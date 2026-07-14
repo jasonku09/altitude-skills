@@ -99,7 +99,7 @@ other, dependencies, package.json), engineering practice (git commits, testing,
 environment variables), and AI-era practice (writing a good plan, reviewing a
 diff, agent memory files). Each entry gets a status — seed (not yet taught) →
 introduced (explained once) → practicing (used it with help) → understood
-(explained in my own words and passed a quiz) — plus introduced/last-reviewed
+(explained in my own words and passed a quiz on a later day) — plus introduced/last-reviewed
 dates and a one-line evidence field. Statuses only ever upgrade on evidence of
 something I actually said or did, and I shouldn't be re-quizzed on concepts that
 are understood and fresh. Anything we already walked through and checked while
@@ -138,6 +138,75 @@ end: update learning/knowledge-graph.md (statuses upgrade only on evidence of
 what I actually did) and learning/file-map.md (files I authored count as known),
 check the task off in learning/plan.md, give me a one-line recap of the new
 leaves on my tree, and stop there.
+```
+
+---
+
+## Already have a project? — the adoption path
+
+Built something already — maybe an AI wrote most of it — and you can't fully explain it? Don't start over. These three prompts replace Steps 2–6; run them in your existing project folder, in order, each in its own session if you like (the files they write are the save points). Then the Step 7 prompt works unchanged.
+
+**Adoption 1 — Triage:**
+
+```
+I already have a project — [one sentence: what it is and how it got built, e.g.
+"an AI coding tool built most of it" or "I followed a tutorial partway"]. I want
+to actually understand it and keep building it, not start over. First look
+around: the file listing, package.json, the README, and git status — tell me
+plainly if git isn't even set up — and check whether the app currently runs.
+Then interview me one question at a time: what the app is in my own words, how
+it was built and how much I typed myself, what works and what's broken, which
+parts of the code scare me most, and what I want it to become. Then give me
+your honest triage recommendation with the reasoning shown: adopt it as-is;
+trim first (of everything built, which features are actually my MVP? — freeze
+the rest, don't delete them); or, only if it can't be made to run or the stack
+is a genuinely bad teacher for a beginner, rebuild with this repo kept open as
+the reference spec. This is an inventory, not an exam — no shame anywhere.
+Record who I am, how the app was built, the MVP / frozen / parking-lot split,
+and the decision in learning/project.md.
+```
+
+**Adoption 2 — The understanding inventory:**
+
+```
+Read learning/project.md. Now build my honest understanding inventory. First
+probe what I actually know with 5-8 questions anchored to MY code — one spot
+per layer (a UI piece, a server route, wherever data gets saved, one config
+file), biased toward the parts that scare me — asking things like "walk me
+through what happens when I click save" and "what breaks if this line is
+deleted?" My claims don't count as evidence, only what I demonstrate; if I say
+I wrote something, probe it once before believing me. Then create
+learning/file-map.md covering everything on disk, one line each on why it
+exists: known only for what I explained myself, generated for machine-made
+folders like node_modules, and parked with an honest one-liner for everything
+else — expect mostly parked, that's the point, every parked line is a lesson
+we've scheduled. Walk me through the 4-6 files that matter most in plain
+language. Then create learning/knowledge-graph.md seeded with one entry per
+concept this codebase embodies plus the engineering practices it's missing
+(git, testing, environment variables), each with a status — seed (not yet
+taught) → introduced (explained once) → practicing (used it with help) →
+understood (explained in my own words and passed a quiz on a later day) —
+plus dates and a one-line evidence field. My probe answers set the statuses;
+everything unprobed starts at seed.
+```
+
+**Adoption 3 — The forward plan:**
+
+```
+Read learning/project.md, learning/file-map.md, and learning/knowledge-graph.md.
+First walk me through the decisions my code already made — language, framework,
+database, hosting — one at a time: what each is in plain language, whether it's
+the popular boring choice or an unusual one (be honest), and check I can say
+what it does for my app before moving on. Then write learning/plan.md. Section
+1 is always "make the ground solid": the app runs on my machine, git exists
+with a baseline commit, and the learning folder is committed — my project can
+never be lost again. The remaining sections are my unbuilt MVP features in
+order of value, 5-9 sections total, each ending in something I can see working.
+Give every section exactly one reclaim task: pick a parked file or a fuzzy
+inherited decision that section's feature touches, and the task is to explain
+it, break it on purpose, predict the failure, then fix it. Put the missing
+engineering practices (tests, deployment) where they become load-bearing, not
+tacked on the end. Sections only — no task breakdown yet.
 ```
 
 ---

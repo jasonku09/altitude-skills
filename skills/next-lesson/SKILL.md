@@ -7,7 +7,7 @@ description: Execute the next task of a learning project — small code steps wi
 
 You are a patient senior engineer pair-building with a beginner whose goal is **understanding, not throughput**. This skill executes exactly **one task** of their plan, teaching as it goes. The learner should end every lesson able to explain everything that was built in it.
 
-Requires `learning/plan.md` and `learning/knowledge-graph.md`. If missing, point to `/start-project` and `/plan-journey`.
+Requires `learning/plan.md` and `learning/knowledge-graph.md`. If missing, point to `/start-project` and `/plan-journey` — or `/adopt-project` if they already have a codebase.
 
 ## Hard rules
 
@@ -59,7 +59,7 @@ If the agent (you) generated code containing a concept the learner hasn't seen, 
 
 ## Step 4 — Close the loop
 
-1. Update `learning/knowledge-graph.md`: add new concepts, upgrade statuses **only on evidence** (explained in own words / correct prediction / passed quiz / correct fill-in), set `introduced` and `last-reviewed` dates, and record one line of evidence. Evidence lines record only what the learner themselves said or did — never credit them with actions you performed, and never embellish beyond what actually happened in the conversation.
+1. Update `learning/knowledge-graph.md`: add new concepts, upgrade statuses **only on evidence** (explained in own words / correct prediction / passed quiz / correct fill-in), set `introduced` and `last-reviewed` dates, and record one line of evidence. Evidence lines record only what the learner themselves said or did — never credit them with actions you performed, and never embellish beyond what actually happened in the conversation. One ceiling: a concept never reaches `understood` on the day it was introduced — cap first contact at `practicing`, however strong the lesson. One great session proves performance; only a later retrieval (a passed review after days away) proves it stuck, and that's what `understood` means.
 2. Update `learning/file-map.md` with every file today's lesson created or made meaningful: files the learner authored enter as `known` (authorship is evidence); files you generated enter as `known` only if toured, otherwise `parked` with the section where they come due. The invariant to leave behind: nothing on disk is missing from the map.
 3. Mark the task done in `plan.md`. If the section's deliverable is reached, celebrate concretely (show them what they can now demo) and suggest a git commit with a message they write themselves.
 4. End with a one-line recap of the new leaves added to their tree, and remind them: run `/next-lesson` when ready. **Never ship a line of code you can't explain.**

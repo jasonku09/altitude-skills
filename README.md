@@ -11,8 +11,13 @@ The metaphor: concepts learned in isolation are loose leaves — hard to sort, e
 | `/start-project` | Interviews you for a project idea sized to your experience, defines the MVP, maps the trunk | 2–4 |
 | `/plan-journey` | Walks every design decision with you (and checks you understand it), builds the sectioned learning plan, seeds your knowledge graph | 5–6 |
 | `/next-lesson` | Executes one task: small code steps, fill-in-the-blank placeholders, predict-before-run, quizzes driven by your knowledge graph, graph update at the end | 7 |
+| `/adopt-project` | Already have a project? Honest triage, an understanding inventory, a file map with no mystery boxes, and a forward plan with reclaim tasks — replaces the first two skills, feeds the same `/next-lesson` loop | alternate entry |
 
 Rather not install anything? [PROMPTS.md](PROMPTS.md) has the copy/paste version of every step.
+
+## Already started a project?
+
+If you've got an existing codebase — especially one an AI wrote for you that you can't fully explain — don't start over. Run `/adopt-project` in that folder. It triages the project honestly (adopt it, trim it first, or — rarely — rebuild with your old repo as the spec), inventories what you actually understand (an inventory, not an exam), maps every file so nothing on disk is a mystery box, and writes a plan that keeps building your app forward while you reclaim the code you already have, piece by piece. From there, `/next-lesson` works exactly the same.
 
 All state lives in a `learning/` folder in your project — plain markdown you own:
 
