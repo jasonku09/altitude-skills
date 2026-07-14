@@ -1,4 +1,4 @@
-# The Knowledge Tree — copy/paste edition
+# Altitude — copy/paste edition
 
 Don't want to install the skill pack? These prompts walk the same steps from the video *"How I would learn to code in 2026 (If I could start over)"* — just copy, paste, and go. The skills are still the fuller experience (they carry the whole method so you don't have to), but these will take you most of the way.
 

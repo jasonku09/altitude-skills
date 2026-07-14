@@ -1,4 +1,4 @@
-# The Knowledge Tree — learn to code by building (free skill pack)
+# Altitude — learn to code by building (free skill pack)
 
 Three Claude Code skills that implement the learning loop from the video *"How I would learn to code in 2026 (If I could start over)"*: pick a real project, plan it with learning as the primary objective, then build it one small, fully-understood step at a time.
 
@@ -27,7 +27,7 @@ All state lives in a `learning/` folder in your project — plain markdown you o
 
 ```
 /plugin marketplace add jasonku09/altitude-skills
-/plugin install knowledge-tree@knowledge-tree
+/plugin install altitude@altitude
 ```
 
 **Or copy the skills directly:**

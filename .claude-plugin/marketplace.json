@@ -1,11 +1,11 @@
 {
-  "name": "knowledge-tree",
+  "name": "altitude",
   "owner": {
     "name": "Jason Ku"
   },
   "plugins": [
     {
-      "name": "knowledge-tree",
+      "name": "altitude",
       "source": "./",
       "description": "Learn to code by building a real project with an AI coding agent — three skills that enforce small steps, predict-before-run, and knowledge-graph quizzes. Never ship a line you can't explain."
     }
