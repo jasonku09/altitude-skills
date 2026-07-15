@@ -26,6 +26,8 @@ Read `learning/` before anything else:
 - Those exist but `plan.md` doesn't → resume at Phase 3.
 - Nothing → Phase 1. If there's no real codebase here either, this is a fresh start — point to `/start-project`.
 
+When resuming, treat prior artifacts as receipts: verify their ground-truth claims against the disk first (stack, git state, file inventory); if they hold, carry forward the learner-evidence they record rather than making the learner re-prove it — say you're doing so, and offer to downgrade anything that feels too generous. Evidence a prior session never wrote down doesn't exist: redo that work, don't reconstruct it from guesswork.
+
 ## Phase 1 — Triage and trim → `learning/project.md`
 
 Look around and narrate what you find in plain language: the file listing, `package.json` or equivalent, the README if any, and `git status` — note especially whether git exists at all (many adopted repos have none). Establish whether the app currently runs.
