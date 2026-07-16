@@ -44,6 +44,28 @@ cp -r altitude-skills/skills/* ~/.claude/skills/
 
 Either way: open a new Claude Code session in an empty folder and run `/start-project`. That's it — no hooks, no config, no setup.
 
+**Using Codex or Cursor instead?** These skills use the open [Agent Skills](https://agentskills.io) format, which both support — only the target folder changes:
+
+```bash
+git clone https://github.com/jasonku09/altitude-skills.git
+cp -r altitude-skills/skills/* ~/.codex/skills/    # Codex (invoke with $start-project, or /skills to list)
+cp -r altitude-skills/skills/* ~/.cursor/skills/   # Cursor (pick via / in Agent chat, or automatic)
+```
+
+And [PROMPTS.md](PROMPTS.md) works with any agent at all, no install needed.
+
+## How to use it
+
+- **Starting from zero?** Make an empty folder, open Claude Code in it, run `/start-project`. When it's done, run `/plan-journey`. One sitting each.
+- **Already have a codebase?** Open Claude Code in that folder and run `/adopt-project` instead — it replaces both of the above.
+- **From then on, it's `/next-lesson`, over and over.** That's the whole loop, for months. One lesson is one small task — expect 30–60 minutes, 3–5 sittings a week.
+- **One lesson per sitting — really.** Don't binge five in a night. The gap between sessions is where memory consolidates, and it's exactly what the next lesson's review quiz tests. Hungry for more is the perfect place to stop.
+- **Start each sitting in a fresh session.** Everything the tutor needs to remember lives in `learning/` — a brand-new session picks up exactly where the last one left off.
+- **Do the typing yourself.** When the tutor dictates a command, you run it in your terminal. When it leaves `TODO(you)` blanks, fill them in your editor and hit save — it's watching the file, not the chat.
+- **Answer quizzes from your head, in your own words.** Don't look it up first. A wrong answer isn't a failure — it's the data that decides what gets taught next.
+- **Life happens — bring it to the lesson.** Broke something on your own? Say so; that's a lesson, and a good one. Want a feature that isn't in the plan? Ask; the plan is a living backlog, not a contract.
+- **Read your `learning/` files anytime; let the lessons write them.** Graph statuses only move on demonstrated evidence — promoting yourself to `understood` by hand just cheats the quizzes that keep you honest.
+
 ## Ground rules baked into the skills
 
 - One small step at a time. The pause between lessons is the pedagogy.
