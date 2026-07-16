@@ -56,7 +56,7 @@ Either way: open a new Claude Code session in an empty folder and run `/start-pr
 
 Skills are instructions — they tell the agent what to do. They can't *remember what you know*. The graph file helps, but nothing here schedules a review for the week you're about to forget something, notices you rubber-stamping diffs, or adapts quiz difficulty to your actual track record. You are your own coach, and the honest truth is that's the hard part.
 
-I'm building an app that is that coach — same loop, with real mastery tracking, spaced review, and checkpoint gates that don't rely on your willpower. If you'd rather not be your own coach: **[waitlist link — TBD]**.
+I'm building an app that is that coach — same loop, with real mastery tracking, spaced review, and checkpoint gates that don't rely on your willpower. If you'd rather not be your own coach, watch this repo — the waitlist link lands here soon.
 
 ## License
 
