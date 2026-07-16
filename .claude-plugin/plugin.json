@@ -1,12 +1,18 @@
 {
   "name": "altitude",
-  "description": "Learn to code by building a real project with an AI coding agent — four skills (start-project, plan-journey, next-lesson, adopt-project) that enforce small steps, predict-before-run, and knowledge-graph quizzes. Never ship a line you can't explain.",
-  "version": "0.2.0",
+  "description": "Learn to code by building a real project with an AI coding agent \u2014 four skills (start-project, plan-journey, next-lesson, adopt-project) that enforce small steps, predict-before-run, and knowledge-graph quizzes. Never ship a line you can't explain.",
+  "version": "0.2.1",
   "author": {
     "name": "Jason Ku"
   },
   "homepage": "https://github.com/jasonku09/altitude-skills",
   "repository": "https://github.com/jasonku09/altitude-skills",
   "license": "MIT",
-  "keywords": ["learn-to-code", "education", "beginner", "skills", "knowledge-graph"]
+  "keywords": [
+    "learn-to-code",
+    "education",
+    "beginner",
+    "skills",
+    "knowledge-graph"
+  ]
 }

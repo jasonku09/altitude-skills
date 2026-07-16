@@ -2,10 +2,11 @@
 
 Don't want to install the skill pack? These prompts walk the same steps from the video *"How I would learn to code in 2026 (If I could start over)"* — just copy, paste, and go. The skills are still the fuller experience (they carry the whole method so you don't have to), but these will take you most of the way.
 
-Two things before you start:
+Three things before you start:
 
 1. **Work in one project folder.** Make an empty folder for your project and always start your coding agent inside it.
 2. **The prompts save your progress to files** in a `learning/` folder — plain markdown you own. That's how a brand-new session picks up exactly where the last one left off. Don't skip those parts.
+3. **Answer quizzes in your own words.** If your agent turns a quiz into a multiple-choice panel, tell it to ask in plain chat instead — picking from a list isn't the same as retrieving it yourself, and the right option is usually guessable.
 
 Works with Claude Code, Cursor, or Codex — any coding agent that can read and write files in your folder.
 
@@ -133,7 +134,8 @@ when my prediction is wrong, slow down and dig into the gap, because that's
 where the learning is. When a command creates new files (scaffolds, installers),
 walk me through the 4–6 that matter in plain language and park the rest in the
 file map — never build on files I can't account for. Quiz me on graph concepts
-as they come up, but never re-quiz what's marked understood and fresh. At the
+as they come up — always open questions I answer in my own words, never
+multiple choice — but never re-quiz what's marked understood and fresh. At the
 end: update learning/knowledge-graph.md (statuses upgrade only on evidence of
 what I actually did) and learning/file-map.md (files I authored count as known),
 check the task off in learning/plan.md, give me a one-line recap of the new
@@ -170,7 +172,8 @@ and the decision in learning/project.md.
 
 ```
 Read learning/project.md. Now build my honest understanding inventory. First
-probe what I actually know with 5-8 questions anchored to MY code — one spot
+probe what I actually know with 5-8 questions anchored to MY code — open
+questions I answer in my own words, never multiple choice — one spot
 per layer (a UI piece, a server route, wherever data gets saved, one config
 file), biased toward the parts that scare me — asking things like "walk me
 through what happens when I click save" and "what breaks if this line is
@@ -229,7 +232,8 @@ repair.
 
 ```
 Read learning/knowledge-graph.md. Quiz me on 3–5 concepts I haven't reviewed in
-over a week, one question at a time. Update last-reviewed dates on passes. If I
+over a week, one question at a time — open questions I answer in my own words,
+never multiple choice. Update last-reviewed dates on passes. If I
 struggle, downgrade understood to practicing — no shame, forgetting is how
 memory works, that's why we review — and give me a 2–3 sentence refresher. End
 with one repo-tour question from learning/file-map.md: pick a file and ask me
