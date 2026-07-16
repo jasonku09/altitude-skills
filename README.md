@@ -1,4 +1,4 @@
-# Altitude — learn to code by building (free skill pack)
+# Altitude — learn to code by building
 
 Four Claude Code skills that turn an AI coding agent into a tutor instead of a ghostwriter: pick a real project (or adopt one you've already built), plan it with learning as the primary objective, then build it one small, fully-understood step at a time.
 
