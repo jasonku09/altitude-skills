@@ -2,6 +2,14 @@
 
 Four Claude Code skills that turn an AI coding agent into a tutor instead of a ghostwriter: pick a real project (or adopt one you've already built), plan it with learning as the primary objective, then build it one small, fully-understood step at a time.
 
+## Where it takes you
+
+Wherever you're starting from, the destination is the same — a real product you can explain line by line:
+
+- **Nothing yet** → from an empty folder to a deployed MVP you built yourself, understanding every line as it's written.
+- **A project you can't fully explain** (an AI wrote it, or a tutorial carried you) → to a deployed MVP, plus ownership of what's already there: the plan keeps building your app forward while you reclaim the code you didn't write, piece by piece.
+- **A shipped MVP** → keep shipping new features with a tutor at your side — each one placed in the plan, built in small steps, and understood before it goes out.
+
 The metaphor: concepts learned in isolation are loose leaves — hard to sort, easy to lose. A real project is a tree. The **trunk** is the project's core components, the **branches** are the build plan, and the **leaves** are every concept you learn along the way, attached where they belong.
 
 ## The four skills
