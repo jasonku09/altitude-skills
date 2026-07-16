@@ -1,10 +1,10 @@
 # Altitude — learn to code by building (free skill pack)
 
-Three Claude Code skills that implement the learning loop from the video *"How I would learn to code in 2026 (If I could start over)"*: pick a real project, plan it with learning as the primary objective, then build it one small, fully-understood step at a time.
+Four Claude Code skills that implement the learning loop from the video *"How I would learn to code in 2026 (If I could start over)"*: pick a real project (or adopt one you've already built), plan it with learning as the primary objective, then build it one small, fully-understood step at a time.
 
 The metaphor: concepts learned in isolation are loose leaves — hard to sort, easy to lose. A real project is a tree. The **trunk** is the project's core components, the **branches** are the build plan, and the **leaves** are every concept you learn along the way, attached where they belong.
 
-## The three skills
+## The four skills
 
 | Skill | What it does | Video steps |
 |---|---|---|
