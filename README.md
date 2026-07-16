@@ -1,17 +1,17 @@
 # Altitude — learn to code by building (free skill pack)
 
-Four Claude Code skills that implement the learning loop from the video *"How I would learn to code in 2026 (If I could start over)"*: pick a real project (or adopt one you've already built), plan it with learning as the primary objective, then build it one small, fully-understood step at a time.
+Four Claude Code skills that turn an AI coding agent into a tutor instead of a ghostwriter: pick a real project (or adopt one you've already built), plan it with learning as the primary objective, then build it one small, fully-understood step at a time.
 
 The metaphor: concepts learned in isolation are loose leaves — hard to sort, easy to lose. A real project is a tree. The **trunk** is the project's core components, the **branches** are the build plan, and the **leaves** are every concept you learn along the way, attached where they belong.
 
 ## The four skills
 
-| Skill | What it does | Video steps |
-|---|---|---|
-| `/start-project` | Interviews you for a project idea sized to your experience, defines the MVP, maps the trunk | 2–4 |
-| `/plan-journey` | Walks every design decision with you (and checks you understand it), builds the sectioned learning plan, seeds your knowledge graph | 5–6 |
-| `/next-lesson` | Executes one task: small code steps, fill-in-the-blank placeholders, predict-before-run, quizzes driven by your knowledge graph, graph update at the end | 7 |
-| `/adopt-project` | Already have a project? Honest triage, an understanding inventory, a file map with no mystery boxes, and a forward plan with reclaim tasks — replaces the first two skills, feeds the same `/next-lesson` loop | alternate entry |
+| Skill | What it does |
+|---|---|
+| `/start-project` | Interviews you for a project idea sized to your experience, defines the MVP, maps the trunk |
+| `/plan-journey` | Walks every design decision with you (and checks you understand it), builds the sectioned learning plan, seeds your knowledge graph |
+| `/next-lesson` | Executes one task: small code steps, fill-in-the-blank placeholders, predict-before-run, quizzes driven by your knowledge graph, graph update at the end |
+| `/adopt-project` | Already have a project? Honest triage, an understanding inventory, a file map with no mystery boxes, and a forward plan with reclaim tasks — replaces the first two skills, feeds the same `/next-lesson` loop |
 
 Rather not install anything? [PROMPTS.md](PROMPTS.md) has the copy/paste version of every step.
 
@@ -52,11 +52,11 @@ Either way: open a new Claude Code session in an empty folder and run `/start-pr
 - No mystery boxes: every file in your repo is either explained or explicitly parked. When a scaffold dumps fifteen files into your folder, you get the tour before you build on them.
 - **Never ship a single line of code you cannot explain.**
 
-## What these skills can't do
+## The one thing these skills can't do
 
-Skills are instructions — they tell the agent what to do. They can't *remember what you know*. The graph file helps, but nothing here schedules a review for the week you're about to forget something, notices you rubber-stamping diffs, or adapts quiz difficulty to your actual track record. You are your own coach, and the honest truth is that's the hard part.
+The `learning/` folder is the agent's memory of what you know: every session reads it, quizzes come from it, and nothing in it changes without evidence. What no skill can do is **start a session on its own**. Spaced repetition works because reviews arrive on the forgetting curve's schedule — right when a concept is about to fade — and these skills can only review you when you show up. The scheduling loop is you.
 
-I'm building an app that is that coach — same loop, with real mastery tracking, spaced review, and checkpoint gates that don't rely on your willpower. If you'd rather not be your own coach, watch this repo — the waitlist link lands here soon.
+I'm building an app that closes that loop: same method, but the review schedule runs for you — it notices what's about to fade and comes to you. If you'd rather not be your own scheduler, watch this repo — the waitlist link lands here soon.
 
 ## License
 
