@@ -36,7 +36,7 @@ All state lives in a `learning/` folder in your project — plain markdown you o
 
 ## Install
 
-**As a plugin** (recommended — updates with the repo):
+**As a plugin** (Claude Code only — recommended there, since it updates with the repo):
 
 ```
 /plugin marketplace add jasonku09/altitude-skills
@@ -60,7 +60,7 @@ cp -r altitude-skills/skills/* ~/.codex/skills/    # Codex (invoke with $start-p
 cp -r altitude-skills/skills/* ~/.cursor/skills/   # Cursor (pick via / in Agent chat, or automatic)
 ```
 
-And [PROMPTS.md](PROMPTS.md) works with any agent at all, no install needed.
+Copied skills don't auto-update — re-run the clone + copy to pick up new versions. And [PROMPTS.md](PROMPTS.md) works with any agent at all, no install needed.
 
 ## How to use it
 
