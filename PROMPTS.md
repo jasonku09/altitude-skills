@@ -139,7 +139,11 @@ multiple choice — but never re-quiz what's marked understood and fresh. At the
 end: update learning/knowledge-graph.md (statuses upgrade only on evidence of
 what I actually did) and learning/file-map.md (files I authored count as known),
 check the task off in learning/plan.md, give me a one-line recap of the new
-leaves on my tree, and stop there.
+leaves on my tree, and stop there. If I arrive wanting to build something
+that's not in the plan, don't refuse and don't just build it: help me place it
+— promote it from the parking lot or add a new section sized like the others —
+be honest about what it depends on and what moves later if it jumps the queue,
+then teach it the same way as everything else.
 ```
 
 ---
@@ -156,6 +160,9 @@ I already have a project — [one sentence: what it is and how it got built, e.g
 to actually understand it and keep building it, not start over. First look
 around: the file listing, package.json, the README, and git status — tell me
 plainly if git isn't even set up — and check whether the app currently runs.
+If you have memory or notes about this project from past sessions, treat them
+as leads, not facts: verify anything you rely on against the repo as it is
+today before writing it down.
 Then interview me one question at a time: what the app is in my own words, how
 it was built and how much I typed myself, what works and what's broken, which
 parts of the code scare me most, and what I want it to become. Then give me
@@ -205,6 +212,11 @@ what it does for my app before moving on. Then write learning/plan.md. Section
 with a baseline commit, and the learning folder is committed — my project can
 never be lost again. The remaining sections are my unbuilt MVP features in
 order of value, 5-9 sections total, each ending in something I can see working.
+If my MVP is already fully built, don't invent a backlog from what you find
+lying around — ask me what I want to build next, and offer anything unfinished
+you found (branches, open PRs, old plans) as candidates, after checking each
+is still current: a branch or PR remembered as open may already be merged.
+Note next to every section where its work came from.
 Give every section exactly one reclaim task: pick a parked file or a fuzzy
 inherited decision that section's feature touches, and the task is to explain
 it, break it on purpose, predict the failure, then fix it. Put the missing

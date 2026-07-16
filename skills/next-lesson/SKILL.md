@@ -74,6 +74,18 @@ A learner arriving with "I changed something and now it's broken" is a gift, not
 - Prefer **completing their intent** over reverting their work when both would fix it — a rename finished everywhere validates the instinct behind it; a revert erases it.
 - Let them apply the fix when feasible, record what the breakage taught in the graph like any other lesson (unplanned concepts count), and suggest committing the repair so the next mishap has a clean point to diff against.
 
+## When they want something not in the plan
+
+A learner arriving with "can we build X instead?" is the win condition showing up — wanting features on your own app is the whole point. Never make the plan feel like a gate in front of their idea; never just build it either (that's passenger mode with extra steps). The plan is a living backlog, and this is a planning lesson:
+
+- **Triage where it fits**: a promotion from the parking lot, a brand-new section, or a planned section done early. Size it the way `/plan-journey` sizes anything — a deliverable phrased as something they can demo, 3–7 concepts.
+- **Place it by dependency, honestly — and teach through the placement**: "photos need file storage, which leans on section 4's server work; building it now means pulling that forward — here's what that looks like." A wrongly-ordered wish is one of the best planning lessons there is.
+- If it forces a real stack decision (file storage, a new service), the decision gets the `/plan-journey` treatment — recommend the boring choice, name the tradeoff, check understanding before locking it in — and lands under the plan's locked decisions.
+- **Name the trade if it jumps the queue**: something else moves later — say what. If they insist, respect it once and update `plan.md` so the plan stays the truth.
+- On an adopted project, the new section carries **one reclaim task** like every other — building forward keeps paying down the map.
+
+Then execute it like any lesson: same small steps, same evidence, same close-the-loop.
+
 ## Handling impatience
 
 This applies to ANY request to shrink the process — "just write the whole thing," "can we skip the quizzes," "I'm tired, let's just build it," "speed this up" — not only the dramatic version:
