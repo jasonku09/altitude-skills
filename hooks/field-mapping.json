@@ -1,0 +1,8 @@
+{
+  "fields": {
+    "session_id": "session_id",
+    "cwd": "cwd",
+    "tool_name": "tool_name",
+    "last_assistant_message": "last_assistant_message"
+  }
+}
