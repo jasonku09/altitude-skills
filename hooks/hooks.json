@@ -1,0 +1,89 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "altitude",
+            "args": [
+              "hook",
+              "session-start",
+              "--agent",
+              "claude-code",
+              "--mapping",
+              "${CLAUDE_PLUGIN_ROOT}/hooks/field-mapping.json",
+              "--print-context",
+              "--nudge",
+              "Run /altitude:next-lesson to continue (or /altitude:begin if this is your first session)."
+            ],
+            "timeout": 30
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "ExitPlanMode",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "altitude",
+            "args": [
+              "hook",
+              "pre-tool-use",
+              "--agent",
+              "claude-code",
+              "--mapping",
+              "${CLAUDE_PLUGIN_ROOT}/hooks/field-mapping.json",
+              "--gate",
+              "plan"
+            ],
+            "timeout": 30
+          }
+        ]
+      },
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "altitude",
+            "args": [
+              "hook",
+              "pre-tool-use",
+              "--agent",
+              "claude-code",
+              "--mapping",
+              "${CLAUDE_PLUGIN_ROOT}/hooks/field-mapping.json",
+              "--gate",
+              "diff"
+            ],
+            "timeout": 30
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "altitude",
+            "args": [
+              "hook",
+              "stop",
+              "--agent",
+              "claude-code",
+              "--mapping",
+              "${CLAUDE_PLUGIN_ROOT}/hooks/field-mapping.json",
+              "--gate",
+              "retro"
+            ],
+            "timeout": 30
+          }
+        ]
+      }
+    ]
+  }
+}

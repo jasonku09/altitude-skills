@@ -55,7 +55,7 @@ cp -r altitude-skills/skills/* ~/.claude/skills/
 
 For the standalone method, open a new Claude Code session in an empty folder and run `/start-project`. If you planned a subscribed journey on Altitude, install its CLI, connect with `/altitude:connect`, and run `/altitude:begin` instead.
 
-Session-capture hooks will land in the plugin in a follow-up commit.
+The plugin also bundles Altitude's session hooks (`hooks/`). They stay fully dormant unless you're working inside a project bound to a subscribed journey (`altitude bind` / `/altitude:begin`) — no events, gates, or context injection anywhere else. With a bound project, they capture session evidence for your journey and run the plan/diff/retro gates. Gates fail open: a crashed hook never blocks your work. The `/altitude:connect` and `/altitude:status` skills manage the link.
 
 **Using Codex or Cursor instead?** These skills use the open [Agent Skills](https://agentskills.io) format, which both support — only the target folder changes:
 
