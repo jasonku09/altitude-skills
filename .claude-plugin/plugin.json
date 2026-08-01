@@ -1,7 +1,7 @@
 {
   "name": "altitude",
-  "description": "Learn to code by building a real project with an AI coding agent \u2014 four skills (start-project, plan-journey, next-lesson, adopt-project) that enforce small steps, predict-before-run, and knowledge-graph quizzes. Never ship a line you can't explain.",
-  "version": "0.2.2",
+  "description": "Learn to code by building a real project with an AI coding agent \u2014 five skills (begin, start-project, plan-journey, next-lesson, adopt-project) that enforce small steps, predict-before-run, and evidence-based reviews. Never ship a line you can't explain.",
+  "version": "0.3.0",
   "author": {
     "name": "Jason Ku"
   },
