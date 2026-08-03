@@ -84,6 +84,44 @@
           }
         ]
       }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "altitude",
+            "args": [
+              "hook",
+              "session-end",
+              "--agent",
+              "claude-code",
+              "--mapping",
+              "${CLAUDE_PLUGIN_ROOT}/hooks/field-mapping.json"
+            ],
+            "timeout": 30
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "altitude",
+            "args": [
+              "hook",
+              "user-prompt-submit",
+              "--agent",
+              "claude-code",
+              "--mapping",
+              "${CLAUDE_PLUGIN_ROOT}/hooks/field-mapping.json"
+            ],
+            "timeout": 30
+          }
+        ]
+      }
     ]
   }
 }
