@@ -39,6 +39,8 @@ Run `altitude task --json` in the current working directory and parse the single
 
 Treat this directory as bound only when `binding` is non-null and its `project_root` resolves to the current project root. A binding for a different folder does not bind this one.
 
+The envelope may also carry `update_available`. Deliberately do nothing with it here. Every route through this skill ends in `/altitude:next-lesson` behavior, which delivers that notice at the close of the first lesson — repeating it here would spend part of a first session on maintenance and say the same thing twice.
+
 ## Step 2 — Protect existing work
 
 When a journey is present but the current directory is not bound, inspect `learning/plan.md` before doing anything else.

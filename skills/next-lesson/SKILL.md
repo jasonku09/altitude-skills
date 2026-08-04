@@ -34,6 +34,8 @@ Choose exactly one mode for the session:
 
 If neither `learning/plan.md` nor a usable bound server journey exists, point to `/altitude:begin` for the paid route or `/start-project` for the free route (`/adopt-project` for an existing codebase), then stop.
 
+The response may also carry `update_available`. Note it and carry on — it is housekeeping, and Step 4's close is where it belongs. **Treat a missing key as `false`**: older CLI builds simply do not send it, and an absent field is not a reason to start telling a learner about updates you have no evidence of.
+
 ### Match their shell
 
 Read the host platform from your environment. On macOS or Linux there is nothing to do here — the commands this method teaches are the same in `bash` and `zsh`, and you must not create the file below.
@@ -118,6 +120,10 @@ If the agent (you) generated code containing a concept the learner hasn't seen, 
 2. Update `learning/file-map.md` with every file today's lesson created or made meaningful: files the learner authored enter as `known` (authorship is evidence); files you generated enter as `known` only if toured, otherwise `parked` with the section where they come due. The invariant to leave behind: nothing on disk is missing from the map.
 3. In free mode, mark the task done in `plan.md`. In paid mode, leave the generated plan untouched and best-effort run `altitude emit task-completed --session "$CLAUDE_CODE_SESSION_ID" --task <current task id>`. The flags are `--session` and `--task` — not `--session-id`/`--task-id`, which do not exist and fail. Pass the session explicitly so the event attributes to *this* session even when the learner has another agent open; `$CLAUDE_CODE_SESSION_ID` is the id the workshop hooks already report, so the two always agree. If that variable is empty, drop the flag and let the CLI resolve the session itself. Never block the lesson on an emit failure: mention that progress could not sync and move on. Then re-run `altitude task --json`; if the refreshed response still has a bound, entitled journey, confirm that its `current_task.id` differs from the task just completed (or is null because the journey finished) and re-materialize the plan. If refresh fails or the pointer has not advanced, mention that briefly and continue anyway. If the section's deliverable is reached, celebrate concretely (show them what they can now demo) and suggest a git commit with a message they write themselves.
 4. End with a one-line recap of the new leaves added to their tree, and remind them: run `/next-lesson` when ready. **Never ship a line of code you can't explain.**
+
+**If Step 1 reported `update_available`**, add one plain line after that recap — never before the lesson and never inside it. Their copy of the Altitude method is behind the published one, and `altitude update` brings it current. Dictate the command and let them run it in their own terminal like any other; don't run it for them, don't wait for it, and don't make the next lesson conditional on it. Running it now is safe: the refreshed files are picked up the next time the skill starts, so nothing about the lesson you just finished changes.
+
+Say it **once per session** no matter how many lessons they do in a row — a notice they already saw isn't more true the third time, and a beginner who learns to scroll past your closing line will scroll past the one that matters later. Keep it proportionate: nothing they built is wrong, and every lesson works whether or not they update. If they ask what changed, say plainly that you can't see the changelog from here rather than guessing at a list.
 
 ## When they broke something
 
