@@ -1,0 +1,57 @@
+{
+  "description": "Altitude workshop lifecycle and learning gates.",
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$PLUGIN_ROOT/bin/altitude-codex-hook.mjs\" session-start",
+            "commandWindows": "node \"%PLUGIN_ROOT%\\bin\\altitude-codex-hook.mjs\" session-start",
+            "timeout": 30,
+            "statusMessage": "Starting Altitude workshop capture"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "^update_plan$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$PLUGIN_ROOT/bin/altitude-codex-hook.mjs\" plan",
+            "commandWindows": "node \"%PLUGIN_ROOT%\\bin\\altitude-codex-hook.mjs\" plan",
+            "timeout": 30,
+            "statusMessage": "Checking the Altitude plan gate"
+          }
+        ]
+      },
+      {
+        "matcher": "^(apply_patch|Edit|Write)$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$PLUGIN_ROOT/bin/altitude-codex-hook.mjs\" diff",
+            "commandWindows": "node \"%PLUGIN_ROOT%\\bin\\altitude-codex-hook.mjs\" diff",
+            "timeout": 30,
+            "statusMessage": "Checking the Altitude diff gate"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$PLUGIN_ROOT/bin/altitude-codex-hook.mjs\" stop",
+            "commandWindows": "node \"%PLUGIN_ROOT%\\bin\\altitude-codex-hook.mjs\" stop",
+            "timeout": 30,
+            "statusMessage": "Checking the Altitude retro gate"
+          }
+        ]
+      }
+    ]
+  }
+}

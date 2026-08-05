@@ -39,14 +39,23 @@ The free method is complete and works standalone: `/start-project` + `/plan-jour
 
 ## Install
 
-**As a plugin** (Claude Code only — recommended there, since it updates with the repo):
+**As a plugin** (recommended — it updates with the repo). In Claude Code, type both lines inside the agent:
 
 ```
 /plugin marketplace add jasonku09/altitude-skills
 /plugin install altitude@altitude
 ```
 
-**Or copy the skills directly:**
+In Codex, run both lines in your terminal:
+
+```bash
+codex plugin marketplace add jasonku09/altitude-skills
+codex plugin add altitude@altitude
+```
+
+The first `codex` launch after installing shows a one-time "Hooks need review" prompt — choose **Trust all and continue** to enable Altitude's session hooks. (They stay dormant outside bound journey projects; see below.)
+
+**Or copy the skills directly** (Claude Code):
 
 ```bash
 git clone https://github.com/jasonku09/altitude-skills.git
@@ -57,12 +66,11 @@ For the standalone method, open a new Claude Code session in an empty folder and
 
 The plugin also bundles Altitude's session hooks (`hooks/`). They stay fully dormant unless you're working inside a project bound to a subscribed journey (`altitude bind` / `/altitude:begin`) — no events, gates, or context injection anywhere else. With a bound project, they capture session evidence for your journey and run the plan/diff/retro gates. Gates fail open: a crashed hook never blocks your work. The `/altitude:connect` and `/altitude:status` skills manage the link.
 
-**Using Codex or Cursor instead?** These skills use the open [Agent Skills](https://agentskills.io) format, which both support — only the target folder changes:
+**Using Cursor instead?** These skills use the open [Agent Skills](https://agentskills.io) format, which Cursor supports — copy them in:
 
 ```bash
 git clone https://github.com/jasonku09/altitude-skills.git
-cp -r altitude-skills/skills/* ~/.codex/skills/    # Codex (invoke with $start-project, or /skills to list)
-cp -r altitude-skills/skills/* ~/.cursor/skills/   # Cursor (pick via / in Agent chat, or automatic)
+cp -r altitude-skills/skills/* ~/.cursor/skills/   # pick via / in Agent chat, or automatic
 ```
 
 Copied skills don't auto-update — re-run the clone + copy to pick up new versions. And [PROMPTS.md](PROMPTS.md) works with any agent at all, no install needed.

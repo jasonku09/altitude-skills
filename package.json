@@ -1,0 +1,8 @@
+{
+  "name": "altitude-skills",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test"
+  }
+}
