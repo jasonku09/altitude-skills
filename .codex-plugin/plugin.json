@@ -1,0 +1,27 @@
+{
+  "name": "altitude",
+  "version": "0.5.0",
+  "description": "Learn to code by building a real project with an AI coding agent — seven skills (begin, start-project, plan-journey, next-lesson, adopt-project, connect, status) plus dormant-by-default session hooks that enforce small steps, predict-before-run, and evidence-based reviews. Never ship a line you can't explain.",
+  "hooks": "./hooks/codex.json",
+  "keywords": [
+    "learn-to-code",
+    "education",
+    "beginner",
+    "skills",
+    "knowledge-graph"
+  ],
+  "interface": {
+    "displayName": "Altitude",
+    "shortDescription": "Learn to code by building — with session capture and learning gates",
+    "longDescription": "Turns your coding agent into a tutor instead of a ghostwriter. Seven skills walk you from project idea to deployed MVP one fully-understood step at a time; with a subscribed Altitude journey, dormant-by-default hooks capture session evidence and run the learning gates.",
+    "developerName": "Altitude",
+    "category": "Education",
+    "capabilities": [
+      "Hooks"
+    ],
+    "defaultPrompt": [
+      "Connect this Codex installation to Altitude.",
+      "Show my local Altitude workshop status."
+    ]
+  }
+}
