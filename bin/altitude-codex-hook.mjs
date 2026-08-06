@@ -54,6 +54,19 @@ const hookActions = {
     "--gate",
     "retro",
   ],
+  // Stop is end of TURN. Only this lifecycle ends the session, so without it
+  // the session marker is never retired and no `session_ended` is ever sent.
+  "session-end": ["hook", "session-end", "--agent", "codex", "--mapping", mappingPath],
+  // Turn start: stamps what this turn's gates credit, and carries the
+  // learner's answer to a retro question parked at the end of the last turn.
+  "user-prompt-submit": [
+    "hook",
+    "user-prompt-submit",
+    "--agent",
+    "codex",
+    "--mapping",
+    mappingPath,
+  ],
 };
 
 function executable(name) {
@@ -94,6 +107,9 @@ const action = process.argv[2];
 if (Object.hasOwn(hookActions, action)) {
   process.exitCode = await runHook(action);
 } else {
-  process.stderr.write("usage: altitude-codex-hook <session-start|plan|diff|stop>\n");
+  process.stderr.write(
+    "usage: altitude-codex-hook " +
+      "<session-start|plan|diff|stop|session-end|user-prompt-submit>\n",
+  );
   process.exitCode = 1;
 }
