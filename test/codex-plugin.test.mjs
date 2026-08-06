@@ -75,6 +75,10 @@ test("declares Codex's documented hook payload fields at the adapter edge", asyn
       session_id: "session_id",
       cwd: "cwd",
       tool_name: "tool_name",
+      // The learner's answer to a parked retro question arrives here, so an
+      // unmapped `prompt` leaves every Codex question parked until its marker
+      // expires — the gate asks and nothing can ever answer.
+      prompt: "prompt",
       last_assistant_message: "last_assistant_message",
     },
   });
@@ -121,9 +125,36 @@ test("wires lifecycle and PreToolUse gates through frozen cross-platform shim co
           hooks: [hook("stop", "Checking the Altitude retro gate")],
         },
       ],
+      // Stop is END OF TURN, not end of session: workshop-core removes the
+      // session marker and emits `session_ended` only on this lifecycle.
+      SessionEnd: [
+        {
+          hooks: [hook("session-end", "Closing the Altitude workshop session")],
+        },
+      ],
+      // The other half of the retro gate — the turn where the learner answers
+      // the parked question — plus the turn-start credit stamp.
+      UserPromptSubmit: [
+        {
+          hooks: [hook("user-prompt-submit", "Recording your Altitude turn")],
+        },
+      ],
     },
   });
   assert.equal(Object.hasOwn(config.hooks, "PostToolUse"), false);
+});
+
+test("covers the same lifecycle surface as the Claude plugin", async () => {
+  const codex = await readJson("hooks/codex.json");
+  const claude = await readJson("hooks/hooks.json");
+
+  // Agent neutrality: a lifecycle wired for one agent and not the other is an
+  // adapter bug, and it is invisible until a bound session runs live. Codex
+  // 0.145.0 supports every event Claude Code does that we use.
+  assert.deepEqual(
+    Object.keys(codex.hooks).sort(),
+    Object.keys(claude.hooks).sort(),
+  );
 });
 
 test("the shim forwards exact lifecycle arguments and stdin to workshop-core", async (t) => {
@@ -162,6 +193,32 @@ test("the shim forwards exact lifecycle arguments and stdin to workshop-core", a
     "diff",
   ]);
   assert.equal(await readFile(stdinPath, "utf8"), payload);
+});
+
+test("the shim forwards the session-end and user-prompt-submit lifecycles", async (t) => {
+  const temp = await mkdtemp(join(tmpdir(), "altitude-codex-lifecycle-"));
+  t.after(() => rm(temp, { recursive: true, force: true }));
+  const argvPath = join(temp, "argv");
+  await fakeExecutable(temp, "altitude", `printf '%s\\n' "$@" > "${argvPath}"`);
+  const base = ["--agent", "codex", "--mapping", join(repoRoot, "hooks/codex-field-mapping.json")];
+
+  for (const [action, lifecycle] of [
+    ["session-end", "session-end"],
+    ["user-prompt-submit", "user-prompt-submit"],
+  ]) {
+    const result = runShim([action], {
+      input: JSON.stringify({ session_id: `codex-${action}`, cwd: "/tmp/project" }),
+      env: { PATH: `${temp}${delimiter}${process.env.PATH}` },
+    });
+
+    assert.equal(result.status, 0, action);
+    // No `--gate`: neither lifecycle runs a gate, so neither can ever block.
+    assert.deepEqual(
+      (await readFile(argvPath, "utf8")).trim().split("\n"),
+      ["hook", lifecycle, ...base],
+      action,
+    );
+  }
 });
 
 test("the shim preserves exit 2 and the gate reason", async (t) => {

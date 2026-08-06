@@ -52,6 +52,32 @@
           }
         ]
       }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$PLUGIN_ROOT/bin/altitude-codex-hook.mjs\" session-end",
+            "commandWindows": "node \"%PLUGIN_ROOT%\\bin\\altitude-codex-hook.mjs\" session-end",
+            "timeout": 30,
+            "statusMessage": "Closing the Altitude workshop session"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$PLUGIN_ROOT/bin/altitude-codex-hook.mjs\" user-prompt-submit",
+            "commandWindows": "node \"%PLUGIN_ROOT%\\bin\\altitude-codex-hook.mjs\" user-prompt-submit",
+            "timeout": 30,
+            "statusMessage": "Recording your Altitude turn"
+          }
+        ]
+      }
     ]
   }
 }
