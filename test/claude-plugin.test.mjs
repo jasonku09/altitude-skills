@@ -42,13 +42,18 @@ test("declares Claude's documented payload fields without leaking them into core
 
   // This file ships in the marketplace plugin, which auto-updates ahead of the
   // learner's CLI. Every field here must be one the OLDEST CLI still in the
-  // wild understands: CLIs at or below 0.3.0 reject a mapping outright if it
-  // carries a field they do not know, which silently disables every hook.
+  // wild understands. That floor is 0.4.0: from 0.4.0 the CLI drops unknown
+  // mapping fields instead of rejecting the mapping (which on ≤0.3.0 silently
+  // disables every hook), and the server's agent-version floor at device
+  // connect is how any straggler gets pushed forward. `prompt` requires
+  // ≥0.4.0 and is what answer capture rides on — without it the hook never
+  // sees the learner's reply to a parked retro question.
   assert.deepEqual(mapping, {
     fields: {
       session_id: "session_id",
       cwd: "cwd",
       tool_name: "tool_name",
+      prompt: "prompt",
       last_assistant_message: "last_assistant_message",
     },
   });
