@@ -213,6 +213,48 @@ test("README installs the plugin from a terminal, with scope and reload guidance
   assert.match(readme, /\/reload-plugins/);
 });
 
+test("README fences the direct-copy install off from hooks and subscribers", async () => {
+  const readme = await readFile(join(repoRoot, "README.md"), "utf8");
+
+  const start = readme.indexOf("**Or copy the skills directly**");
+  const end = readme.indexOf("**Using Cursor instead?**");
+  assert.ok(start !== -1 && end > start, "the direct-copy install block moved or vanished");
+  const copyBlock = readme.slice(start, end);
+
+  // `hooks/` sits outside `skills/`, and every hook command resolves
+  // `${CLAUDE_PLUGIN_ROOT}` — a variable only a plugin install defines. So
+  // `cp -r skills/*` yields working slash commands and no session hooks: no
+  // evidence capture, no gates. Gates fail open by design, so nothing errors;
+  // a subscriber's only symptom is a learning map that never fills. The
+  // warning has to sit with the commands, not three paragraphs below them.
+  assert.match(copyBlock, /no session hooks/i, "must say the copy carries no hooks");
+  assert.match(copyBlock, /free standalone method/i, "must scope the copy to the free method");
+  assert.match(copyBlock, /subscription/i, "must send subscribers back to the plugin");
+
+  // A copied skill is invoked by its own `name` — `/connect`, not
+  // `/altitude:connect`, which exists only under the plugin's namespace. The
+  // paid route must not be described as reachable from a copied install.
+  assert.doesNotMatch(
+    copyBlock,
+    /\/altitude:connect/,
+    "a copied install has no /altitude: namespace to connect with",
+  );
+});
+
+test("README scopes the Cursor copy to the free method too", async () => {
+  const readme = await readFile(join(repoRoot, "README.md"), "utf8");
+
+  const cursorBlock = readme.slice(readme.indexOf("**Using Cursor instead?**"));
+  assert.match(cursorBlock, /~\/\.cursor\/skills/, "the Cursor copy block moved or vanished");
+  // Same mechanism, same silent loss: skills copy over, hooks do not exist to
+  // copy, and Cursor has no Altitude hook adapter at all.
+  assert.match(
+    cursorBlock.slice(0, cursorBlock.indexOf("## How to use it")),
+    /free standalone method/i,
+    "must scope the Cursor copy to the free method",
+  );
+});
+
 test("keeps the Claude adapter surface free of server-owned teaching content", async () => {
   const distributable = [
     ".claude-plugin/plugin.json",
