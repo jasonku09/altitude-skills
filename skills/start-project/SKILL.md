@@ -108,7 +108,7 @@ For each component: its name, a plain-language explanation of what it is, and wh
 - How the pieces talk to each other
 - Deployment — how it gets onto the real internet
 
-Keep the trunk to roughly 5–9 components. Then check understanding — forward, per the hard rule. Take one or two components away and ask what falls over: "suppose we skip the database and keep everything else — what happens the first time you close the app and open it again?" Or ask them to wire two of them together: "which of these has to talk to which, for someone else to see your <thing>?" Never "what's <component> for?" — you defined it a minute ago. One question, then correct gently: a wrong answer here is the cheapest one they will ever give you.
+Keep the trunk to roughly 5–9 components. Then check understanding — forward, per the hard rule. Take one or two components away and ask what falls over: "suppose we skip the database and keep everything else — what happens the first time you close the app and open it again?" Or ask them to wire two of them together: "which of these has to talk to which, for someone else to see your `<thing>`?" Never "what's `<component>` for?" — you defined it a minute ago. One question, then correct gently: a wrong answer here is the cheapest one they will ever give you.
 
 ## Phase 5 — Write it down
 
