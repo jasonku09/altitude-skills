@@ -255,6 +255,31 @@ test("README scopes the Cursor copy to the free method too", async () => {
   );
 });
 
+test("teaches the `!` shell shortcut only where it exists", async () => {
+  // `!` runs a line as a shell command inside a Claude Code session. It is a
+  // Claude Code affordance, and these teaching skills ship to Codex too, so
+  // every line that mentions it must name Claude Code in the same breath.
+  // An unconditional tip is simply wrong for half the learners who read it.
+  const teaching = ["skills/begin/SKILL.md", "skills/next-lesson/SKILL.md"];
+  let taught = 0;
+
+  for (const relativePath of teaching) {
+    const contents = await readFile(join(repoRoot, relativePath), "utf8");
+    const lines = contents.split("\n").filter((line) => line.includes("`!"));
+    taught += lines.length;
+
+    for (const line of lines) {
+      assert.match(
+        line,
+        /Claude Code/,
+        `${relativePath} teaches \`!\` without scoping it to Claude Code`,
+      );
+    }
+  }
+
+  assert.equal(taught > 0, true, "no skill tells a first-session learner about `!`");
+});
+
 test("keeps the Claude adapter surface free of server-owned teaching content", async () => {
   const distributable = [
     ".claude-plugin/plugin.json",
