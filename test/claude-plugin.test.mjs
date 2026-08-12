@@ -193,6 +193,26 @@ test("ships one status skill that serves both agents", async () => {
   assert.match(status, /\$connect/);
 });
 
+test("README installs the plugin from a terminal, with scope and reload guidance", async () => {
+  const readme = await readFile(join(repoRoot, "README.md"), "utf8");
+
+  // `/plugin` is a terminal-only command. Telling a learner to type it "inside
+  // the agent" sends IDE-extension users to a chat panel that answers "plugin
+  // isn't available in this environment", and they cannot find Claude Code at
+  // all from there — this is where the first beta tester stranded (2026-08-08).
+  // The install has to start by opening a terminal and running `claude`.
+  assert.doesNotMatch(readme, /type both lines inside the agent/i);
+  assert.match(readme, /Open a terminal and run `claude`/);
+
+  // `/plugin install` prompts for an install scope. Project scope writes
+  // `.claude/settings.json` and local scope `.claude/settings.local.json` into
+  // whatever folder the learner is standing in — both left behind the moment
+  // their first lesson creates its own project folder, which is precisely when
+  // the skills are needed. Name the user scope, and the reload follow-up.
+  assert.match(readme, /user scope/);
+  assert.match(readme, /\/reload-plugins/);
+});
+
 test("keeps the Claude adapter surface free of server-owned teaching content", async () => {
   const distributable = [
     ".claude-plugin/plugin.json",

@@ -39,12 +39,22 @@ The free method is complete and works standalone: `/start-project` + `/plan-jour
 
 ## Install
 
-**As a plugin** (recommended — it updates with the repo). In Claude Code, type both lines inside the agent:
+**As a plugin** (recommended — it updates with the repo). Open a terminal and run `claude` to start Claude Code:
+
+```bash
+claude
+```
+
+Then type these two lines inside that session:
 
 ```
 /plugin marketplace add jasonku09/altitude-skills
 /plugin install altitude@altitude
 ```
+
+`/plugin` exists only in the terminal app. Pasted into an IDE extension's chat panel it answers "plugin isn't available in this environment" — that's the wrong window, not a broken install. (The VS Code and JetBrains extensions are documented to have their own graphical `/plugins` manager — note the plural — which should also get you there; the terminal route above is the one we test.)
+
+**When the install asks where to put the plugin, choose the user scope** — the "for yourself, across all projects" option. Your first lesson makes a brand-new project folder, and a project- or local-scoped install writes into the folder you're standing in right now, so it would stay behind exactly when the skills are needed. If the install summary asks you to run `/reload-plugins`, run it; newer versions activate the plugin in place and tell you "Plugin is now active" instead.
 
 In Codex, run both lines in your terminal:
 
