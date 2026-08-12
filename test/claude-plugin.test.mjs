@@ -193,6 +193,68 @@ test("ships one status skill that serves both agents", async () => {
   assert.match(status, /\$connect/);
 });
 
+test("README installs the plugin from a terminal, with scope and reload guidance", async () => {
+  const readme = await readFile(join(repoRoot, "README.md"), "utf8");
+
+  // `/plugin` is a terminal-only command. Telling a learner to type it "inside
+  // the agent" sends IDE-extension users to a chat panel that answers "plugin
+  // isn't available in this environment", and they cannot find Claude Code at
+  // all from there — this is where the first beta tester stranded (2026-08-08).
+  // The install has to start by opening a terminal and running `claude`.
+  assert.doesNotMatch(readme, /type both lines inside the agent/i);
+  assert.match(readme, /Open a terminal and run `claude`/);
+
+  // `/plugin install` prompts for an install scope. Project scope writes
+  // `.claude/settings.json` and local scope `.claude/settings.local.json` into
+  // whatever folder the learner is standing in — both left behind the moment
+  // their first lesson creates its own project folder, which is precisely when
+  // the skills are needed. Name the user scope, and the reload follow-up.
+  assert.match(readme, /user scope/);
+  assert.match(readme, /\/reload-plugins/);
+});
+
+test("README fences the direct-copy install off from hooks and subscribers", async () => {
+  const readme = await readFile(join(repoRoot, "README.md"), "utf8");
+
+  const start = readme.indexOf("**Or copy the skills directly**");
+  const end = readme.indexOf("**Using Cursor instead?**");
+  assert.ok(start !== -1 && end > start, "the direct-copy install block moved or vanished");
+  const copyBlock = readme.slice(start, end);
+
+  // `hooks/` sits outside `skills/`, and every hook command resolves
+  // `${CLAUDE_PLUGIN_ROOT}` — a variable only a plugin install defines. So
+  // `cp -r skills/*` yields working slash commands and no session hooks: no
+  // evidence capture, no gates. Gates fail open by design, so nothing errors;
+  // a subscriber's only symptom is a learning map that never fills. The
+  // warning has to sit with the commands, not three paragraphs below them.
+  assert.match(copyBlock, /no session hooks/i, "must say the copy carries no hooks");
+  assert.match(copyBlock, /free standalone method/i, "must scope the copy to the free method");
+  assert.match(copyBlock, /subscription/i, "must send subscribers back to the plugin");
+
+  // A copied skill is invoked by its own `name` — `/connect`, not
+  // `/altitude:connect`, which exists only under the plugin's namespace. The
+  // paid route must not be described as reachable from a copied install.
+  assert.doesNotMatch(
+    copyBlock,
+    /\/altitude:connect/,
+    "a copied install has no /altitude: namespace to connect with",
+  );
+});
+
+test("README scopes the Cursor copy to the free method too", async () => {
+  const readme = await readFile(join(repoRoot, "README.md"), "utf8");
+
+  const cursorBlock = readme.slice(readme.indexOf("**Using Cursor instead?**"));
+  assert.match(cursorBlock, /~\/\.cursor\/skills/, "the Cursor copy block moved or vanished");
+  // Same mechanism, same silent loss: skills copy over, hooks do not exist to
+  // copy, and Cursor has no Altitude hook adapter at all.
+  assert.match(
+    cursorBlock.slice(0, cursorBlock.indexOf("## How to use it")),
+    /free standalone method/i,
+    "must scope the Cursor copy to the free method",
+  );
+});
+
 test("keeps the Claude adapter surface free of server-owned teaching content", async () => {
   const distributable = [
     ".claude-plugin/plugin.json",

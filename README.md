@@ -39,12 +39,22 @@ The free method is complete and works standalone: `/start-project` + `/plan-jour
 
 ## Install
 
-**As a plugin** (recommended — it updates with the repo). In Claude Code, type both lines inside the agent:
+**As a plugin** (recommended — it updates with the repo). Open a terminal and run `claude` to start Claude Code:
+
+```bash
+claude
+```
+
+Then type these two lines inside that session:
 
 ```
 /plugin marketplace add jasonku09/altitude-skills
 /plugin install altitude@altitude
 ```
+
+`/plugin` exists only in the terminal app. Pasted into an IDE extension's chat panel it answers "plugin isn't available in this environment" — that's the wrong window, not a broken install. (The VS Code and JetBrains extensions are documented to have their own graphical `/plugins` manager — note the plural — which should also get you there; the terminal route above is the one we test.)
+
+**When the install asks where to put the plugin, choose the user scope** — the "for yourself, across all projects" option. Your first lesson makes a brand-new project folder, and a project- or local-scoped install writes into the folder you're standing in right now, so it would stay behind exactly when the skills are needed. If the install summary asks you to run `/reload-plugins`, run it; newer versions activate the plugin in place and tell you "Plugin is now active" instead.
 
 In Codex, run both lines in your terminal:
 
@@ -55,25 +65,27 @@ codex plugin add altitude@altitude
 
 The first `codex` launch after installing shows a one-time "Hooks need review" prompt — choose **Trust all and continue** to enable Altitude's session hooks. (They stay dormant outside bound journey projects; see below.)
 
-**Or copy the skills directly** (Claude Code):
+The plugin also bundles Altitude's session hooks (`hooks/`). They stay fully dormant unless you're working inside a project bound to a subscribed journey (`altitude bind` / `/altitude:begin`) — no events, gates, or context injection anywhere else. With a bound project, they capture session evidence for your journey and run the plan/diff/retro gates. Gates fail open: a crashed hook never blocks your work. The `/altitude:connect` and `/altitude:status` skills manage the link.
+
+Once it's installed: for the free standalone method, open a new Claude Code session in an empty folder and run `/start-project`. If you planned a subscribed journey on Altitude, install its CLI, connect with `/altitude:connect`, and run `/altitude:begin` instead.
+
+**Or copy the skills directly** — for the free standalone method only (Claude Code):
 
 ```bash
 git clone https://github.com/jasonku09/altitude-skills.git
 cp -r altitude-skills/skills/* ~/.claude/skills/
 ```
 
-For the standalone method, open a new Claude Code session in an empty folder and run `/start-project`. If you planned a subscribed journey on Altitude, install its CLI, connect with `/altitude:connect`, and run `/altitude:begin` instead.
+That copies the skills and nothing else: **no session hooks**, and no auto-update (re-run the clone + copy for new versions). The free method needs neither, so this route is complete for `/start-project` → `/plan-journey` → `/next-lesson`. **With an Altitude subscription, install the plugin instead.** The hooks are what capture session evidence and run the gates, they live outside `skills/`, and a copied install has no `/altitude:` commands to connect or begin with — and nothing would tell you: gates fail open, so the only symptom is a learning map that never fills.
 
-The plugin also bundles Altitude's session hooks (`hooks/`). They stay fully dormant unless you're working inside a project bound to a subscribed journey (`altitude bind` / `/altitude:begin`) — no events, gates, or context injection anywhere else. With a bound project, they capture session evidence for your journey and run the plan/diff/retro gates. Gates fail open: a crashed hook never blocks your work. The `/altitude:connect` and `/altitude:status` skills manage the link.
-
-**Using Cursor instead?** These skills use the open [Agent Skills](https://agentskills.io) format, which Cursor supports — copy them in:
+**Using Cursor instead?** These skills use the open [Agent Skills](https://agentskills.io) format, which Cursor supports — copy them in for the free standalone method:
 
 ```bash
 git clone https://github.com/jasonku09/altitude-skills.git
 cp -r altitude-skills/skills/* ~/.cursor/skills/   # pick via / in Agent chat, or automatic
 ```
 
-Copied skills don't auto-update — re-run the clone + copy to pick up new versions. And [PROMPTS.md](PROMPTS.md) works with any agent at all, no install needed.
+Same caveats as the copy above, plus one more: Cursor has no Altitude hooks at all, so a subscribed journey needs Claude Code or Codex. And [PROMPTS.md](PROMPTS.md) works with any agent at all, no install needed.
 
 ## How to use it
 
