@@ -64,6 +64,11 @@ test("keeps the two plugin manifests on the same released version", async () => 
   const codex = await readJson(".codex-plugin/plugin.json");
   const claude = await readJson(".claude-plugin/plugin.json");
 
+  // Both agents pin an installed plugin to its manifest's declared version
+  // string — an update whose string has not moved is SKIPPED, so a release
+  // that bumps one manifest and not the other silently strands every install
+  // on the unbumped agent. The bump is a release-checklist step; this equality
+  // is what keeps the two halves from drifting when someone forgets half of it.
   assert.equal(codex.version, claude.version);
 });
 
