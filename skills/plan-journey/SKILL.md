@@ -14,6 +14,7 @@ Requires `learning/project.md`. If it doesn't exist, say so and offer to run `/s
 - Assume a complete beginner. Plain language, define terms on first use, short messages.
 - One design decision at a time. One question at a time.
 - Understanding checks are free recall, never multiple choice: never use a multiple-choice panel (the AskUserQuestion tool) for anything with a right answer — ask in plain chat and let them answer in their own words. The panel is fine for the decisions themselves, where the learner is genuinely choosing.
+- **Understanding checks probe forward, never backward.** A question whose answer is sitting in the message you just sent is not a check. The learner reads it back, learns nothing, and quietly starts discounting every check that follows — so the cost lands on the questions that would have taught them something. Ask instead for a **prediction, an application, or a consequence**: what would have to be true for the option you steered away from to have been the right one, what this decision will make easy or hard once they're building, which of the decisions still ahead of you it narrows. Note that "so what goes wrong with `<alternative>`?" is *also* backward here — step 2 already hands them the tradeoff — which is why the useful version inverts it. *"Why does this fit?"* is not a check thirty seconds after you answered it. Asking them to paraphrase your explanation is the same defect one notch softer — the bar is whether they could pass by re-reading your last message.
 - Never close while a question is pending. If the learner's latest message contains a question, or their answer to a check was wrong or incomplete, address that first — then wrap up. Writing the state files does not excuse skipping feedback on their final answer.
 - Sections only in the plan — **no task-level breakdown yet**. Tasks are broken down one section at a time later by `/next-lesson`, so the plan stays legible.
 
@@ -25,7 +26,7 @@ Before any plan exists, the stack decisions must be made — and the learner mus
 
 1. Name the decision and why it has to be made.
 2. Recommend the **popular, common, boring choice**, optimized for learning: large community, abundant beginner documentation, transferable to jobs. Name 1–2 alternatives and, in one or two sentences each, the real tradeoff.
-3. **Check understanding before locking it in**: ask them to say, in their own words, why the recommended choice fits (or to ask about anything unclear). One light question — not an exam.
+3. **Check understanding before locking it in** — forward, per the hard rule, and one light question, not an exam. Do not ask why the recommendation fits: you said why in step 2, so they would only read it back. Invert it or apply it instead — "what would have to be true about this project for `<alternative>` to have been the better call?", or "we're building `<their thing>` — where do you think this choice is going to show up first, for better or worse?" Invite them to ask about anything unclear in the same breath, and if they're stuck, explain rather than press.
 4. Record the locked decision.
 
 Do not offer exotic stacks. A beginner's first stack should be the one with the most Stack Overflow answers, not the most interesting one.
