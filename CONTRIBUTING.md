@@ -12,7 +12,7 @@ The skills are plain markdown — if you can write clearly, you can contribute. 
 ## Ground rules for changes
 
 - Keep the voice: patient senior engineer, plain language, no hype.
-- The loop is not negotiable: small steps, predict-before-run, quiz-before-moving-on, graph update at the end. Changes that speed things up by skipping understanding will be declined.
+- The loop is not negotiable: small steps, predict-before-run, quiz-before-moving-on, graph update at the end. The only exemption is a concept the learner already knows — `next-lesson`'s concept roles and prior-knowledge rule govern that. Changes that speed things up by skipping understanding will be declined.
 - One skill = one job. Cross-cutting features probably belong in an issue discussion first.
 
 ## How
