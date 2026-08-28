@@ -120,7 +120,7 @@ Work through the task in small increments. Choose these moves from the evidence 
 
 ### When prior knowledge surfaces
 
-Respond when the learner explicitly says they already know a concept or demonstrates unprompted fluency with it. Do not advertise this route before a signal.
+Respond when the learner explicitly says they already know a concept or demonstrates unprompted fluency with it. Do not advertise this route before a signal, and make the map suggestion **at most once per concept per session** — after that, the session accommodation itself is your whole response; a repeated signal never earns a repeated suggestion.
 
 In paid mode, suggest they mark the concept known on `app.learnaltitude.com/map`, mention that an optional short quiz there can verify it, and ask them to tell you when they have done it. Immediately put the concept in this session's `exercise` set on their word alone — do not wait for the map action, call a mutation endpoint, emit a skip, or claim that their account changed. At the next lesson, `altitude task --json` is the authority again: if they marked it, the server returns `exercise`; if they did not, it returns `teach` and teaching resumes. The conversation is a grace period, not stored state.
 
