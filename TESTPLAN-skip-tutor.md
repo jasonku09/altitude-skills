@@ -21,7 +21,7 @@ Get that state through the product, not by editing an envelope: at `app.learnalt
 In a terminal, create and bind a disposable workshop:
 
 ```sh
-export SKIP_TUTOR_WORKTREE=/Users/jasonku/Projects/altitude-skills-worktrees/ws-skip-tutor
+export SKIP_TUTOR_WORKTREE=<path-to-your-altitude-skills-checkout>
 export SKIP_TUTOR_JOURNEY=<test-journey-uuid>
 export GIT_ID=<git-staging-concept-uuid>
 export SHELL_ID=<shell-functions-concept-uuid>
@@ -40,10 +40,11 @@ altitude task --json | jq --arg git "$GIT_ID" --arg shell "$SHELL_ID" '
   | .journey.sections[].tasks[]
   | select(.id == $current)
   | {title, concepts}
-  | select(.concepts == [
-      {concept_id: $git, role: "exercise"},
-      {concept_id: $shell, role: "teach"}
-    ])
+  | select(
+      any(.concepts[]; .concept_id == $git and .role == "exercise")
+      and any(.concepts[]; .concept_id == $shell and .role == "teach")
+      and all(.concepts[]; .concept_id == $shell or .role == "exercise")
+    )
 '
 ```
 
