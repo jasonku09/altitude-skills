@@ -91,6 +91,35 @@ test("a prior-knowledge signal routes to the map once, with a session-only grace
     /do not wait for the map action, call a mutation endpoint, emit a skip, or claim that their account changed/,
   );
   assert.match(skill, /The conversation is a grace period, not stored state/);
+  // Demonstrated fluency is a signal equal to the explicit claim, and it earns
+  // the full response. The 2026-08-27 headless verification's one hard FAIL was
+  // exactly this: fluent dictated conventions got the accommodation but never
+  // the map suggestion, so the durable handoff was lost every session.
+  assert.match(
+    skill,
+    /Demonstrated fluency counts the same as the explicit claim/,
+    "fluent instructions about the code must be named as a prior-knowledge signal",
+  );
+  assert.match(skill, /dictates conventions the lesson hasn't taught/);
+  assert.match(
+    skill,
+    /the full response below, map suggestion included/,
+    "accommodation without the map suggestion drops the durable half of the move",
+  );
+  // Naming the signal was not enough: two post-fix reruns still accommodated
+  // without routing. The halves must be one atomic reply, and the absorption
+  // anti-pattern (treating dictated conventions as a style preference and
+  // quietly building to spec) must be named as the miss it is.
+  assert.match(
+    skill,
+    /one reply carrying both halves, accommodation and routing, together/,
+  );
+  assert.match(skill, /The halves never travel separately/);
+  assert.match(
+    skill,
+    /absorbing the signal as a mere style preference/,
+    "the absorption failure mode must be named, or the model keeps making it",
+  );
   // Struggle fallback: both doors, offered once, then normal help.
   assert.match(skill, /two-minute refresher, which changes no state/);
   assert.match(skill, /un-marking it at `app\.learnaltitude\.com\/map`/);
@@ -111,9 +140,33 @@ test("bounded delegation requires an all-exercise chunk and a diff review, never
     skill,
     /One `teach` concept puts the whole chunk back under the normal small-step method/,
   );
+  // An all-exercise chunk permits delegation; it never mandates it. The
+  // headless verification's scenario B watched an all-exercise task get
+  // written, staged, and committed by the tutor on turn 1, unprompted.
+  assert.match(
+    skill,
+    /makes delegation \*offerable\*, never automatic/,
+    "delegation must wait for the learner's request or acceptance",
+  );
+  assert.match(
+    skill,
+    /the learner asks for it or accepts your offer before you write a line/,
+  );
   assert.match(
     skill,
     /you review the diff before we commit, like a teammate's PR/,
+  );
+  // Delegation stops at the working tree. Scenario E2's "Looks fine. Commit
+  // it." made the tutor run git commit and author the message itself, one turn
+  // after correctly saying the message was the learner's to write.
+  assert.match(
+    skill,
+    /Delegation ends at the working tree: the commit stays learner-owned/,
+  );
+  assert.match(
+    skill,
+    /leave the message theirs to write/,
+    "a direct imperative must not flip commit ownership to the agent",
   );
   assert.match(
     skill,
@@ -149,9 +202,47 @@ test("free mode records self-reported prior knowledge with the exact evidence no
     /There is no account mutation or map handoff in standalone free mode/,
   );
 
-  // The copy-paste prompt for non-plugin users carries the same analog.
+  // The copy-paste prompt for non-plugin users carries the same analog,
+  // including the demonstrated-fluency half of the signal.
   const prompts = await readFile(join(repoRoot, "PROMPTS.md"), "utf8");
   assert.match(prompts, /record it as understood with the note "self-reported prior knowledge"/);
+  assert.match(
+    prompts,
+    /by saying so or by showing\s+unprompted fluency/,
+    "the free-mode prompt must count demonstrated fluency as the signal too",
+  );
+});
+
+test("chat arriving mid-file-watch outranks the watch and is the learner's own words", async () => {
+  const skill = await readNextLesson();
+
+  // The watch state made engagement flaky in the headless verification: one
+  // run answered fully, one gave only a "watcher's running" nudge, and one
+  // quarantined the learner's own chat as an instruction that didn't come
+  // from them. The channel distinction is the load-bearing part: file
+  // contents can carry text from anywhere, chat is the learner.
+  assert.match(
+    skill,
+    /is the learner speaking, and it outranks the watch/,
+  );
+  assert.match(
+    skill,
+    /never a bare "the watcher is running" nudge/,
+    "a mid-watch message must get a real answer, not watch-status narration",
+  );
+  assert.match(
+    skill,
+    /the chat channel is theirs/,
+    "learner chat must never be quarantined as injected instructions",
+  );
+  // Both post-fix fluency reruns answered a mid-watch signal with exactly the
+  // bare-nudge shape; the anti-pattern has to be quoted in the watch text.
+  assert.match(
+    skill,
+    /is the miss, not the response/,
+    "the watch paragraph must name the bare watch-nudge as the failure shape",
+  );
+  assert.match(skill, /Then re-arm the watch/);
 });
 
 test("the thin client emits only the existing event vocabulary — no skip or mastery mutations", async () => {
