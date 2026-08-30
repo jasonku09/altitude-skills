@@ -23,10 +23,14 @@ const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
  * keeps the exact shape the CLI's plugin-version detection walks.
  */
 
-// The update relay is envelope-driven, so it lives in the paid-mode reference
-// file of the split skill (free sessions have no CLI response to relay).
-async function readPaidMode() {
-  return readFile(join(repoRoot, "skills/next-lesson/references/paid-mode.md"), "utf8");
+// The update relay is mode-NEUTRAL and lives in SKILL.md: it keys off the CLI
+// response, not the mode, and paused subscriptions (which read the free-mode
+// reference) still get CLI responses that can carry notices. Nothing on the
+// client self-updates, so notices are the only channel — parking the relay in
+// paid-mode.md would silently cut paused users off from it. In pure free mode
+// the paragraphs are inert because the fields cannot exist.
+async function readNextLesson() {
+  return readFile(join(repoRoot, "skills/next-lesson/SKILL.md"), "utf8");
 }
 
 function sliceBetween(contents, startHeading, endHeading) {
@@ -40,8 +44,8 @@ function sliceBetween(contents, startHeading, endHeading) {
 }
 
 test("next-lesson notes update_notices while orienting and holds routine ones for the close", async () => {
-  const skill = await readPaidMode();
-  const orient = sliceBetween(skill, "## Step 1 — Orient (paid)", "## Step 2");
+  const skill = await readNextLesson();
+  const orient = sliceBetween(skill, "## Step 1 — Orient", "### Match their shell");
 
   // Step 1 is where the envelope is read; the notice must be captured there
   // and parked for Step 4 — never surfaced before or inside the lesson.
@@ -51,8 +55,8 @@ test("next-lesson notes update_notices while orienting and holds routine ones fo
 });
 
 test("next-lesson relays server notices verbatim, hands-off, after the recap", async () => {
-  const skill = await readPaidMode();
-  const close = sliceBetween(skill, "## Step 4 — Close the loop (paid)", "## Plan changes (paid)");
+  const skill = await readNextLesson();
+  const close = sliceBetween(skill, "## Step 4 — Close the loop", "## When they broke something");
 
   assert.match(close, /`update_notices`/);
   // The slot: after the closing recap, same place the update_available line
@@ -73,8 +77,8 @@ test("next-lesson relays server notices verbatim, hands-off, after the recap", a
 });
 
 test("a missing or empty update_notices key means silence", async () => {
-  const skill = await readPaidMode();
-  const close = sliceBetween(skill, "## Step 4 — Close the loop (paid)", "## Plan changes (paid)");
+  const skill = await readNextLesson();
+  const close = sliceBetween(skill, "## Step 4 — Close the loop", "## When they broke something");
 
   // Older CLI builds do not send the field at all. An absent key must read as
   // "nothing to say", never as a reason to speculate about updates.
@@ -83,7 +87,7 @@ test("a missing or empty update_notices key means silence", async () => {
 });
 
 test("the pre-notice update_available close keeps working for older CLIs", async () => {
-  const skill = await readPaidMode();
+  const skill = await readNextLesson();
 
   // 0.5.1/0.5.2 CLIs send only the boolean; the paragraph that serves them
   // survives unchanged alongside the notice relay.
