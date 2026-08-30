@@ -23,6 +23,12 @@ const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
  * keeps the exact shape the CLI's plugin-version detection walks.
  */
 
+// The update relay is mode-NEUTRAL and lives in SKILL.md: it keys off the CLI
+// response, not the mode, and paused subscriptions (which read the free-mode
+// reference) still get CLI responses that can carry notices. Nothing on the
+// client self-updates, so notices are the only channel — parking the relay in
+// paid-mode.md would silently cut paused users off from it. In pure free mode
+// the paragraphs are inert because the fields cannot exist.
 async function readNextLesson() {
   return readFile(join(repoRoot, "skills/next-lesson/SKILL.md"), "utf8");
 }
@@ -39,7 +45,7 @@ function sliceBetween(contents, startHeading, endHeading) {
 
 test("next-lesson notes update_notices while orienting and holds routine ones for the close", async () => {
   const skill = await readNextLesson();
-  const orient = sliceBetween(skill, "## Step 1 — Orient", "## Step 2");
+  const orient = sliceBetween(skill, "## Step 1 — Orient", "### Match their shell");
 
   // Step 1 is where the envelope is read; the notice must be captured there
   // and parked for Step 4 — never surfaced before or inside the lesson.

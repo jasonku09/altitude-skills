@@ -1,6 +1,6 @@
 # Manual live-session test plan: role-aware tutor
 
-This verifies the learner-visible behavior of `skills/next-lesson/SKILL.md`. Run it against a test Altitude account and journey; do not use a learner's real journey because the final steps complete tasks and emit evidence.
+This verifies the learner-visible behavior of the `skills/next-lesson` skill (`SKILL.md` plus its `references/` mode files). Run it against a test Altitude account and journey; do not use a learner's real journey because the final steps complete tasks and emit evidence.
 
 ## Paid-mode fixture
 
