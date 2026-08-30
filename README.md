@@ -95,7 +95,7 @@ Same caveats as the copy above, plus one more: Cursor has no Altitude hooks at a
 - **From then on, it's `/next-lesson`, over and over.** That's the whole loop in both free and paid modes, for months. One lesson is one small task — expect 30–60 minutes, 3–5 sittings a week.
 - **One lesson per sitting — really.** Don't binge five in a night. The gap between sessions is where memory consolidates, and it's exactly what the next lesson's review quiz tests. Hungry for more is the perfect place to stop.
 - **Start each sitting in a fresh session.** In free mode, the tutor picks up from `learning/`; in paid mode, it refreshes the bound journey first. Either route restores exactly where you left off.
-- **Do the typing yourself.** When the tutor dictates a command, you run it in your terminal. When it leaves `TODO(you)` blanks, fill them in your editor and hit save — it's watching the file, not the chat.
+- **Do the typing yourself.** When the tutor dictates a command, you run it in your terminal. When it leaves `TODO(you)` blanks, fill them in your editor and hit save — it's watching the file, not the chat. The one exception: a chunk built entirely from concepts you've already mastered may be written for you — then you review the diff before it's committed, like a teammate's PR.
 - **Answer quizzes from your head, in your own words.** Don't look it up first. A wrong answer isn't a failure — it's the data that decides what gets taught next.
 - **Life happens — bring it to the lesson.** Broke something on your own? Say so; that's a lesson, and a good one. Want a feature that isn't in the plan? Ask; the plan is a living backlog, not a contract.
 - **Read your `learning/` files anytime; let the lessons write them.** In free mode, graph statuses move only on demonstrated evidence. In paid mode, `plan.md` is a readable projection of the server journey, so park ideas in a lesson or edit the journey on the web.
@@ -104,7 +104,7 @@ Same caveats as the copy above, plus one more: Cursor has no Altitude hooks at a
 
 - One small step at a time. The pause between lessons is the pedagogy.
 - Predict before you run. A wrong prediction is the best teacher you'll meet.
-- Quizzes come from your evidence — the local graph in free mode or your server-side learning map in paid mode — so demonstrated, still-fresh concepts do not become busywork.
+- Quizzes, predictions, and scaffolds come from your evidence — the local graph in free mode or your server-side learning map in paid mode — so demonstrated, still-fresh concepts do not become busywork, and anything you've marked known on the Altitude map is simply used, not re-taught.
 - No mystery boxes: every file in your repo is either explained or explicitly parked. When a scaffold dumps fifteen files into your folder, you get the tour before you build on them.
 - **Never ship a single line of code you cannot explain.**
 
