@@ -306,3 +306,30 @@ test("the mode split is wired: read-gate present, reference files real, moved ru
   // Free mode is emit-free by design: session capture is a paid-mode path.
   assert.doesNotMatch(free, /altitude emit/);
 });
+
+test("the plan-materialization spec cannot drift between begin and next-lesson", async () => {
+  // The rendering spec is deliberately duplicated — each skill loads
+  // standalone at runtime — so nothing but this assertion keeps the two
+  // copies of the byte-exact contract from forking.
+  const begin = await readFile(join(repoRoot, "skills/begin/SKILL.md"), "utf8");
+  const paid = await readPaidMode();
+
+  const spec = (source, name) => {
+    const match = source.match(
+      /^Create `learning\/` if needed and render the [\s\S]*?nondeterministic data in the file\.$/m,
+    );
+    assert.notEqual(match, null, `${name} lost its plan-materialization spec block`);
+    return match[0];
+  };
+
+  // The one sanctioned wording difference: begin, which just created the
+  // binding, says "the bound journey"; next-lesson says "the journey".
+  assert.equal(
+    spec(begin, "skills/begin/SKILL.md").replace(
+      "render the bound journey",
+      "render the journey",
+    ),
+    spec(paid, "references/paid-mode.md"),
+    "the two copies of the plan-rendering spec must stay identical",
+  );
+});
