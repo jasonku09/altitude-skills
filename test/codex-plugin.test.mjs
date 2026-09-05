@@ -94,11 +94,11 @@ test("wires lifecycle and PreToolUse gates through frozen cross-platform shim co
   const command = (action) => `node "$PLUGIN_ROOT/bin/altitude-codex-hook.mjs" ${action}`;
   const commandWindows = (action) =>
     `node "%PLUGIN_ROOT%\\bin\\altitude-codex-hook.mjs" ${action}`;
-  const hook = (action, statusMessage) => ({
+  const hook = (action, statusMessage, timeout = 30) => ({
     type: "command",
     command: command(action),
     commandWindows: commandWindows(action),
-    timeout: 30,
+    timeout,
     statusMessage,
   });
 
@@ -132,9 +132,13 @@ test("wires lifecycle and PreToolUse gates through frozen cross-platform shim co
       ],
       // Stop is END OF TURN, not end of session: workshop-core removes the
       // session marker and emits `session_ended` only on this lifecycle.
+      // Codex caps SessionEnd at 3 s (1 s default) and clamps anything larger
+      // with a warning on every launch. `timeout` is inside the trust hash, so
+      // this retime re-prompts every existing install ONCE on upgrade —
+      // accepted 2026-09-04 (sandbox-aware copy release).
       SessionEnd: [
         {
-          hooks: [hook("session-end", "Closing the Altitude workshop session")],
+          hooks: [hook("session-end", "Closing the Altitude workshop session", 3)],
         },
       ],
       // The other half of the retro gate — the turn where the learner answers
@@ -147,6 +151,43 @@ test("wires lifecycle and PreToolUse gates through frozen cross-platform shim co
     },
   });
   assert.equal(Object.hasOwn(config.hooks, "PostToolUse"), false);
+});
+
+test("the Codex SessionEnd hook fits Codex's documented 3-second ceiling", async () => {
+  const config = await readJson("hooks/codex.json");
+  const [entry] = config.hooks.SessionEnd;
+  const [hook] = entry.hooks;
+
+  // Codex: "SessionEnd and Interrupt use 1 second by default and support up
+  // to 3 seconds." A larger value is clamped with a warning on every launch.
+  assert.ok(hook.timeout >= 1 && hook.timeout <= 3, `SessionEnd timeout ${hook.timeout} exceeds Codex's 3 s cap`);
+});
+
+test("Codex hook entries keep their positions — trust state is positional", async () => {
+  const config = await readJson("hooks/codex.json");
+
+  // Codex records trust per event + POSITION over {async, command, timeout,
+  // type}. Retiming SessionEnd re-prompts once on upgrade (accepted); moving
+  // any entry would silently orphan trust for the entries around it.
+  assert.deepEqual(Object.keys(config.hooks), [
+    "SessionStart",
+    "PreToolUse",
+    "Stop",
+    "SessionEnd",
+    "UserPromptSubmit",
+  ]);
+  assert.deepEqual(
+    config.hooks.PreToolUse.map((entry) => entry.matcher),
+    ["^update_plan$", "^(apply_patch|Edit|Write)$"],
+  );
+  for (const [event, entries] of Object.entries(config.hooks)) {
+    assert.equal(entries.length, event === "PreToolUse" ? 2 : 1, `${event} entry count changed`);
+    for (const entry of entries) assert.equal(entry.hooks.length, 1, `${event} handler count changed`);
+  }
+  assert.equal(
+    config.hooks.SessionEnd[0].hooks[0].command,
+    'node "$PLUGIN_ROOT/bin/altitude-codex-hook.mjs" session-end',
+  );
 });
 
 test("covers the same lifecycle surface as the Claude plugin", async () => {
