@@ -63,7 +63,7 @@ codex plugin marketplace add jasonku09/altitude-skills
 codex plugin add altitude@altitude
 ```
 
-The first `codex` launch after installing shows a one-time "Hooks need review" prompt — choose **Trust all and continue** to enable Altitude's session hooks. (They stay dormant outside bound journey projects; see below.)
+The first `codex` launch after installing shows a one-time "Hooks need review" prompt — choose **Trust all and continue** to enable Altitude's session hooks. (They stay dormant outside bound journey projects; see below.) Trusting them matters more in Codex than it looks: Codex runs the agent's commands in a sandbox with no internet access, so the skills read your journey from a local copy — and the hooks, which run outside the sandbox, are what keep that copy fresh. You'll see the same prompt again after a plugin update that changes a hook; answer it the same way.
 
 The plugin also bundles Altitude's session hooks (`hooks/`). They stay fully dormant unless you're working inside a project bound to a subscribed journey (`altitude bind` / `/altitude:begin`) — no events, gates, or context injection anywhere else. With a bound project, they capture session evidence for your journey and run the plan/diff/retro gates. Gates fail open: a crashed hook never blocks your work. The `/altitude:connect` and `/altitude:status` skills manage the link.
 
