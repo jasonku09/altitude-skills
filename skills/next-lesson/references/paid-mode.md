@@ -4,6 +4,22 @@ Binding rules for sessions where Step 1 chose **paid mode**. Read this file in f
 
 ## Step 1 — Orient (paid)
 
+### Versioned lesson execution
+
+Read `learning_runtime` first. Relay `update_message` verbatim and pause the paid lesson when its status is `update_required`. A missing or unsupported runtime for an Intermediate task is not permission to run the legacy method; obtain a fresh supported read. Editor commands themselves remain available.
+
+When the host exposes this session's ID, append `--session <that ID>` to task reads as well as evidence emits so a concurrent agent's plugin version cannot stand in for this one. Claude Code exposes `$CLAUDE_CODE_SESSION_ID`; omit the flag if it is empty. On other agents, use their actual exposed session ID when available; never invent one. Quote all command arguments for the actual shell, including learner text, without allowing command substitution inside their answers.
+
+Read `current_task.learning_requirements` and retain its `schema_version`, `plan_revision`, instructions, and concept requirements alongside the current task ID for this entire lesson. Version 1 instructions are authoritative and override all hands-on defaults in SKILL.md and this reference, including the concept-role defaults below. Execute the server-authored `instructions`; do not reconstruct a teaching routine from the level name, depth settings, or local plan. Preserve the active task's requirements even if a newer journey revision arrives mid-lesson. If the task's working-set entry and current-task requirements disagree, refresh before teaching or reporting completion.
+
+For `lesson_mode: decide_inspect_verify`, the server instructions govern where to pause and what evidence to collect. AI can implement the requested code, including newly taught concepts, without mandatory TODO fill-ins or learner command entry. Do not impose prediction before every command, the exercise-only delegation rule, or eventual every-line understanding. Teach details needed for the specified capabilities; incidental implementation details need not become learning debt. Follow server instructions for lessons that need no implementation at all. Do not treat AI implementation as impatience or a request to skip understanding.
+
+Capture only the learner's actual answers and actions. Never infer independent implementation competence or credit from reading, tracing, approving, or agent-written code. Do not award capabilities locally, invent grading rubrics, or replace required evidence with a concept marked known. Role-based accommodations do not remove the active task's capability requirements. Older Beginner tasks with no requirements retain the existing method below; `hands_on` retains that method subject to its server instructions.
+
+The `--answer` value must be the learner's message verbatim, including their wording and errors: never summarize, polish, combine answers, or substitute your explanation. The `--question` value must be the exact question you actually asked, not a new question reconstructed from the answer. If an answer volunteers additional reasoning, keep it in their original message without inventing a corresponding question. If you cannot recover both exact texts, omit the quiz event and say the evidence could not be captured; do not manufacture a substitute.
+
+For every task completion and quiz emitted under versioned requirements, pass `--task <the retained task id> --plan-revision <the retained plan_revision>`. Do not substitute the refreshed pointer or revision. A queued event is a claim awaiting server judgment, never proof of capability mastery. If requirements cannot be read, do not emit completion or quiz credit for that lesson.
+
 Materialize `learning/plan.md` from the bound journey before orienting (the "Paid plan materialization" section below is the rendering spec). Overwriting a previously generated plan is correct and expected. Say nothing about the refresh unless the prior generated file's `← you are here` task differs from the refreshed journey's current task; if it changed underfoot, re-orient plainly before continuing.
 
 While reconciling the file map, keep concept-level depth in the server map and do not create local graph nodes for file-map links. If the current section has no task breakdown yet, never invent or append tasks; the server journey is the plan.

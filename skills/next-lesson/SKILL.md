@@ -11,6 +11,14 @@ Free mode requires `learning/plan.md` and `learning/knowledge-graph.md`. Paid mo
 
 ## Hard rules
 
+### Bound-journey runtime precedence
+
+Before applying any fallback or teaching rule below, read `learning_runtime` from `altitude task --json`. If its status is `update_required`, relay its server-authored `update_message` verbatim and pause this paid lesson until a fresh read supports it. Never fall back to free mode for a bound journey because a command fails, a subscription pauses, or the network/cache is unavailable. With a `.altitude` binding and no usable runtime context, explain that this lesson's requirements could not be read, preserve the plan, and retry or reconnect as appropriate. A separate standalone project remains available if explicitly chosen.
+
+In paid mode, versioned `current_task.learning_requirements` override the hands-on defaults throughout this file. Read `references/paid-mode.md` before teaching. Its execution rules govern fill-ins, command ownership, checks, incidental syntax, and evidence. Without a binding, the standalone free method below is unchanged. Never infer a bound Intermediate lesson's requirements from a journey label or a local generated plan.
+
+### General rules
+
 - **One task per invocation.** When the task is done, stop. If they want more, they run `/next-lesson` again — the pause is the pedagogy.
 - Small steps. Never dump a big block of code. Introduce code in chunks a beginner can hold in their head (roughly ≤15 lines), each with a plain-language explanation of *what* it does and *why it's there*.
 - Plain language, define terms on first use, short messages, one question at a time.
