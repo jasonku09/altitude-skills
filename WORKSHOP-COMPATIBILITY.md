@@ -28,4 +28,4 @@ session delivered two quizzes and one completion with the original task/revision
 no automatic gate credit, and verbatim scripted learner answers. Tutor question
 strings still normalized formatting/contractions; do not mistake model-authored
 claims for exact transcript capture or server-validated mastery. No production
-account, provider API key, deployment, or client publication was involved.
+Altitude account, provider API key, deployment, or client publication was involved.
