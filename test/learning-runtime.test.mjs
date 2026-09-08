@@ -236,3 +236,72 @@ test('the compatibility doc records where session affinity holds and what closes
   // The fix lives in the CLI, not here; name it rather than inventing a command.
   assert.match(doc, /separate monorepo/);
 });
+
+test('no dictated task read is left unscoped, in any voice', () => {
+  // Passive permission is still permission: the round-4 guard only caught the
+  // active "drop the flag" and missed "flag dropped", so four command sites
+  // survived the absolute they contradict.
+  for (const path of [...ENTRY_POINTS, PAID]) {
+    const text = read(path);
+    assert.doesNotMatch(
+      text,
+      /(?:re-?run|run|running)\s+`altitude task --json`/i,
+      `${path} still dictates a bare task read that another session's marker can answer`,
+    );
+    assert.doesNotMatch(text, /flag dropped/i, `${path} passively permits an unscoped read`);
+    assert.doesNotMatch(text, /drop(?:ping)? the flag/i, `${path} permits an unscoped read`);
+    assert.doesNotMatch(text, /omit(?:ting)? the flag/i, `${path} permits an unscoped read`);
+  }
+});
+
+test("begin's post-bind re-read is scoped and defers to the stale-copy branch", () => {
+  const begin = read('skills/begin/SKILL.md');
+  const beat = begin.split('\n').find((line) => line.includes('Re-run the Step 1 read'));
+  assert.ok(beat, 'begin lost its post-bind re-read beat');
+  assert.match(beat, /never unscoped/, 'the post-bind re-read still allows an unscoped call');
+  assert.doesNotMatch(
+    beat,
+    /a `"cache"` answer here is a complete one/,
+    'a cached copy with no runtime is exactly what the stale-copy branch refuses to call complete',
+  );
+  assert.match(beat, /stale-copy/, 'the post-bind re-read never defers to the stale-copy branch');
+});
+
+test("a cache-warming run in the learner's own terminal carries this session's literal ID", () => {
+  // `$CLAUDE_CODE_SESSION_ID` is the agent's variable, not theirs: dictated
+  // into their shell it expands to nothing and the read goes out unscoped.
+  for (const skill of ENTRY_POINTS) {
+    const text = read(skill);
+    assert.match(
+      text,
+      /--session '<this session's ID>'/,
+      `${skill} never dictates the learner-terminal read with a literal, quoted ID`,
+    );
+    assert.match(text, /literal ID/, `${skill} does not say to substitute the literal ID`);
+    assert.match(
+      text,
+      /is not set in their (?:own )?shell/,
+      `${skill} does not say why the variable form cannot be pasted`,
+    );
+  }
+  const stale = read('skills/next-lesson/SKILL.md')
+    .split('\n')
+    .find((line) => line.includes('**Stale copy**'));
+  assert.doesNotMatch(
+    stale,
+    /the same session-scoped read in their own terminal/,
+    'the stale-copy refresh still dictates a command the learner cannot run',
+  );
+});
+
+test('both supported hosts name a real session marker, Codex included', () => {
+  for (const path of [...ENTRY_POINTS, PAID]) {
+    assert.match(read(path), /CODEX_THREAD_ID/, `${path} never names the Codex session marker`);
+  }
+  const doc = read('WORKSHOP-COMPATIBILITY.md').replace(/\s+/g, ' ');
+  assert.match(doc, /CODEX_THREAD_ID/);
+  // The claim is evidenced by the mapping this repo actually ships.
+  assert.match(doc, /codex-field-mapping\.json/);
+  assert.match(doc, /release prerequisite/);
+  assert.match(read('README.md'), /CODEX_THREAD_ID/, 'Codex learners never learn this at onboarding');
+});
