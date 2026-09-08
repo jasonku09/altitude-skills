@@ -25,15 +25,22 @@ exemption, a silent free or Beginner substitute, or a compatibility answer borro
 from another concurrent session.
 
 Session affinity is what makes the "no borrowed answer" half of that hold, and it
-rests on the host exposing a real session ID: Claude Code does, through
-`CLAUDE_CODE_SESSION_ID`. A host that exposes none does not get an unscoped read,
+rests on the host exposing a real session ID. Both supported hosts do: Claude Code
+through `CLAUDE_CODE_SESSION_ID`, and Codex through `CODEX_THREAD_ID` — the same
+session marker its hooks already report as `session_id`, per the mapping this
+plugin ships in `hooks/codex-field-mapping.json`. The constraint therefore does not
+drop Codex from the supported set. A host that exposes none does not get an unscoped read,
 which would let another concurrent session's marker answer the compatibility
 question — bound lesson execution pauses there instead, with the standalone free
 method, the editor hooks, and every tool unaffected. Closing that gap needs a
 session-neutral way for the CLI to identify its caller, which is CLI work in the
 separate monorepo and cannot be added from this repo; until it ships, treat
 "bound journeys require a session-ID-exposing host" as a documented constraint.
-No real Codex session has been run against this behavior.
+No real Codex session has been run against this behavior: the marker's presence is
+read from the shipped hook mapping, not from an observed paid lesson, so full Codex
+paid-lesson acceptance stays a release prerequisite. A session whose identity cannot
+be read, or does not match the one the hooks report, pauses the bound lesson rather
+than borrowing another session's context.
 
 Publication is staged, and none of it happens in this PR. The version floor is
 enforced by the plugin as well as the server: it lives in the skill markdown, and
