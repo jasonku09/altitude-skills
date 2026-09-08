@@ -24,12 +24,24 @@ the learner's agent — never an old-client retry without the new flags, a legac
 exemption, a silent free or Beginner substitute, or a compatibility answer borrowed
 from another concurrent session.
 
-Publication is staged, and none of it happens in this PR. The order is: publish CLI
-0.8.1, publish plugin 0.5.7, let existing installs pick both up, send in-product
-advance notices over the existing `update_notices` channel while the server still
-accepts older clients, and only then enable server-side enforcement of the version
-floor. Enforcing before that notice window strands learners who have not updated,
-which is the failure this sequence exists to prevent.
+Publication is staged, and none of it happens in this PR. The version floor is
+enforced by the plugin as well as the server: it lives in the skill markdown, and
+agents pull plugin updates from the marketplace automatically while the CLI is a
+global npm package the learner updates by hand. So publishing the plugin is itself
+an enforcement step, and it is sequenced like one — a learner whose plugin
+auto-advances to 0.5.7 while their CLI is still 0.8.0 would otherwise be refused on
+every bound lesson, Beginner included, before any notice reached them.
+
+The order is: publish CLI 0.8.1 and verify it against the server, which starts
+sending `learning_runtime` while still accepting older clients; verify plugin 0.5.7
+as a release candidate without publishing it; send in-product advance notices over
+the existing `update_notices` channel naming `altitude update` and the plugin
+update; wait through that notice window and confirm CLI adoption; publish plugin
+0.5.7, which turns on the plugin-side minimum; then coordinate server-side
+enforcement of the floor. Roll back in the reverse order. Softening the client rules
+to shorten the sequence is not an option — restoring an old-client teaching fallback
+would reintroduce exactly the silent Beginner downgrade this change removes, so
+sequencing is the mitigation, not a weaker refusal.
 
 Progress already captured survives the whole window. Queued events spool locally and
 sync the next time Altitude is reached; a rejected emit is reported as unrecorded
@@ -49,7 +61,8 @@ cold caches, an active lesson whose journey revision changes, and a real agent
 session using server-authored fixture requirements. Automated markdown checks
 alone do not establish that an agent follows the lesson correctly.
 
-September 7 verification: 68 repository tests passed. Two real Claude Code 2.1.263
+September 7 verification, against the instructions as they stood at 70d6d6a:
+68 repository tests passed. Two real Claude Code 2.1.263
 sessions used the built CLI 0.8.1 and this plugin with an isolated loopback fixture
 backend. Both elicited a decision, let AI implement the entire small module, asked
 for an actual-code trace and prediction, and ran a Node behavioral check. The final
@@ -58,3 +71,13 @@ no automatic gate credit, and verbatim scripted learner answers. Tutor question
 strings still normalized formatting/contractions; do not mistake model-authored
 claims for exact transcript capture or server-validated mastery. No production
 Altitude account, provider API key, deployment, or client publication was involved.
+
+Review commits after 70d6d6a changed behavior those sessions cannot speak for, and
+each of the following remains unexercised by a real agent session: both emit
+templates now carrying `--task` and `--plan-revision`, learner text moved into
+single quotes, the supported-client floor and its update-required routing replacing
+the previous free-mode fallback, the version-evidence versus reach-failure split
+that decides which of those a learner is told, and the per-shell session reference.
+Repository tests pin those sentences, but a markdown assertion is not an agent
+following them; rerun the live scratch sessions before release and treat the
+September 7 results as evidence about the older text only.
