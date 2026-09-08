@@ -305,3 +305,69 @@ test('both supported hosts name a real session marker, Codex included', () => {
   assert.match(doc, /release prerequisite/);
   assert.match(read('README.md'), /CODEX_THREAD_ID/, 'Codex learners never learn this at onboarding');
 });
+
+test('the Codex marker rests on the probe that observed it, not on the hook mapping', () => {
+  // hooks/codex-field-mapping.json maps a stdin payload field. It shows Codex
+  // sends hooks a `session_id`; it never names an environment variable and
+  // cannot establish that the two carry the same value. Only the probe can.
+  const doc = read('WORKSHOP-COMPATIBILITY.md').replace(/\s+/g, ' ');
+  assert.match(doc, /codex-cli 0\.153\.4/, 'the doc does not say which Codex build was observed');
+  assert.match(doc, /printenv CODEX_THREAD_ID/, 'the doc does not say how the variable was read');
+  assert.match(doc, /01a07eab-7516-7d70-aeb6-24f7e41c0ae2/, 'the observed matching ID is not recorded');
+  assert.doesNotMatch(
+    doc,
+    /per the mapping this plugin ships/,
+    'the mapping is still cited as proof of a variable it does not contain',
+  );
+  // One build, one probe, and no paid lesson: say so where the claim is made.
+  assert.match(doc, /not a claim about every Codex version/i);
+  assert.match(doc, /paid-lesson/);
+  assert.match(read('README.md'), /0\.153\.4/, 'README states the capability with no observed-version hedge');
+});
+
+test('every host session variable carries its three shell forms', () => {
+  // The round-2 PowerShell fix, reopened for the host added in round 5: an
+  // agent given only the Claude Code variable has to guess both the name and
+  // the syntax, and both guesses fail the same way — an empty expansion.
+  for (const path of [...ENTRY_POINTS, PAID]) {
+    const text = read(path);
+    for (const form of [
+      /\$env:CLAUDE_CODE_SESSION_ID/,
+      /%CLAUDE_CODE_SESSION_ID%/,
+      /\$env:CODEX_THREAD_ID/,
+      /%CODEX_THREAD_ID%/,
+    ]) {
+      assert.match(text, form, `${path} is missing a per-shell session form: ${form}`);
+    }
+  }
+});
+
+test('command templates carry the resolved literal ID, not one host\'s variable', () => {
+  for (const path of [...ENTRY_POINTS, PAID]) {
+    assert.doesNotMatch(
+      read(path),
+      /--session "\$CLAUDE_CODE_SESSION_ID"/,
+      `${path} hardcodes the Claude Code variable into a template a Codex agent also runs`,
+    );
+  }
+  const paid = read(PAID);
+  for (const name of ['quiz-moment', 'task-completed']) {
+    const template = paid.match(new RegExp(`altitude emit ${name}[^\`]*`));
+    assert.ok(template, `the ${name} template moved or vanished`);
+    assert.match(template[0], /--session '<this session's ID>'/, `${name} does not pass a resolved ID`);
+  }
+  assert.doesNotMatch(
+    paid,
+    /so the two always agree/,
+    'the hook/variable agreement is asserted unqualified for every host',
+  );
+});
+
+test('the compatibility doc states the CLI contract for a refresh run outside the plugin', () => {
+  // The stale-copy refresh is a scoped read from a shell with no plugin in it.
+  // Whether that leaves the session's marker alone is CLI behavior this repo
+  // cannot enforce, so it is recorded as an expectation on the monorepo PR.
+  const doc = read('WORKSHOP-COMPATIBILITY.md').replace(/\s+/g, ' ');
+  assert.match(doc, /must not create, replace, or clear/);
+  assert.match(doc, /re-read under the same session/i);
+});

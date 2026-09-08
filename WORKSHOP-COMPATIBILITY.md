@@ -26,21 +26,39 @@ from another concurrent session.
 
 Session affinity is what makes the "no borrowed answer" half of that hold, and it
 rests on the host exposing a real session ID. Both supported hosts do: Claude Code
-through `CLAUDE_CODE_SESSION_ID`, and Codex through `CODEX_THREAD_ID` — the same
-session marker its hooks already report as `session_id`, per the mapping this
-plugin ships in `hooks/codex-field-mapping.json`. The constraint therefore does not
-drop Codex from the supported set. A host that exposes none does not get an unscoped read,
+through `CLAUDE_CODE_SESSION_ID`, and Codex through `CODEX_THREAD_ID`. The
+constraint therefore does not drop Codex from the supported set.
+
+The Codex half of that was observed directly, on installed codex-cli 0.153.4 under
+a ChatGPT subscription. A fresh `codex exec --ephemeral --ignore-user-config
+--disable plugins` run with vetted inline SessionStart and PreToolUse recorder
+hooks answered `printenv CODEX_THREAD_ID` with `01a07a1b-f65d-70b2-8f96-abe983b7bdfe`
+in the root probe, and in the recorder run both hook payload `session_id` values
+matched the command environment's ID `01a07eab-7516-7d70-aeb6-24f7e41c0ae2` exactly
+— asserted by `node /tmp/altitude-codex-session-check.teTdfm/check.mjs`, which
+passed `{verified:true, command_id_equals_all_hook_ids:true, hook_count:2}`. Read
+that for what it is: one build on one platform, not a claim about every Codex
+version or OS. `hooks/codex-field-mapping.json` is not the evidence — it maps a
+stdin payload field and never names an environment variable. A host that exposes none does not get an unscoped read,
 which would let another concurrent session's marker answer the compatibility
 question — bound lesson execution pauses there instead, with the standalone free
 method, the editor hooks, and every tool unaffected. Closing that gap needs a
 session-neutral way for the CLI to identify its caller, which is CLI work in the
 separate monorepo and cannot be added from this repo; until it ships, treat
 "bound journeys require a session-ID-exposing host" as a documented constraint.
-No real Codex session has been run against this behavior: the marker's presence is
-read from the shipped hook mapping, not from an observed paid lesson, so full Codex
-paid-lesson acceptance stays a release prerequisite. A session whose identity cannot
-be read, or does not match the one the hooks report, pauses the bound lesson rather
-than borrowing another session's context.
+That probe covered session identity and nothing else: no Codex Altitude paid lesson
+has been run, so full Codex paid-lesson acceptance stays a release prerequisite. A
+session whose identity cannot be read, or does not match the one the hooks report,
+pauses the bound lesson rather than borrowing another session's context.
+
+Two expectations land on the CLI in the separate monorepo, because this repo cannot
+enforce either. First, `altitude task --json --session <actual ID>` reads the marker
+already recorded for that session. Second, running it from a learner's own terminal
+— a shell with no plugin and no hooks in it, which is how the stale-copy branch
+refreshes a cold copy — must not create, replace, or clear that session's plugin
+identity, and must never stand a missing marker in for a present one. The agent must
+re-read under the same session afterwards, so a refresh that registered the session
+as marker-less would turn that next read into false version evidence.
 
 Publication is staged, and none of it happens in this PR. The version floor is
 enforced by the plugin as well as the server: it lives in the skill markdown, and
