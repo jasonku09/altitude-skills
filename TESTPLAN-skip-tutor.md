@@ -18,6 +18,8 @@ The task must carry these concept entries (substitute the fixture's real UUIDs f
 
 Get that state through the product, not by editing an envelope: at `app.learnaltitude.com/map`, mark **Git staging** known, do not take the optional test-out quiz, and leave **Shell functions** unmarked. The task may contain additional concepts only if their role is `exercise`; otherwise they make the delegation checks ambiguous.
 
+Run it on a supported workshop client: a bound journey whose CLI or plugin is below the floor now takes the update-required path instead of entering paid mode, so every check below would fail for the wrong reason. [WORKSHOP-COMPATIBILITY.md](WORKSHOP-COMPATIBILITY.md) records the supported versions. The fixture task itself carries no server-authored `learning_requirements`, so the hands-on expectations below still apply to it unchanged.
+
 In a terminal, create and bind a disposable workshop:
 
 ```sh

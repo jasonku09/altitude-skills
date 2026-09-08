@@ -39,13 +39,14 @@ matched the command environment's ID `01a07eab-7516-7d70-aeb6-24f7e41c0ae2` exac
 passed `{verified:true, command_id_equals_all_hook_ids:true, hook_count:2}`. Read
 that for what it is: one build on one platform, not a claim about every Codex
 version or OS. `hooks/codex-field-mapping.json` is not the evidence — it maps a
-stdin payload field and never names an environment variable. A host that exposes none does not get an unscoped read,
-which would let another concurrent session's marker answer the compatibility
-question — bound lesson execution pauses there instead, with the standalone free
-method, the editor hooks, and every tool unaffected. Closing that gap needs a
-session-neutral way for the CLI to identify its caller, which is CLI work in the
-separate monorepo and cannot be added from this repo; until it ships, treat
-"bound journeys require a session-ID-exposing host" as a documented constraint.
+stdin payload field and never names an environment variable. A host that exposes
+none does not get an unscoped read, which would let another concurrent session's
+marker answer the compatibility question — bound lesson execution pauses there
+instead, with the standalone free method, the editor hooks, and every tool
+unaffected. Closing that gap needs a session-neutral way for the CLI to identify
+its caller, which is CLI work in the separate monorepo and cannot be added from
+this repo; until it ships, treat "bound journeys require a session-ID-exposing
+host" as a documented constraint.
 That probe covered session identity and nothing else: no Codex Altitude paid lesson
 has been run, so full Codex paid-lesson acceptance stays a release prerequisite. A
 session whose identity cannot be read, or does not match the one the hooks report,
