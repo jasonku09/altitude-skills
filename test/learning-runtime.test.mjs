@@ -171,3 +171,68 @@ test('the compatibility doc sequences the notice window ahead of the plugin-side
   assert.match(doc, /70d6d6a/);
   assert.match(doc, /unexercised by a real agent session/);
 });
+
+test('a runtime that was read and says update_required stays the server message\'s to deliver', () => {
+  // Two owners for one state is how the server's wording gets replaced by the
+  // agent's. `update_required` means the runtime WAS read and said what to do,
+  // so it is not a "no usable runtime context" branch at all.
+  for (const skill of ENTRY_POINTS) {
+    const text = read(skill);
+    const bullet = text.split('\n').find((line) => line.includes('**Version evidence**'));
+    assert.ok(bullet, `${skill} lost its version-evidence branch`);
+    assert.match(bullet, /is not this branch/, `${skill} still lists update_required as version evidence`);
+    assert.match(
+      text,
+      /server-authored `update_message` always outranks/,
+      `${skill} does not give the server's message precedence`,
+    );
+    assert.match(text, /relay the envelope's server-authored `update_message` verbatim when it carried one/);
+  }
+  const paid = read(PAID);
+  assert.doesNotMatch(paid, /a status of `update_required`/, 'paid-mode still files update_required as version evidence');
+  assert.match(paid, /outranks/);
+});
+
+test('a cached copy with no runtime gets its own exit, not a branch that does not exist', () => {
+  // `"cache"` + `network_blocked` is the NORMAL path in a sandboxed agent, and
+  // Step 1 has no `"cache"` reason-exit to delegate to. A copy warmed before
+  // the CLI upgrade carries no runtime on a perfectly current client.
+  for (const skill of ENTRY_POINTS) {
+    const text = read(skill);
+    assert.match(text, /\*\*Stale copy\*\*/, `${skill} has no stale-copy branch`);
+    assert.match(text, /predates what this lesson needs/, `${skill} never says why the copy is unusable`);
+    assert.match(
+      text,
+      /Never re-read without `--session`/,
+      `${skill} lets the refresh fall back to an unscoped read`,
+    );
+    const reach = text.split('\n').find((line) => line.includes('**Reach failure**'));
+    assert.ok(reach, `${skill} lost its reach-failure branch`);
+    assert.doesNotMatch(reach, /"cache"/, `${skill} still routes a cached answer through the reach exit`);
+  }
+  assert.match(read(PAID), /stale copy/i);
+});
+
+test('no host and no shell may borrow another session marker to satisfy the floor', () => {
+  // Letting the CLI resolve the session is the borrowed-marker case --session
+  // exists to close, so it can never be the fallback for a bound lesson.
+  for (const path of [...ENTRY_POINTS, PAID]) {
+    const text = read(path);
+    assert.doesNotMatch(text, /drop(?:ping)? the flag/, `${path} still tells the agent to read unscoped`);
+    assert.doesNotMatch(text, /omit the flag/, `${path} still tells the agent to read unscoped`);
+    assert.match(text, /host that exposes no session ID/, `${path} never says what a host without one gets`);
+    assert.match(
+      text,
+      /bound journey waits|bound lesson pauses/,
+      `${path} does not pause bound execution when the session is unidentifiable`,
+    );
+  }
+});
+
+test('the compatibility doc records where session affinity holds and what closes the gap', () => {
+  const doc = read('WORKSHOP-COMPATIBILITY.md').replace(/\s+/g, ' ');
+  assert.match(doc, /rests on the host exposing a real session ID/);
+  assert.match(doc, /bound journeys require a session-ID-exposing host/);
+  // The fix lives in the CLI, not here; name it rather than inventing a command.
+  assert.match(doc, /separate monorepo/);
+});

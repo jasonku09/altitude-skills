@@ -24,6 +24,17 @@ the learner's agent — never an old-client retry without the new flags, a legac
 exemption, a silent free or Beginner substitute, or a compatibility answer borrowed
 from another concurrent session.
 
+Session affinity is what makes the "no borrowed answer" half of that hold, and it
+rests on the host exposing a real session ID: Claude Code does, through
+`CLAUDE_CODE_SESSION_ID`. A host that exposes none does not get an unscoped read,
+which would let another concurrent session's marker answer the compatibility
+question — bound lesson execution pauses there instead, with the standalone free
+method, the editor hooks, and every tool unaffected. Closing that gap needs a
+session-neutral way for the CLI to identify its caller, which is CLI work in the
+separate monorepo and cannot be added from this repo; until it ships, treat
+"bound journeys require a session-ID-exposing host" as a documented constraint.
+No real Codex session has been run against this behavior.
+
 Publication is staged, and none of it happens in this PR. The version floor is
 enforced by the plugin as well as the server: it lives in the skill markdown, and
 agents pull plugin updates from the marketplace automatically while the CLI is a
