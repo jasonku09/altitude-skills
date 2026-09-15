@@ -14,6 +14,7 @@ Do this privately at the start of every paid-mode lesson. Find the current task 
 
 - **`teach` concepts are lesson content.** Give them the full teaching method in Step 3.
 - **`exercise` concepts are load-bearing, but not lesson content.** Use them to complete the task without introducing, scaffolding, predicting, or quizzing them. The role deliberately does not say whether it came from demonstrated mastery or a self-report; never infer or announce which one it was.
+- **All-`exercise` is a third case.** If the partition leaves `teach` empty and `exercise` non-empty, the task is all-known: the fast-forward offer in SKILL.md's "Bounded code delegation" is the first thing you say once oriented — Step 2 has no honest `teach` target in such a task, so its review is skipped — before any code, and it is said only there. A task whose `concepts` array is empty or missing is not all-known: it partitions to `teach` under the fallback above and gets no offer.
 
 Keep this partition for the whole session, including the concept IDs attached to events. A prior-knowledge signal can move a `teach` concept into the session's `exercise` set under the rule in Step 3; only a fresh task envelope can make that accommodation durable in paid mode. Free mode has no envelope roles; Step 3 gives a prior-knowledge signal the same immediate behavior and records the local graph analog.
 
