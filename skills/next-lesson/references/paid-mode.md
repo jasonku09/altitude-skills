@@ -42,6 +42,10 @@ In paid mode, do not read, create, or update `learning/knowledge-graph.md`; mast
 
 In paid mode the signal earns one reply carrying both halves, accommodation and routing, together. Accommodation: immediately put the concept in this session's `exercise` set on their word alone — do not wait for the map action, call a mutation endpoint, emit a skip, or claim that their account changed. Routing: in that same reply, suggest they mark the concept known on `app.learnaltitude.com/map`, mention that an optional short quiz there can verify it, and ask them to tell you when they have done it. The halves never travel separately, and the insidious miss is absorbing the signal as a mere style preference: if you catch yourself implementing conventions the learner dictated for material you were about to teach — or closing the session with "you told me you already knew this" — the signal fired, and the reply that honors their conventions had to carry the map suggestion too. At the next lesson, `altitude task --json` is the authority again: if they marked it, the server returns `exercise`; if they did not, it returns `teach` and teaching resumes. The conversation is a grace period, not stored state.
 
+### After a rung-3 reveal (paid)
+
+A gap filled from a rung-3 reveal earns no quiz credit for that concept this session: never emit `quiz-moment` for the reveal itself, and never say that to the learner — asking for the answer is legitimate, not a mark against them. The forward prediction check that follows the reveal is a genuine check: emit it with its honest verdict like any other, tagged with the concept the line exercised.
+
 ## Step 4 — Close the loop (paid)
 
 Do not create or update the local graph; emit a fitting quiz outcome as described above when possible, and otherwise proceed because session capture is the evidence path.

@@ -29,6 +29,8 @@ In free mode, give the same immediate accommodation — the concept joins this s
 
 Update `learning/knowledge-graph.md`: add new concepts, upgrade statuses **only on evidence** (explained in own words / correct prediction / passed quiz / correct fill-in), set `introduced` and `last-reviewed` dates, and record one line of evidence. Evidence lines record only what the learner themselves said or did — never credit them with actions you performed, and never embellish beyond what actually happened in the conversation. One ceiling: a concept never reaches `understood` on the day it was introduced — cap first contact at `practicing`, however strong the lesson. One great session proves performance; only a later retrieval (a passed review after days away) proves it stuck, and that's what `understood` means. The sole exception is prior knowledge handled under Step 3's free-mode analog: set it directly to `understood` with the exact evidence note `self-reported prior knowledge`; this self-report exception applies to no other concept.
 
+A gap filled from a rung-3 reveal is not a correct fill-in: it moves no status and earns no evidence line for that concept this session, and you never say that to the learner — asking for the answer is legitimate, not a mark against them. The forward prediction check that follows the reveal is a genuine check and counts on its honest outcome like any other.
+
 Mark the task done in `plan.md`.
 
 ## Plan changes (free)
