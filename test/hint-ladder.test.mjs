@@ -69,6 +69,39 @@ test("the watch window is three minutes, chunked under the tool timeout", async 
   );
 });
 
+test("the watch starts in the turn that hands the gap over", async () => {
+  const watch = watchSection(await readNextLesson());
+
+  // The handover promises "I read it the moment the markers are gone", and in a
+  // single-turn host that promise is only true while a poll is running. One
+  // replay turn wrote the skeleton, made the promise and ended — nothing was
+  // watching the file, so the 3-minute window, the expiry question and the stop
+  // below never happened at all. The window rule says how long to watch; this
+  // says when it starts, in the same breath.
+  assert.match(
+    watch,
+    /\*\*The watch starts in the same turn that hands the gap over\.\*\*/,
+    "the start of the watch must be one atomic instruction in the watch paragraph",
+  );
+  assert.match(
+    watch,
+    /issue the first poll chunk before that turn ends/,
+    "the handover turn must issue the first poll chunk before it ends",
+  );
+  assert.match(
+    watch,
+    /never end a turn on a promise to watch with no poll running/,
+    "the tutor must never end a turn promising to watch with nothing polling",
+  );
+  // The clause sits with the window and chunking rules, not off in its own
+  // section where an agent can read it as a separate optional step.
+  const startIdx = watch.indexOf("**The watch starts in the same turn that hands the gap over.**");
+  const windowIdx = watch.indexOf("3 minutes in all");
+  const guardIdx = watch.indexOf("is work in progress, not a submission");
+  assert.ok(startIdx > windowIdx, "the start clause must sit in the watch paragraph, after the window rule");
+  assert.ok(startIdx < guardIdx, "the start clause must stay inside the watch paragraph");
+});
+
 test("the expiry message is a question with no hint in it", async () => {
   const watch = watchSection(await readNextLesson());
 
