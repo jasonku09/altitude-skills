@@ -171,13 +171,39 @@ test("a save that still contains a TODO(you) marker is work in progress: silent 
   // correcting work that isn't finished.
   assert.match(
     watch,
-    /\*\*A save with a `TODO\(you\)` still in the file is work in progress, not a submission\.\*\*/,
+    /\*\*A save with a `TODO\(you\)` still in the file — or with a marker deleted and nothing written in its place — is work in progress, not a submission\.\*\*/,
     "the autosave guard must be one atomic rule",
   );
   assert.match(
     watch,
     /re-arm the watch silently — no review, no comment/,
     "a work-in-progress save must earn no review and no comment",
+  );
+});
+
+test("a save whose gap is empty is work in progress too, in the same rule as the marker", async () => {
+  const watch = watchSection(await readNextLesson());
+
+  // The handover asks the learner to delete the marker and write their code in
+  // its place, so deleting it is usually its own keystroke. An autosave firing
+  // in the pause that follows produces a file with no markers and an empty gap
+  // — which a marker-only guard reads as a submission and reviews, the exact
+  // miss the guard exists to prevent.
+  assert.match(
+    watch,
+    /or with a marker deleted and nothing written in its place/,
+    "the empty gap must ride in the guard's own atomic sentence, not a separate rule",
+  );
+  assert.match(
+    watch,
+    /or a gap stands empty where one of them used to be, re-arm the watch silently/,
+    "an empty gap must take the same silent re-arm as a remaining marker",
+  );
+  // The finished test now has both halves: markers gone AND code in their place.
+  assert.match(
+    watch,
+    /every marker gone \*\*and\*\* the learner's code standing where each one was is the real one/,
+    "the real save must require code in the gap, not just the markers being gone",
   );
 });
 
