@@ -197,12 +197,19 @@ test("both mode files define the all-known trigger in their own terms", async ()
     "paid mode must not let an empty concepts array read as all-known",
   );
 
-  // Free: no envelope roles, so the graph decides — practicing or above on
-  // every concept the task exercises; one seed/introduced/missing concept
-  // makes it mixed.
+  // Free: no envelope roles, so the graph decides — `understood` on every
+  // concept the task exercises; one seed/introduced/practicing/missing concept
+  // makes it mixed. `practicing` is deliberately below the bar: it is the cap
+  // on first contact, so counting it would fast-forward past yesterday's
+  // lesson, and SKILL.md's Step 3 still hands `practicing` concepts the larger
+  // fill-in gaps.
   assert.match(free, /\*\*The fast-forward offer \(free\)\.\*\*/);
-  assert.match(free, /every concept it exercises stands at `practicing` or `understood` in `learning\/knowledge-graph\.md`/);
-  assert.match(free, /mixed the moment one of them is `seed`, `introduced`, or missing from the graph/);
+  assert.match(free, /every concept it exercises stands at `understood` in `learning\/knowledge-graph\.md`/);
+  assert.match(
+    free,
+    /mixed the moment one of them is `seed`, `introduced`, `practicing`, or missing from the graph/,
+  );
+  assert.match(free, /\*\*`practicing` is not enough\.\*\*/, "the free-mode bar must exclude practicing explicitly");
 });
 
 test("the README names the proactive offer where it describes delegation", async () => {

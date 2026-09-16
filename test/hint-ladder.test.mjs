@@ -130,6 +130,39 @@ test("the expiry question is asked once per fill-in; later windows re-arm silent
   );
 });
 
+test("asking the expiry question re-arms the watch in the same turn, never ends it", async () => {
+  const watch = watchSection(await readNextLesson());
+
+  // "and then you wait for the answer" read, to an agent, as "end the turn" —
+  // which stops the poll. A learner still typing at 3:00 (exactly the case the
+  // longer window exists for) would then save into a watch nobody was running,
+  // while README promises "it's watching the file, not the chat". It also made
+  // the four-window stop below unreachable: that stop needs windows to keep
+  // expiring with no save and no message.
+  assert.match(
+    watch,
+    /\*\*Asking the question never ends your turn\*\*/,
+    "the expiry question must be bound to not ending the turn, as one emphasized clause",
+  );
+  assert.match(
+    watch,
+    /in that same turn you re-arm the watch/,
+    "the question and the re-arm must happen in the same turn",
+  );
+  assert.doesNotMatch(
+    watch,
+    /and then you wait for the answer/,
+    "the old wording still reads as ending the turn to wait for a reply",
+  );
+  // Both ways the answer can arrive, so neither a save nor a reply is stranded.
+  assert.match(watch, /a real save lands in the next window/, "a save during the wait must still be caught");
+  assert.match(
+    watch,
+    /a\s+chat reply reaches you when that poll returns/,
+    "a reply must arrive on the poll's return, per the mid-poll rule below",
+  );
+});
+
 test("a save that still contains a TODO(you) marker is work in progress: silent re-arm", async () => {
   const watch = watchSection(await readNextLesson());
 
@@ -145,6 +178,43 @@ test("a save that still contains a TODO(you) marker is work in progress: silent 
     watch,
     /re-arm the watch silently — no review, no comment/,
     "a work-in-progress save must earn no review and no comment",
+  );
+});
+
+test("the handover tells the learner to replace the TODO(you) line, not type under it", async () => {
+  const watch = watchSection(await readNextLesson());
+
+  // The guard below is mechanical: any marker left in the file means work in
+  // progress. So the handover has to ask for the marker to go. "Fill them in
+  // your editor and hit save" doesn't — a beginner who types under the comment
+  // and leaves it has finished, but every save reads as unfinished: no review,
+  // a silent re-arm, and finally "Still working, or want a hint?" sent to
+  // someone who is already done.
+  assert.match(
+    watch,
+    /\*\*replace each `TODO\(you\)` line with your code\*\*/,
+    "the handover must tell the learner to replace the marker line, as an emphasized instruction",
+  );
+  assert.match(
+    watch,
+    /the marker comment goes away/,
+    "the handover must say the comment itself is deleted, not just written under",
+  );
+  assert.match(
+    watch,
+    /I read it the moment the markers are gone/,
+    "the handover must tell the learner what makes the tutor look: the markers being gone",
+  );
+  assert.match(
+    watch,
+    /say the replacement part every time you hand over a gap/,
+    "the replacement instruction must be required at every handover, not just the first",
+  );
+  // And the worked example hands its gap over the same way.
+  assert.match(
+    watch,
+    /that line goes where the `TODO\(you\)` comment is now, replacing it/,
+    "the worked example's rung 3 must hand over with the same replacement wording",
   );
 });
 
