@@ -25,9 +25,13 @@ Every few lessons, swap the concept question for a repo-tour question from `lear
 
 In free mode, give the same immediate accommodation — the concept joins this session's `exercise` set on their word alone — and record the concept as `understood` in `learning/knowledge-graph.md` with the evidence note `self-reported prior knowledge`. There is no account mutation or map handoff in standalone free mode.
 
+**The fast-forward offer (free).** Free mode has no envelope roles, so the graph decides the all-known test: today's task is all-`exercise` when every concept it exercises stands at `understood` in `learning/knowledge-graph.md` (or joined this session's `exercise` set under the rule above, which records that same status), and it is mixed the moment one of them is `seed`, `introduced`, `practicing`, or missing from the graph. **`practicing` is not enough.** It is the cap on first contact, so every concept from last session's lesson sits there; only a passed retrieval on a later day makes it `understood`. A `practicing` concept keeps the larger fill-in gaps Step 3 gives it in free mode — that rule is untouched — and a task carrying one gets no offer. Make SKILL.md's fast-forward offer on exactly that test, at the task's start, once; a mixed task gets none.
+
 ## Step 4 — Close the loop (free)
 
 Update `learning/knowledge-graph.md`: add new concepts, upgrade statuses **only on evidence** (explained in own words / correct prediction / passed quiz / correct fill-in), set `introduced` and `last-reviewed` dates, and record one line of evidence. Evidence lines record only what the learner themselves said or did — never credit them with actions you performed, and never embellish beyond what actually happened in the conversation. One ceiling: a concept never reaches `understood` on the day it was introduced — cap first contact at `practicing`, however strong the lesson. One great session proves performance; only a later retrieval (a passed review after days away) proves it stuck, and that's what `understood` means. The sole exception is prior knowledge handled under Step 3's free-mode analog: set it directly to `understood` with the exact evidence note `self-reported prior knowledge`; this self-report exception applies to no other concept.
+
+A gap filled from a rung-3 reveal is not a correct fill-in: it moves no status and earns no evidence line for that concept this session, and you never say that to the learner — asking for the answer is legitimate, not a mark against them. The forward prediction check that follows the reveal is a genuine check and counts on its honest outcome like any other.
 
 Mark the task done in `plan.md`.
 

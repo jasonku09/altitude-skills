@@ -14,6 +14,7 @@ Do this privately at the start of every paid-mode lesson. Find the current task 
 
 - **`teach` concepts are lesson content.** Give them the full teaching method in Step 3.
 - **`exercise` concepts are load-bearing, but not lesson content.** Use them to complete the task without introducing, scaffolding, predicting, or quizzing them. The role deliberately does not say whether it came from demonstrated mastery or a self-report; never infer or announce which one it was.
+- **All-`exercise` is a third case.** If the partition leaves `teach` empty and `exercise` non-empty, the task is all-known: the fast-forward offer in SKILL.md's "Bounded code delegation" is the first thing you say once oriented — Step 2 has no honest `teach` target in such a task, so its review is skipped — before any code, and it is said only there. A task whose `concepts` array is empty or missing is not all-known: it partitions to `teach` under the fallback above and gets no offer.
 
 Keep this partition for the whole session, including the concept IDs attached to events. A prior-knowledge signal can move a `teach` concept into the session's `exercise` set under the rule in Step 3; only a fresh task envelope can make that accommodation durable in paid mode. Free mode has no envelope roles; Step 3 gives a prior-knowledge signal the same immediate behavior and records the local graph analog.
 
@@ -41,6 +42,10 @@ In paid mode, do not read, create, or update `learning/knowledge-graph.md`; mast
 ## Step 3 — When prior knowledge surfaces (paid)
 
 In paid mode the signal earns one reply carrying both halves, accommodation and routing, together. Accommodation: immediately put the concept in this session's `exercise` set on their word alone — do not wait for the map action, call a mutation endpoint, emit a skip, or claim that their account changed. Routing: in that same reply, suggest they mark the concept known on `app.learnaltitude.com/map`, mention that an optional short quiz there can verify it, and ask them to tell you when they have done it. The halves never travel separately, and the insidious miss is absorbing the signal as a mere style preference: if you catch yourself implementing conventions the learner dictated for material you were about to teach — or closing the session with "you told me you already knew this" — the signal fired, and the reply that honors their conventions had to carry the map suggestion too. At the next lesson, `altitude task --json` is the authority again: if they marked it, the server returns `exercise`; if they did not, it returns `teach` and teaching resumes. The conversation is a grace period, not stored state.
+
+### After a rung-3 reveal (paid)
+
+A gap filled from a rung-3 reveal earns no quiz credit for that concept this session: never emit `quiz-moment` for the reveal itself, and never say that to the learner — asking for the answer is legitimate, not a mark against them. The forward prediction check that follows the reveal is a genuine check: emit it with its honest verdict like any other, tagged with the concept the line exercised.
 
 ## Step 4 — Close the loop (paid)
 

@@ -86,7 +86,13 @@ After the script works, send:
 
 Expected: any opportunistic question targets Shell functions only. The tutor never asks a recall, prediction, breakage, or “quick check” question about Git staging and never emits a `quiz-moment` tagged with `<GIT_ID>` merely because Git is convenient to ask about.
 
-Also run a fresh copy of the fixture with every task concept marked known. On `/altitude:next-lesson`, expected: Step 2's opening review is omitted entirely because there is no `teach` target.
+Also run a fresh copy of the fixture with every task concept marked known. On `/altitude:next-lesson`, expected: Step 2's opening review is omitted entirely because there is no `teach` target, and the opening message ends on the fast-forward offer defined in `SKILL.md`'s “Bounded code delegation” — one question asking whether the tutor should do the step while the learner reviews the diff and writes the commit, or whether they would rather type it — with no code, dictated command, or scaffold before it. It then waits for the answer instead of starting the task.
+
+Decline it:
+
+> `I'll type it myself.`
+
+Expected: the task runs hands-on under the `exercise` rules in section 2 — no introduction, no fill-in, no prediction, no quiz — and the offer is not made again for the rest of the task. Section 7 covers the accept path.
 
 ## 4. Questions still receive full answers
 
@@ -157,7 +163,7 @@ For the all-exercise half of the fixture, send:
 
 > `Please write the Git setup chunk for me.`
 
-Expected: the tutor may offer and, after acceptance, write a bounded chunk because every concept it exercises is `exercise`. Before commit it puts the learner in the reviewer's chair and says the equivalent of: “you review the diff before we commit, like a teammate's PR.” It asks for a diff review, not a recall quiz.
+Expected: the tutor writes a bounded chunk on that request because every concept it exercises is `exercise`. It does not volunteer the offer itself: this fixture's task is mixed, and the fast-forward offer belongs only to an all-`exercise` task (section 3). Before commit it puts the learner in the reviewer's chair and says the equivalent of: “you review the diff before we commit, like a teammate's PR.” It asks for a diff review, not a recall quiz.
 
 Give a substantive review:
 
