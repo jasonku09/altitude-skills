@@ -171,6 +171,13 @@ test('a live read whose pointer has not moved is an unaccepted claim, never a sy
   assert.match(step4, /has not advanced on a live[^\n]*sent but Altitude has not accepted it yet/);
   assert.match(step4, /never call it synced, recorded, or done/);
   assert.match(step4, /never explain it away as lag/);
+  // Agents did not read "it should catch up on its own" as a lag excuse, and
+  // called the task "closed out" once the learner asked to wrap up. Altitude
+  // may have refused the claim, so neither the prediction nor the closure is
+  // true — in that message or any later reply.
+  assert.match(step4, /never predict that it will catch up, sync later, or be accepted on its own/);
+  assert.match(step4, /the next `\/next-lesson` will show whether it was accepted/);
+  assert.match(step4, /never describe the task as done, finished, wrapped, or closed out[^\n]*any later reply this session/);
 });
 
 test('the compatibility doc requires available downloads, not advance announcements', () => {
