@@ -22,10 +22,11 @@ Every server-planned lesson requires CLI 0.8.1 or later and plugin 0.5.8 or late
 including historical Beginner tasks whose requirements are null. Those lessons still
 execute their existing hands-on method once the client is supported, and their data
 and recorded progress are preserved untouched. An unsupported or unreportable client
-gets explicit update-required copy naming `altitude update` and the plugin update in
-the learner's agent — never an old-client retry without the new flags, a legacy-client
-exemption, a silent free or Beginner substitute, or a compatibility answer borrowed
-from another concurrent session.
+gets explicit update-required copy naming `altitude update`, the plugin update and a
+restart of the learner's agent, and that queued progress stays saved and syncs
+automatically once both are updated — never an old-client retry without the new
+flags, a legacy-client exemption, a silent free or Beginner substitute, or a
+compatibility answer borrowed from another concurrent session.
 
 Session affinity is what makes the "no borrowed answer" half of that hold, and it
 rests on the host exposing a real session ID. Both supported hosts do: Claude Code
@@ -107,8 +108,9 @@ cold caches, an active lesson whose journey revision changes, and a real agent
 session using server-authored fixture requirements. Automated markdown checks
 alone do not establish that an agent follows the lesson correctly.
 
-September 7 verification, against the instructions as they stood at 70d6d6a:
-68 repository tests passed. Two real Claude Code 2.1.263
+September 7 verification, against the instructions as they stood at 70d6d6a — the
+pre-rebase commit on the old 0.5.6 base, which this branch does not contain; its
+rebased counterpart here is ceafe02. 68 repository tests passed. Two real Claude Code 2.1.263
 sessions used the built CLI 0.8.1 and this plugin with an isolated loopback fixture
 backend. Both elicited a decision, let AI implement the entire small module, asked
 for an actual-code trace and prediction, and ran a Node behavioral check. The final
@@ -119,11 +121,17 @@ claims for exact transcript capture or server-validated mastery. No production
 Altitude account, provider API key, deployment, or client publication was involved.
 
 Review commits after 70d6d6a changed behavior those sessions cannot speak for, and
-each of the following remains unexercised by a real agent session: both emit
-templates now carrying `--task` and `--plan-revision`, learner text moved into
-single quotes, the supported-client floor and its update-required routing replacing
-the previous free-mode fallback, the version-evidence versus reach-failure split
-that decides which of those a learner is told, and the per-shell session reference.
+each of the following remains unexercised by a real agent session: the rebase onto
+the released 0.5.7 main, so the merged tree — whose hint-ladder, fast-forward offer,
+and watch text now share next-lesson's SKILL.md and paid-mode.md with these rules —
+has never run as a whole; both emit templates now carrying `--task` and
+`--plan-revision`; learner text moved into single quotes; the supported-client
+floor, now plugin 0.5.8, and its update-required routing replacing the previous
+free-mode fallback; the version-evidence versus reach-failure split that decides
+which of those a learner is told; the per-shell session reference; and the later
+review fixes — the not-connected branch for a bound folder on an unpaired computer,
+the install command for a missing `altitude`, the restart and queued-progress lines
+in the agent's own update-required wording, and session IDs dictated bare in `cmd`.
 Repository tests pin those sentences, but a markdown assertion is not an agent
 following them; rerun the live scratch sessions before release and treat the
 September 7 results as evidence about the older text only.
