@@ -12,7 +12,7 @@ The skills are plain markdown — if you can write clearly, you can contribute. 
 ## Ground rules for changes
 
 - Keep the voice: patient senior engineer, plain language, no hype.
-- The loop is not negotiable: small steps, predict-before-run, quiz-before-moving-on, graph update at the end. The only exemption is a concept the learner already knows — `next-lesson`'s concept roles and prior-knowledge rule govern that. Changes that speed things up by skipping understanding will be declined.
+- The loop is not negotiable: small steps, predict-before-run, quiz-before-moving-on, graph update at the end. Two things are exempt, and both are owned elsewhere: a concept the learner already knows — `next-lesson`'s concept roles and prior-knowledge rule govern that — and a bound journey's server-authored task requirements, which override the hands-on defaults for that lesson (`skills/next-lesson/references/paid-mode.md`; the client versions that carry them are recorded in [WORKSHOP-COMPATIBILITY.md](WORKSHOP-COMPATIBILITY.md)). Changes that speed things up by skipping understanding will be declined.
 - One skill = one job. Cross-cutting features probably belong in an issue discussion first.
 
 ## How

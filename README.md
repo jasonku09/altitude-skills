@@ -35,7 +35,7 @@ In the standalone free method, all state lives in a `learning/` folder in your p
 - `learning/knowledge-graph.md` — the living map of what you actually know
 - `learning/file-map.md` — why every file and folder in your repo exists
 
-The free method is complete and works standalone: `/start-project` + `/plan-journey` (or `/adopt-project`), then `/next-lesson`. An Altitude subscription adds a journey planned on the web, the server-side learning map, scheduled reviews, and progression gates. `/begin` materializes that journey as a readable local `learning/plan.md`; `/next-lesson` refreshes it and syncs completed tasks while you remain entitled. If a subscription pauses, the local plan remains yours and lessons continue in free mode with local knowledge-graph evidence.
+The free method is complete and works standalone: `/start-project` + `/plan-journey` (or `/adopt-project`), then `/next-lesson`. An Altitude subscription adds a journey planned on the web, the server-side learning map, scheduled reviews, and progression gates. `/begin` materializes that journey as a readable local `learning/plan.md`; `/next-lesson` refreshes it and syncs completed tasks while you remain entitled. If a subscription pauses, the local plan remains yours and lessons continue in free mode with local knowledge-graph evidence — except a task that carries Altitude's own lesson requirements, which waits for an active subscription with your plan and progress untouched (a separate standalone project stays open to you).
 
 ## Install
 
@@ -64,6 +64,8 @@ codex plugin add altitude@altitude
 ```
 
 The first `codex` launch after installing shows a one-time "Hooks need review" prompt — choose **Trust all and continue** to enable Altitude's session hooks. (They stay dormant outside bound journey projects; see below.) Trusting them matters more in Codex than it looks: Codex runs the agent's commands in a sandbox with no internet access, so the skills read your journey from a local copy — and the hooks, which run outside the sandbox, are what keep that copy fresh. You'll see the same prompt again after a plugin update that changes a hook; answer it the same way.
+
+A subscribed journey also needs this session's own identity, so that a second agent window open on the same machine can never answer for this one. Codex exposes it as `CODEX_THREAD_ID` — observed on Codex CLI 0.153.4 carrying the same value its hooks report as `session_id` — and the skills pass it explicitly on every journey read. If no real session marker can be read, a bound lesson says so and waits instead of guessing; the free standalone method and every editor tool keep working either way.
 
 The plugin also bundles Altitude's session hooks (`hooks/`). They stay fully dormant unless you're working inside a project bound to a subscribed journey (`altitude bind` / `/altitude:begin`) — no events, gates, or context injection anywhere else. With a bound project, they capture session evidence for your journey and run the plan/diff/retro gates. Gates fail open: a crashed hook never blocks your work. The `/altitude:connect` and `/altitude:status` skills manage the link.
 
