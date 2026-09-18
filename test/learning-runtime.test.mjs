@@ -161,6 +161,18 @@ test('a rejected flag is an update prompt — never a bare retry, never a false 
   assert.match(read('skills/begin/SKILL.md'), /Do not re-run a rejected command with older flags/);
 });
 
+test('a live read whose pointer has not moved is an unaccepted claim, never a sync', () => {
+  // The emit exiting cleanly proves only that the claim was sent. Under
+  // server-judged versioned requirements, a "network" read still pointing at
+  // the task just completed can mean Altitude did not accept it — calling
+  // that "synced … normal lag" claims a completion the server never granted.
+  const step4 = sliceBetween(read(PAID), '## Step 4', '## Plan changes');
+  assert.doesNotMatch(step4, /or the pointer has not advanced on a live read, mention that briefly/);
+  assert.match(step4, /has not advanced on a live[^\n]*sent but Altitude has not accepted it yet/);
+  assert.match(step4, /never call it synced, recorded, or done/);
+  assert.match(step4, /never explain it away as lag/);
+});
+
 test('the compatibility doc requires available downloads, not advance announcements', () => {
   // The doc is hard-wrapped prose, so assert against it unwrapped: a sentence
   // must not become unpinned because a word moved to the next line.
