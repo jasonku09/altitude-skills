@@ -1,9 +1,12 @@
 # Versioned paid lesson support
 
-Plugin 0.5.7 executes version-1 server-authored task requirements with CLI 0.8.1
+Plugin 0.5.8 executes version-1 server-authored task requirements with CLI 0.8.1
 or later. These are compatible artifact versions, not a publication announcement.
 Publish both clients and complete integrated acceptance checks before enabling
 Intermediate journey creation or switching. This PR does not publish either client.
+Plugin 0.5.7 is the already-released hint-ladder version; it does not contain this
+lesson support. Keep released-version announcements at verified published versions
+until 0.5.8 is actually available.
 
 The paid task's requirements override legacy hands-on instructions. The free
 standalone method keeps its existing behavior. Server-only planning, pedagogy,
@@ -15,7 +18,7 @@ read; it never silently becomes a free Beginner lesson. Hooks remain fail open.
 An old plugin with an old cached plan cannot learn these new rules retroactively;
 server completion/evidence validation and rollout sequencing remain required.
 
-Every server-planned lesson requires CLI 0.8.1 or later and plugin 0.5.7 or later,
+Every server-planned lesson requires CLI 0.8.1 or later and plugin 0.5.8 or later,
 including historical Beginner tasks whose requirements are null. Those lessons still
 execute their existing hands-on method once the client is supported, and their data
 and recorded progress are preserved untouched. An unsupported or unreportable client
@@ -66,16 +69,22 @@ enforced by the plugin as well as the server: it lives in the skill markdown, an
 agents pull plugin updates from the marketplace automatically while the CLI is a
 global npm package the learner updates by hand. So publishing the plugin is itself
 an enforcement step, and it is sequenced like one — a learner whose plugin
-auto-advances to 0.5.7 while their CLI is still 0.8.0 would otherwise be refused on
-every bound lesson, Beginner included, before any notice reached them.
+auto-advances to 0.5.8 while their CLI is still 0.8.0 will be prompted to update
+before continuing any bound lesson, Beginner included. The required CLI download
+must already be available when that happens.
 
 The order is: publish CLI 0.8.1 and verify it against the server, which starts
-sending `learning_runtime` while still accepting older clients; verify plugin 0.5.7
-as a release candidate without publishing it; send in-product advance notices over
-the existing `update_notices` channel naming `altitude update` and the plugin
-update; wait through that notice window and confirm CLI adoption; publish plugin
-0.5.7, which turns on the plugin-side minimum; then coordinate server-side
-enforcement of the floor. Roll back in the reverse order. Softening the client rules
+sending `learning_runtime` while still accepting older clients; verify plugin 0.5.8
+as a release candidate, then publish and verify plugin 0.5.8 in both marketplaces,
+which turns on its local minimum when installed. Verify both downloads and
+actionable update-required notice delivery before server-side enforcement of the
+floor. Advance released-version metadata only after publication is verified.
+The agent's update-required notice is sufficient when outdated tools request a
+lesson: name `altitude update`, the plugin update and agent restart, and preservation
+and automatic retry of queued progress. Separate advance emails or in-app
+announcements are not required; neither is a waiting period or user acknowledgment.
+Raise compatibility minima only when lesson compatibility needs them, not for every
+release. Roll back in the reverse order. Softening the client rules
 to shorten the sequence is not an option — restoring an old-client teaching fallback
 would reintroduce exactly the silent Beginner downgrade this change removes, so
 sequencing is the mitigation, not a weaker refusal.
@@ -86,7 +95,7 @@ rather than queued or synced, and no lesson claims a completion the server did n
 accept. A bound project whose client is too old keeps its binding, its generated
 plan, and its queued events while it waits for the update.
 
-Rollback is per artifact and needs no data migration. Reverting the plugin to 0.5.6
+Rollback is per artifact and needs no data migration. Reverting the plugin to 0.5.7
 restores the previous instructions with the binding and plan intact; reverting the
 CLI to the last published build restores the previous envelope, and the server keeps
 accepting version-less claims until enforcement is enabled. Roll enforcement back

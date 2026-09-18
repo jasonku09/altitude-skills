@@ -4,7 +4,7 @@ import test from 'node:test';
 const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
 
 /**
- * Versioned paid lesson execution (plugin 0.5.7 + CLI 0.8.1). Every rule below
+ * Versioned paid lesson execution (plugin 0.5.8 + CLI 0.8.1). Every rule below
  * is a sentence an agent executes at runtime, so each one is pinned here the
  * way concept-roles.test.mjs and sandbox-reach.test.mjs pin theirs — a
  * paraphrase that drops the discriminator silently restores the failure mode.
@@ -18,6 +18,13 @@ const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), 'utf
  */
 const ENTRY_POINTS = ['skills/begin/SKILL.md', 'skills/next-lesson/SKILL.md'];
 const PAID = 'skills/next-lesson/references/paid-mode.md';
+
+test('both plugin manifests identify the lesson-compatible 0.5.8 release', () => {
+  // 0.5.7 was already released with hint-ladder changes, without this executor.
+  for (const path of ['.claude-plugin/plugin.json', '.codex-plugin/plugin.json']) {
+    assert.equal(JSON.parse(read(path)).version, '0.5.8', path);
+  }
+});
 
 function sliceBetween(contents, startHeading, endHeading) {
   const start = contents.indexOf(startHeading);
@@ -56,9 +63,9 @@ test('every surface that runs a bound lesson names the supported-client floor', 
   for (const skill of ENTRY_POINTS) {
     const text = read(skill);
     assert.match(text, /CLI 0\.8\.1 or later/, `${skill} does not name the CLI floor`);
-    assert.match(text, /0\.5\.7 or later/, `${skill} does not name the plugin floor`);
+    assert.match(text, /0\.5\.8 or later/, `${skill} does not name the plugin floor`);
   }
-  assert.match(read(PAID), /CLI 0\.8\.1 or later with plugin 0\.5\.7 or later/);
+  assert.match(read(PAID), /CLI 0\.8\.1 or later with plugin 0\.5\.8 or later/);
 });
 
 test('a bound project is recognized from disk before any free-mode degrade', () => {
@@ -154,7 +161,7 @@ test('a rejected flag is an update prompt — never a bare retry, never a false 
   assert.match(read('skills/begin/SKILL.md'), /Do not re-run a rejected command with older flags/);
 });
 
-test('the compatibility doc sequences the notice window ahead of the plugin-side floor', () => {
+test('the compatibility doc requires available downloads, not advance announcements', () => {
   // The doc is hard-wrapped prose, so assert against it unwrapped: a sentence
   // must not become unpinned because a word moved to the next line.
   const doc = read('WORKSHOP-COMPATIBILITY.md').replace(/\s+/g, ' ');
@@ -162,11 +169,11 @@ test('the compatibility doc sequences the notice window ahead of the plugin-side
   // The floor lives in the skill markdown, so shipping the plugin IS turning
   // enforcement on for every install that auto-updates.
   assert.match(doc, /publishing the plugin is itself an enforcement step/i);
-  assert.match(doc, /notice window/);
-  assert.ok(
-    doc.indexOf('notice window') < doc.indexOf('server-side enforcement'),
-    'the notice window must be documented before server-side enforcement',
-  );
+  assert.match(doc, /Separate advance emails or in-app announcements are not required/);
+  assert.match(doc, /publish CLI 0\.8\.1 and verify/);
+  assert.match(doc, /publish and verify plugin 0\.5\.8/);
+  assert.match(doc, /both downloads and actionable update-required notice delivery before server-side enforcement/);
+  assert.doesNotMatch(doc, /wait through that notice window|confirm CLI adoption/);
   // Honest limitation: the live sessions predate the current templates.
   assert.match(doc, /70d6d6a/);
   assert.match(doc, /unexercised by a real agent session/);

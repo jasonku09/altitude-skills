@@ -13,7 +13,7 @@ Free mode requires `learning/plan.md` and `learning/knowledge-graph.md`. Paid mo
 
 ### Bound-journey runtime precedence
 
-Every server-planned lesson runs on a supported workshop: Altitude CLI 0.8.1 or later with this plugin (0.5.7 or later). That floor covers every bound journey, Intermediate or Beginner, whether or not its task carries versioned requirements.
+Every server-planned lesson runs on a supported workshop: Altitude CLI 0.8.1 or later with this plugin (0.5.8 or later). That floor covers every bound journey, Intermediate or Beginner, whether or not its task carries versioned requirements.
 
 Before applying any fallback or teaching rule below, read `learning_runtime` from `altitude task --json`. If its status is `update_required`, relay its server-authored `update_message` verbatim and pause this paid lesson until a fresh read supports it. Never fall back to free mode for a bound journey because a command fails or the network or cache is unavailable, and never run a bound lesson under an older client's rules.
 
