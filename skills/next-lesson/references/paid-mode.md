@@ -1,3 +1,7 @@
+<!-- Release note (plugin 0.6.0): this version expects the server to send `teaching_knobs`, `due_review`, and `method_checkin`.
+     On a server that does not send them, the tutor uses the default knobs, asks no review question, and never asks a check-in.
+     Do not publish 0.6.0 before the server that serves these fields is deployed.
+     The CLI 0.8.1 / plugin 0.5.7 runtime floor and the fail-open hooks are unchanged. -->
 # next-lesson — paid mode
 
 Binding rules for sessions where Step 1 chose **paid mode**. Read this file in full right after choosing the mode, before orienting further. Nothing here repeats SKILL.md — both apply, and the step headings below name where each rule slots into SKILL.md's flow.

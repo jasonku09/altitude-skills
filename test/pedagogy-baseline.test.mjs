@@ -265,9 +265,18 @@ test("F: the review question comes only from due_review in paid mode; nothing du
 
   assert.match(
     step2,
-    /\*\*The review question comes only from what the learner has already learned, never from this task's own concepts\.\*\*/,
+    /\*\*The review question comes only from what the learner has already learned, never from a concept this task is about to teach\.\*\*/,
     "the source rule must be one emphasized instruction",
   );
+  // Review fix: the free-mode carve-out that free-mode.md already carries is mirrored here.
+  assert.match(
+    step2,
+    /a concept of today's task qualifies only when it already stands at `practicing` or `understood` from an earlier lesson/,
+    "free mode may review a concept of today's task that an earlier lesson already taught",
+  );
+  assert.match(step2, /a `seed` or `introduced` leaf of today's task is never review material/, "untaught leaves stay off limits");
+  assert.match(step2, /Paid mode has no such carve-out: `due_review` only/, "paid mode stays strictly due_review");
+  assert.doesNotMatch(step2, /never from this task's own concepts/, "the absolute wording that contradicted free-mode.md is gone");
   assert.match(step2, /`current_task\.due_review`/, "the envelope field must be named");
   assert.match(step2, /`evidence_reminder`/, "the reminder is what the situated question is written from");
   assert.match(step2, /\*\*No `due_review` means no review question\*\*/, "absence must be emphasized as no question");
@@ -311,7 +320,16 @@ test("G: the method check-in is asked at the close, after the recap, only when t
   assert.match(close, /`required`, always ask/, "required means always");
   assert.match(close, /`allowed`, ask only when you observed/, "allowed means only on an observed signal");
   assert.match(close, /three or more hint rungs/, "signal: hints heavy");
-  assert.match(close, /drills declined twice/, "signal: drills skipped");
+  assert.match(close, /`drills_skipped`, zero learner-written lines/, "signal: drills skipped, by its contract name");
+  assert.doesNotMatch(close, /drills declined/, "the undefined 'declined' wording is gone");
+  assert.match(
+    close,
+    /\*\*`drills_skipped` means the learner asked to skip a drill before it had been written and run\*\*/,
+    "drills_skipped must be defined as one emphasized instruction",
+  );
+  assert.match(close, /"skip the drill", "just show me in the project"/, "with the example phrasings");
+  assert.match(close, /\*\*twice in one lesson\*\*/, "twice in one lesson");
+  assert.match(close, /choosing "into the project" at the ask after the drills is not a skip/, "the ask's project answer is not a skip");
   assert.match(close, /zero learner-written lines/, "signal: no learner lines");
   assert.match(close, /the impatience rule invoked/, "signal: impatience");
   assert.match(close, /\*\*When the field is absent, never ask\*\*/, "absence must be emphasized as never");
@@ -398,6 +416,14 @@ test("B: the drill loop is numbered, a stalled drill keeps its number, and the a
   assert.match(drillText, /Never open the project step on your own initiative after a drill/, "the tutor never skips the ask into the project");
   assert.match(drillText, /never fold the ask into a message that also starts the project/, "the ask and the project step never share a message");
   assert.match(drillText, /`drills` of 0 means skip the drill entirely, ask nothing/, "zero drills means no ask either");
+  // Review fix: what each answer to the ask does.
+  assert.match(
+    drillText,
+    /\*\*"Another" means one more drill on the same concept under the next number, then the ask again\*\*/,
+    "another = one more drill, then the ask again",
+  );
+  assert.match(drillText, /\*\*"into the project" ends the loop\*\*/, "into the project ends the loop");
+  assert.match(drillText, /your next message opens the apply step/, "and the apply step follows");
 });
 
 test("B: the tutor never writes into learning/scratch/, not to create, fix, or show", async () => {
@@ -408,9 +434,12 @@ test("B: the tutor never writes into learning/scratch/, not to create, fix, or s
 
   assert.match(
     drillText,
-    /\*\*You never write into the scratch file\*\*: `learning\/scratch\/` is theirs to create and theirs to fix/,
+    /\*\*You never write into the scratch file\*\*: every file in `learning\/scratch\/` is theirs to create and theirs to fix/,
     "the no-write rule must be emphasized and name the folder",
   );
+  assert.match(drillText, /You may create the empty `learning\/scratch\/` folder if it does not exist, and nothing inside it/, "the tutor may create the empty folder only");
+  assert.doesNotMatch(drillText, /creating `learning\/scratch\/` if it does not exist/, "the ambiguous creation clause is gone");
+  assert.doesNotMatch(drillText, /file\*\*: `learning\/scratch\/` is theirs to create/, "the folder-level ownership wording is gone");
   assert.match(drillText, /never corrected by you on disk/, "a wrong attempt is never fixed on disk by the tutor");
   assert.match(drillText, /never shown by writing it there/, "the answer is never written into the scratch file");
 });
@@ -436,6 +465,30 @@ test("C: every teach-gap handover goes through the file with a marker, never a c
   const fnText = stepSize.slice(fn, feature);
   assert.match(fnText, /you write the signature and docstring into the file/, "at function grain the signature is written, not optional");
   assert.doesNotMatch(fnText, /structure you may write/, "the optional wording is gone");
+  // Review fix: the signature is tutor-written only when it is untaught structure (invariant A).
+  assert.match(fnText, /only when they are structure the task does not teach/, "the signature is tutor-written only as untaught structure");
+  assert.match(
+    fnText,
+    /\*\*When the signature itself exercises a `teach` concept, the learner types the signature too\*\*/,
+    "a taught signature is the learner's to type, as one emphasized instruction",
+  );
+  assert.match(fnText, /that part drops to `line` grain/, "the signature handover drops to line grain");
+  assert.match(fnText, /is yours to write only in a task that is not teaching type hints or `Path`/, "the worked example's signature is named as the case");
+});
+
+test("C: the hint-ladder worked example says why its signature was tutor-written", async () => {
+  const skill = await readNextLesson();
+  const example = sliceBetween(skill, "Worked example — the gap is", "What a rung-3 reveal does to evidence");
+
+  assert.match(example, /def list_notes\(folder: Path\) -> list\[Path\]/, "the worked gap is missing");
+  assert.match(example, /the signature is tutor-written here because `Path` and type hints were already used/, "the example must justify the tutor-written signature");
+  assert.match(example, /the learner would have typed the signature too/, "and name the other case");
+});
+
+test("B: the learner writes the teach lines section scopes the signature example to untaught structure", async () => {
+  const section = teachingSection(await readNextLesson());
+  const learnerWrites = sliceBetween(section, "### The learner writes the `teach` lines", "### Step size");
+  assert.match(learnerWrites, /a function signature with its docstring when the task is not teaching what the signature uses/, "the signature example must carry its condition");
 });
 
 test("G: the lesson closes in one fixed order: recap, then check-in, then the emit, then update lines", async () => {
@@ -513,4 +566,60 @@ test("the README describes the arc and the teaching settings where it describes 
   // The PR #21 fast-forward pins survive.
   assert.match(readme, /a task built entirely from concepts you've marked known opens with an offer/);
   assert.match(readme, /it never just does it/);
+});
+
+// ------------------------------------------------------------------ review fixes (PR review, 2026-09-17)
+
+test("knob precedence: the knobs set the defaults and server-authored instructions outrank them", async () => {
+  const section = teachingSection(await readNextLesson());
+
+  assert.match(section, /Three teaching knobs set the defaults for the hands-on method: `drills`, `step_size`, and `check_density`/, "the knobs set defaults");
+  assert.match(
+    section,
+    /\*\*server-authored `instructions`, when present, outrank the knobs\*\*/,
+    "instructions outrank the knobs, as one emphasized instruction",
+  );
+  assert.doesNotMatch(section, /and nothing else does/, "the 'nothing else' wording contradicted paid-mode.md");
+
+  const paid = await readPaidMode();
+  assert.match(paid, /Server-authored `instructions` still outrank the knobs/, "paid mode keeps its precedence line");
+});
+
+test("README: the check-in cadence is stated in plain words and the settings have plain names", async () => {
+  const readme = await readReadme();
+  const start = readme.indexOf("- **Tune how you're taught.**");
+  assert.ok(start !== -1, "the tune bullet is missing");
+  const bullet = readme.slice(start, readme.indexOf("\n", start));
+
+  // Cadence in plain words.
+  assert.doesNotMatch(bullet, /Every few lessons/, "the vague cadence is gone");
+  assert.match(bullet, /after your second task, then about every fifth, and never more than once in a sitting/, "the real cadence");
+  // Plain names for the three settings, no raw enum names outside the one syntax clause.
+  assert.match(bullet, /how many drills per new concept/, "drills, in plain words");
+  assert.match(bullet, /the step size/, "step size, in plain words");
+  assert.match(bullet, /prediction checks/, "prediction checks, in plain words");
+  assert.match(bullet, /only on runs that use new material, or every run/, "the density values in plain words");
+  assert.doesNotMatch(bullet, /\(`drills`, 0 to 3\)|`step_size`:|`check_density`:|`teach_runs`/, "raw enum names are gone from the descriptions");
+  // One place with the exact syntax.
+  assert.match(bullet, /`altitude teaching set drills=1`/, "the exact syntax stays in one place");
+  assert.match(bullet, /`altitude teaching set step_size=line`/, "the exact syntax stays in one place");
+  assert.match(bullet, /`altitude teaching set check_density=every_run`/, "the exact syntax stays in one place");
+  // The answer line is warm and plain.
+  assert.doesNotMatch(bullet, /Your answer is what it records/, "the cold wording is gone");
+  assert.match(bullet, /a yes takes effect from your next lesson, a no leaves things as they are/, "the warm wording");
+  // No em-dashes in the rewritten learner-facing bullet.
+  assert.doesNotMatch(bullet, /—/, "no em-dashes in the bullet");
+});
+
+test("paid mode opens with a four-line release note naming the server fields this version expects", async () => {
+  const paid = await readPaidMode();
+  const lines = paid.split("\n");
+  assert.match(lines[0], /^<!-- Release note \(plugin 0\.6\.0\):/, "the note is the first line and names the version");
+  const end = lines.findIndex((line) => line.includes("-->"));
+  assert.equal(end, 3, "the note is exactly four lines");
+  const note = lines.slice(0, 4).join("\n");
+  assert.match(note, /expects the server to send `teaching_knobs`, `due_review`, and `method_checkin`/, "the three fields");
+  assert.match(note, /uses the default knobs, asks no review question, and never asks a check-in/, "the behavior without them");
+  assert.match(note, /Do not publish 0\.6\.0 before the server that serves these fields is deployed/, "the publish order");
+  assert.match(lines[4], /^# next-lesson — paid mode/, "the heading follows the note");
 });
