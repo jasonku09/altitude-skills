@@ -371,6 +371,121 @@ test("H: a plain-words request to change how they are taught maps to one knob an
   assert.match(section, /change no knob for it/, "a level request changes no knob");
 });
 
+// ------------------------------------------------------------------ replay follow-ups
+//
+// Headless replay of c820c31 (2026-09-17, Claude Code + Codex, scripted learner)
+// showed two rules the tutor read and still did otherwise. Codex handed the
+// project step over as a chat description ("add `list_notes` to notes/store.py
+// and tell me when it's saved"): no marker, no watch, because the step-size
+// rule said the signature was structure it "may" write. And after a drill that
+// stalled it opened the project step itself, skipping the ask. Each fix below
+// is one atomic, ordered rule with its exact phrase.
+
+test("B: the drill loop is numbered, a stalled drill keeps its number, and the ask is the whole next message", async () => {
+  const section = teachingSection(await readNextLesson());
+  const drill = section.indexOf("2. **Drill**");
+  const apply = section.indexOf("3. **Apply**");
+  const drillText = section.slice(drill, apply);
+
+  assert.match(drillText, /Number each drill out loud/, "drills are numbered so both sides know where the loop stands");
+  assert.match(drillText, /drill 1, then drill 2, then the ask/, "the default loop is spelled out in order");
+  assert.match(drillText, /re-issue the exercise under the same drill number/, "a stalled drill is re-issued, not counted twice");
+  assert.match(
+    drillText,
+    /\*\*After the last drill has run, the ask is the whole of your next message\*\*/,
+    "the ask must be one emphasized instruction that owns the whole message",
+  );
+  assert.match(drillText, /Never open the project step on your own initiative after a drill/, "the tutor never skips the ask into the project");
+  assert.match(drillText, /never fold the ask into a message that also starts the project/, "the ask and the project step never share a message");
+  assert.match(drillText, /`drills` of 0 means skip the drill entirely, ask nothing/, "zero drills means no ask either");
+});
+
+test("B: the tutor never writes into learning/scratch/, not to create, fix, or show", async () => {
+  const section = teachingSection(await readNextLesson());
+  const drill = section.indexOf("2. **Drill**");
+  const apply = section.indexOf("3. **Apply**");
+  const drillText = section.slice(drill, apply);
+
+  assert.match(
+    drillText,
+    /\*\*You never write into the scratch file\*\*: `learning\/scratch\/` is theirs to create and theirs to fix/,
+    "the no-write rule must be emphasized and name the folder",
+  );
+  assert.match(drillText, /never corrected by you on disk/, "a wrong attempt is never fixed on disk by the tutor");
+  assert.match(drillText, /never shown by writing it there/, "the answer is never written into the scratch file");
+});
+
+test("C: every teach-gap handover goes through the file with a marker, never a chat description", async () => {
+  const section = teachingSection(await readNextLesson());
+  const stepSize = sliceBetween(section, "### Step size", "### Predictions");
+
+  assert.match(
+    stepSize,
+    /\*\*Every hand-over of a `teach` gap goes through the file, never through a chat description of what to write\.\*\*/,
+    "the handover rule must be one emphasized instruction",
+  );
+  assert.match(stepSize, /`TODO\(you\)` marker where the learner's code goes/, "the marker marks the gap");
+  assert.match(stepSize, /start the watch in that same turn/, "the watch starts with the handover");
+  assert.match(
+    stepSize,
+    /"Add `list_notes` to `notes\/store\.py` and tell me when it's saved" is the miss/,
+    "the replay miss must be quoted",
+  );
+  const fn = stepSize.indexOf("- `function` (default) —");
+  const feature = stepSize.indexOf("- `feature` —");
+  const fnText = stepSize.slice(fn, feature);
+  assert.match(fnText, /you write the signature and docstring into the file/, "at function grain the signature is written, not optional");
+  assert.doesNotMatch(fnText, /structure you may write/, "the optional wording is gone");
+});
+
+test("G: the lesson closes in one fixed order: recap, then check-in, then the emit, then update lines", async () => {
+  const close = closeSection(await readNextLesson());
+
+  assert.match(close, /Close in this order, and nothing else goes between the steps/, "the close must be an ordered sequence");
+  const recap = close.indexOf("4. A one-line recap of the new leaves");
+  const checkin = close.indexOf("5. The method check-in");
+  const updates = close.indexOf("6. The update lines");
+  assert.ok(recap !== -1, "the recap step is missing");
+  assert.ok(checkin > recap, "the check-in step must follow the recap step");
+  assert.ok(updates > checkin, "the update lines must follow the check-in step");
+  assert.match(
+    close,
+    /\*\*the emit is the first thing you do after their answer\*\*/,
+    "the emit must be pinned as the first action after the yes/no",
+  );
+
+  const paid = await readPaidMode();
+  assert.match(paid, /the first action of the turn that reads their answer/, "paid mode must place the emit first in the answering turn");
+});
+
+test("prior knowledge: a correct answer to a check the tutor asked is not a prior-knowledge signal", async () => {
+  const skill = await readNextLesson();
+  const section = sliceBetween(skill, "### When prior knowledge surfaces", "### Bounded code delegation");
+
+  assert.match(
+    section,
+    /\*\*A correct answer to a check you asked is not a prior-knowledge signal\.\*\*/,
+    "the rule must be one emphasized instruction",
+  );
+  assert.match(section, /answered from the explanation you just gave/, "an answered check is the check working");
+  assert.match(section, /however much it volunteers beyond the question/, "a fluent, over-full answer to a check is still an answered check");
+  assert.match(section, /Never move a `teach` concept into the `exercise` set on the strength of an answered check/, "no exercise promotion from a check");
+  assert.match(section, /never skip its drill or its scaffold for it/, "the drill and scaffold survive a good answer");
+});
+
+test("C: the handover is spoken in chat before it is watched, never a silent skeleton", async () => {
+  const section = teachingSection(await readNextLesson());
+  const stepSize = sliceBetween(section, "### Step size", "### Predictions");
+
+  assert.match(stepSize, /\*\*The handover is spoken before it is watched\.\*\*/, "the rule must be one emphasized instruction");
+  assert.match(stepSize, /before the first poll/, "the chat message precedes the poll");
+  assert.match(stepSize, /what you wrote and why, one line each/, "the tutor names what it wrote");
+  assert.match(stepSize, /where the `TODO\(you\)` marker sits/, "the tutor says where the marker is");
+  assert.match(stepSize, /replace the marker line with their code and save/, "the replace-and-save instruction is part of the handover");
+  assert.match(stepSize, /A skeleton written silently and then watched is the miss/, "the silent skeleton is the named miss");
+  assert.match(stepSize, /"Still working, or want a hint\?"/, "the replay miss is quoted");
+});
+
 // ------------------------------------------------------------------ mirrors
 
 test("the copy-paste prompt mirrors the arc in the learner's own voice", async () => {
