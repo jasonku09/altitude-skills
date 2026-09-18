@@ -4,7 +4,7 @@ import test from 'node:test';
 const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
 
 /**
- * Versioned paid lesson execution (plugin 0.5.7 + CLI 0.8.1). Every rule below
+ * Versioned paid lesson execution (plugin 0.5.8 + CLI 0.8.1). Every rule below
  * is a sentence an agent executes at runtime, so each one is pinned here the
  * way concept-roles.test.mjs and sandbox-reach.test.mjs pin theirs — a
  * paraphrase that drops the discriminator silently restores the failure mode.
@@ -18,6 +18,14 @@ const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), 'utf
  */
 const ENTRY_POINTS = ['skills/begin/SKILL.md', 'skills/next-lesson/SKILL.md'];
 const PAID = 'skills/next-lesson/references/paid-mode.md';
+
+test('both plugin manifests carry this branch\'s release, above the 0.5.8 floor', () => {
+  // The lesson executor landed in 0.5.8; this branch ships it inside 0.6.0.
+  // The enforced floor stays 0.5.8 — minima move only for compatibility needs.
+  for (const path of ['.claude-plugin/plugin.json', '.codex-plugin/plugin.json']) {
+    assert.equal(JSON.parse(read(path)).version, '0.6.0', path);
+  }
+});
 
 function sliceBetween(contents, startHeading, endHeading) {
   const start = contents.indexOf(startHeading);
@@ -56,9 +64,9 @@ test('every surface that runs a bound lesson names the supported-client floor', 
   for (const skill of ENTRY_POINTS) {
     const text = read(skill);
     assert.match(text, /CLI 0\.8\.1 or later/, `${skill} does not name the CLI floor`);
-    assert.match(text, /0\.5\.7 or later/, `${skill} does not name the plugin floor`);
+    assert.match(text, /0\.5\.8 or later/, `${skill} does not name the plugin floor`);
   }
-  assert.match(read(PAID), /CLI 0\.8\.1 or later with plugin 0\.5\.7 or later/);
+  assert.match(read(PAID), /CLI 0\.8\.1 or later with plugin 0\.5\.8 or later/);
 });
 
 test('a bound project is recognized from disk before any free-mode degrade', () => {
@@ -154,7 +162,39 @@ test('a rejected flag is an update prompt — never a bare retry, never a false 
   assert.match(read('skills/begin/SKILL.md'), /Do not re-run a rejected command with older flags/);
 });
 
-test('the compatibility doc sequences the notice window ahead of the plugin-side floor', () => {
+test('a live read whose pointer has not moved is an unaccepted claim, never a sync', () => {
+  // The emit exiting cleanly proves only that the claim was sent. Under
+  // server-judged versioned requirements, a "network" read still pointing at
+  // the task just completed can mean Altitude did not accept it — calling
+  // that "synced … normal lag" claims a completion the server never granted.
+  const step4 = sliceBetween(read(PAID), '## Step 4', '## Plan changes');
+  assert.doesNotMatch(step4, /or the pointer has not advanced on a live read, mention that briefly/);
+  assert.match(step4, /has not advanced on a live[^\n]*sent but Altitude has not accepted it yet/);
+  assert.match(step4, /never call it synced, recorded, or done/);
+  assert.match(step4, /never explain it away as lag/);
+  // Agents did not read "it should catch up on its own" as a lag excuse, and
+  // called the task "closed out" once the learner asked to wrap up. Altitude
+  // may have refused the claim, so neither the prediction nor the closure is
+  // true — in that message or any later reply.
+  assert.match(step4, /never predict that it will catch up, sync later, or be accepted on its own/);
+  assert.match(step4, /the next `\/next-lesson` will show whether it was accepted/);
+  assert.match(step4, /never describe the task as done, finished, wrapped, or closed out[^\n]*any later reply this session/);
+  // Agents that opened with a recap led with "This task is done on my end" or
+  // "closes out the substance of this task" before the not-accepted status,
+  // and a later turn called the claim "queued … that'll resolve on its own the
+  // next time we talk to the server" although the live read already had.
+  assert.match(step4, /Open your closing message with that status, before any recap/);
+  assert.match(step4, /any recap that follows describes what the learner did this lesson, never the task's status/);
+  assert.match(step4, /hedged forms such as "done on my end", "closes out the substance", or calling the lesson closed out count too/);
+  assert.match(step4, /never call the completion queued or say it will resolve on its own or the next time Altitude is reached[^\n]*any later reply this session/);
+  assert.doesNotMatch(read('skills/next-lesson/SKILL.md'), /paid mode reports completion/);
+  assert.match(read('skills/next-lesson/SKILL.md'), /paid mode sends the completion claim/);
+  // The same holds for quiz emits: a clean exit is not server-side credit.
+  const step2 = sliceBetween(read(PAID), '## Step 2', '## Step 3');
+  assert.match(step2, /If you mention a quiz emit that exited cleanly, call it sent[^\n]*never recorded, credited, or landed/);
+});
+
+test('the compatibility doc requires available downloads, not advance announcements', () => {
   // The doc is hard-wrapped prose, so assert against it unwrapped: a sentence
   // must not become unpinned because a word moved to the next line.
   const doc = read('WORKSHOP-COMPATIBILITY.md').replace(/\s+/g, ' ');
@@ -162,14 +202,129 @@ test('the compatibility doc sequences the notice window ahead of the plugin-side
   // The floor lives in the skill markdown, so shipping the plugin IS turning
   // enforcement on for every install that auto-updates.
   assert.match(doc, /publishing the plugin is itself an enforcement step/i);
-  assert.match(doc, /notice window/);
-  assert.ok(
-    doc.indexOf('notice window') < doc.indexOf('server-side enforcement'),
-    'the notice window must be documented before server-side enforcement',
-  );
+  assert.match(doc, /Separate advance emails or in-app announcements are not required/);
+  assert.match(doc, /publish CLI 0\.8\.1 and verify/);
+  assert.match(doc, /publish and verify plugin 0\.5\.8/);
+  assert.match(doc, /both downloads and actionable update-required notice delivery before server-side enforcement/);
+  assert.doesNotMatch(doc, /wait through that notice window|confirm CLI adoption/);
+  // Installing the plugin turns its minimum on, so the CLI has to be out first.
+  const cli = doc.indexOf('publish CLI 0.8.1 and verify');
+  const candidate = doc.indexOf('verify plugin 0.5.8 as a release candidate');
+  const plugin = doc.indexOf('publish and verify plugin 0.5.8');
+  const enforcement = doc.indexOf('before server-side enforcement');
+  assert.ok(cli !== -1 && cli < candidate, 'the plugin candidate is verified before the CLI is published');
+  assert.ok(candidate < plugin, 'the plugin is published before its candidate is verified');
+  assert.ok(plugin < enforcement, 'server enforcement is sequenced before the plugin publication');
   // Honest limitation: the live sessions predate the current templates.
   assert.match(doc, /70d6d6a/);
   assert.match(doc, /unexercised by a real agent session/);
+});
+
+test('the tested commit is labeled as pre-rebase and the merged tree as unverified', () => {
+  // 70d6d6a is not an ancestor of this branch; citing it bare implies the
+  // sessions ran against the tree being shipped.
+  const doc = read('WORKSHOP-COMPATIBILITY.md').replace(/\s+/g, ' ');
+  assert.match(doc, /70d6d6a[^.]*pre-rebase[^.]*0\.5\.6 base/);
+  assert.match(doc, /ceafe02/, 'the rebased counterpart of the tested commit is not named');
+  const unexercised = doc.slice(doc.indexOf('unexercised by a real agent session'));
+  assert.match(unexercised, /rebase onto the released 0\.5\.7/, 'the merge onto 0.5.7 is not listed as unexercised');
+  assert.match(unexercised, /not-connected/, 'the later review fixes are not listed as unexercised');
+});
+
+const lineWith = (text, needle) => text.split('\n').find((line) => line.includes(needle));
+const hardRules = (text) => sliceBetween(text, '## Hard rules', '### General rules');
+
+test("the agent's own update-required wording names the restart and the kept, self-syncing queue", () => {
+  // With no server `update_message` (a 0.8.0 CLI rejecting `--session` never
+  // reaches the server), this fallback is the learner's whole notice.
+  for (const path of [...ENTRY_POINTS, PAID]) {
+    const sites = read(path)
+      .split('\n')
+      .filter((line) => /(?:run|name) `altitude update`/.test(line) && !line.includes('update_available'));
+    assert.ok(sites.length > 0, `${path} lost its update-required wording`);
+    for (const site of sites) {
+      assert.match(site, /restart their agent/, `${path} never asks for an agent restart: ${site.slice(0, 80)}`);
+      assert.match(
+        site,
+        /queued progress stays saved and syncs automatically/,
+        `${path} never says queued progress is kept and retried: ${site.slice(0, 80)}`,
+      );
+    }
+  }
+  const doc = read('WORKSHOP-COMPATIBILITY.md').replace(/\s+/g, ' ');
+  assert.match(doc, /restart of the learner's agent/);
+  assert.match(doc, /queued progress stays saved and syncs automatically/);
+});
+
+test('a bound folder on an unpaired computer keeps its journey and is asked to connect', () => {
+  // `connected` and `binding` are both local: a bound folder cloned onto a
+  // fresh laptop reads connected=false with a binding that resolves here.
+  for (const skill of ENTRY_POINTS) {
+    const text = read(skill);
+    const bullet = lineWith(hardRules(text), '**Not connected**');
+    assert.ok(bullet, `${skill} has no not-connected branch in its hard rules`);
+    assert.match(bullet, /`\/altitude:connect`/);
+    assert.match(bullet, /binding, plan, and queued progress/);
+    assert.match(bullet, /says nothing about their version/);
+    assert.match(bullet, /before the branches below/, `${skill} lets a no-reason read pass for version evidence`);
+    assert.match(bullet, /free mode/);
+  }
+  const next = read('skills/next-lesson/SKILL.md');
+  const local = lineWith(next, 'Two facts are local');
+  assert.doesNotMatch(local, /When `connected` is false, or `binding` is null/, 'connected=false still means free mode');
+  assert.match(local, /not-connected branch/);
+  assert.match(lineWith(next, '**Free mode:**'), /not connected/);
+
+  const begin = read('skills/begin/SKILL.md');
+  const disconnected = lineWith(begin, 'If `connected` is false');
+  assert.match(disconnected, /`\.altitude`/, 'begin offers free routes to an unpaired bound folder');
+  assert.match(disconnected, /not-connected branch/);
+});
+
+test('a missing altitude command in a bound folder gets the install command, never altitude update', () => {
+  // `altitude update` cannot run without `altitude`. Only command-not-found
+  // gets the install route; cache paths keep their no-reinstall rule.
+  for (const skill of ENTRY_POINTS) {
+    const text = read(skill);
+    for (const rule of text.split('\n').filter((line) => /missing command, nonzero exit/.test(line))) {
+      assert.match(rule, /`altitude` itself as not found/, `${skill} sends a missing CLI to altitude update`);
+    }
+    const install = text
+      .split('\n')
+      .find((line) => /`altitude` itself as not found[^.]*`npm install -g @learnaltitude\/cli`/.test(line));
+    assert.ok(install, `${skill} never gives a bound folder the install command`);
+    assert.match(install, /binding, plan, and queued progress/);
+    for (const branch of ['**Stale copy**', '**Reach failure**']) {
+      assert.doesNotMatch(lineWith(text, branch), /npm install|reinstall/, `${skill} ${branch} recommends reinstalling`);
+    }
+  }
+});
+
+test("next-lesson's hard rules say what a host with no session ID gets", () => {
+  // Step 1 and paid-mode.md both defer to "the hard rules" for this case, and
+  // the agent never reaches paid-mode.md without a scoped read.
+  for (const skill of ENTRY_POINTS) {
+    const rules = hardRules(read(skill));
+    assert.match(rules, /host that exposes no session ID/, `${skill}'s hard rules skip the no-session host`);
+    assert.match(rules, /bound journey waits|bound lesson pauses/);
+    assert.match(rules, /Claude Code does/, `${skill} never names an agent that exposes a session ID`);
+    assert.match(rules, /standalone free method still works/);
+    assert.match(rules, /missing session ID is not version evidence/);
+  }
+});
+
+test("an ID dictated into the learner's terminal is bare in cmd", () => {
+  // cmd does not strip single quotes, so '<uuid>' reaches the CLI with the
+  // apostrophes in it and reads against a session that does not exist.
+  for (const skill of ENTRY_POINTS) {
+    const dictated = read(skill)
+      .split('\n')
+      .filter((line) => /literal ID/.test(line) && /single[- ]quot/.test(line));
+    assert.ok(dictated.length >= 2, `${skill} lost a learner-terminal read`);
+    for (const line of dictated) {
+      assert.match(line, /bare in `cmd`/, `${skill} single-quotes an ID for cmd: ${line.slice(0, 80)}`);
+    }
+  }
 });
 
 test('a runtime that was read and says update_required stays the server message\'s to deliver', () => {
