@@ -35,7 +35,7 @@ In the standalone free method, all state lives in a `learning/` folder in your p
 - `learning/knowledge-graph.md` — the living map of what you actually know
 - `learning/file-map.md` — why every file and folder in your repo exists
 
-The free method is complete and works standalone: `/start-project` + `/plan-journey` (or `/adopt-project`), then `/next-lesson`. An Altitude subscription adds a journey planned on the web, the server-side learning map, scheduled reviews, and progression gates. `/begin` materializes that journey as a readable local `learning/plan.md`; `/next-lesson` refreshes it and syncs completed tasks while you remain entitled. If a subscription pauses, the local plan remains yours and lessons continue in free mode with local knowledge-graph evidence.
+The free method is complete and works standalone: `/start-project` + `/plan-journey` (or `/adopt-project`), then `/next-lesson`. An Altitude subscription adds a journey planned on the web, the server-side learning map, scheduled reviews, and progression gates. `/begin` materializes that journey as a readable local `learning/plan.md`; `/next-lesson` refreshes it and syncs completed tasks while you remain entitled. If a subscription pauses, the local plan remains yours and lessons continue in free mode with local knowledge-graph evidence — except a task that carries Altitude's own lesson requirements, which waits for an active subscription with your plan and progress untouched (a separate standalone project stays open to you).
 
 ## Install
 
