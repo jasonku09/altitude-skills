@@ -66,11 +66,14 @@ test("exercise concepts are used without the teaching apparatus but stay load-be
   );
   // Both quiz surfaces carry the guard: paid Step 2's opening review (in the
   // paid reference file) and Step 3's opportunistic checks (mode-neutral).
-  // Either one alone leaves a door open.
+  // Either one alone leaves a door open. Since the 2026-09-17 pedagogy
+  // redesign the opening review draws from the server-picked `due_review`
+  // alone, which by construction is never one of the task's own concepts,
+  // `teach` or `exercise`.
   const paid = await readPaidMode();
   assert.match(
     paid,
-    /A review question may target only a `teach` concept — never an `exercise` concept/,
+    /\*\*The review question comes only from `current_task\.due_review`\.\*\*/,
   );
   assert.match(
     skill,
@@ -272,10 +275,13 @@ test("the thin client emits only the existing event vocabulary — no skip or ma
 
   const emitted = [...combined.matchAll(/altitude emit ([a-z-]+)/g)].map((m) => m[1]);
   assert.equal(emitted.length > 0, true, "the paid evidence path lost its emit commands");
+  // `teaching-checkin` (2026-09-17 pedagogy redesign) records the learner's
+  // yes/no to a proposed knob change; the server applies it. It is not mastery
+  // evidence and not a skip.
   assert.deepEqual(
     [...new Set(emitted)].sort(),
-    ["quiz-moment", "task-completed"],
-    "next-lesson may only emit the pre-existing events; a skip/mastery mutation belongs to the server and the map UI",
+    ["quiz-moment", "task-completed", "teaching-checkin"],
+    "next-lesson may only emit the pre-existing events plus teaching-checkin; a skip/mastery mutation belongs to the server and the map UI",
   );
 });
 

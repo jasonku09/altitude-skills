@@ -8,6 +8,19 @@ Plugin 0.5.7 is the already-released hint-ladder version; it does not contain th
 lesson support. Keep released-version announcements at verified published versions
 until 0.5.8 is actually available.
 
+Plugin 0.6.0 is this branch's pedagogy baseline — learner-written teach lines,
+scratch drills, the server-picked due-review question, and the method check-in. It
+does not raise the enforced floor: a versioned lesson still requires CLI 0.8.1 or
+later and plugin 0.5.8 or later, because minima move only for real compatibility
+needs. 0.6.0 expects the server to send `teaching_knobs`, `due_review`, and
+`method_checkin` on the journey envelope, and degrades in place when they are
+absent — default knobs, no review question, no check-in — so it is safe against an
+older server but pointless before the one that serves them is deployed. Its two new
+commands, `altitude teaching set` and `altitude emit teaching-checkin`, need CLI
+0.9.0; on an older CLI they fail and the skill says the setting or answer could not
+be recorded rather than claiming it landed. Publication order for it: deploy the
+server that serves those fields, publish CLI 0.9.0, then publish plugin 0.6.0.
+
 The paid task's requirements override legacy hands-on instructions. The free
 standalone method keeps its existing behavior. Server-only planning, pedagogy,
 capability judgment, and entitlement remain in the Altitude application.
@@ -120,10 +133,11 @@ rather than queued or synced, and no lesson claims a completion the server did n
 accept. A bound project whose client is too old keeps its binding, its generated
 plan, and its queued events while it waits for the update.
 
-Rollback is per artifact and needs no data migration. Reverting the plugin to 0.5.7
-restores the previous instructions with the binding and plan intact; reverting the
-CLI to the last published build restores the previous envelope, and the server keeps
-accepting version-less claims until enforcement is enabled. Roll enforcement back
+Rollback is per artifact and needs no data migration. Reverting the plugin one
+release — 0.6.0 back to 0.5.8, or 0.5.8 back to 0.5.7 — restores the previous
+instructions with the binding and plan intact; reverting the CLI to the last
+published build restores the previous envelope, and the server keeps accepting
+version-less claims until enforcement is enabled. Roll enforcement back
 first, then the clients. Nothing in this change publishes a client, deploys a server,
 or enables enforcement.
 

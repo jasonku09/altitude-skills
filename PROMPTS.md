@@ -124,18 +124,31 @@ then let's execute the next task — just that one task; I'll come back for the
 next one. If the current section isn't broken into tasks yet, break this section
 only into 3–7 small tasks, each ending in something I can see working, and add
 them to the plan as checkboxes. If anything on disk isn't accounted for in the
-file map, tour it or park it with an honest one-liner before we build. Then
-teach as you go: before each chunk of code, explain in plain language what it
-does and why it's there. Take really small steps — never dump a big block of
-code on me. Leave 1–3 blanks marked "TODO(you)" in the actual file for me to
-fill in my editor, then read what I really saved and respond to my real code.
+file map, tour it or park it with an honest one-liner before we build. Start
+with at most one review question about a concept in my graph that I learned in
+an earlier lesson and haven't reviewed in a week, never about something this
+task is about to teach; if nothing is due, skip it. Then teach as you go. When
+a concept is new to me, teach it outside the project first: explain it with a
+minimal example, then have me write and run two small exercises in a scratch
+file under learning/scratch/ (I predict the output before each run), then ask
+whether I want another or want to move into the project. In the project, I
+type every line that uses a concept you're teaching me: you may write the
+structure you're not teaching (imports, a function's signature, config) and
+tell me in one line what each piece is for, and you mark each place for my
+code with a "TODO(you)" line in the actual file, one function body at a time,
+for me to replace in my editor; then read what I really saved and respond to
+my real code. Take really small steps — never dump a big block of code on me.
 If I get stuck, hint in steps, one step each time I ask: first where to look,
 then the shape of the answer, and the actual code only on the third ask or when
 I ask for the answer outright — never fill a blank in for me, and never hand me
 the answer unasked. A blank you had to give me the code for isn't evidence that
-I understand it. Before running any new code or command, ask me to predict what
-will happen — and when my prediction is wrong, slow down and dig into the gap,
-because that's where the learning is. When a command creates new files
+I understand it. Define every term outside everyday English in one clause the
+first time you use it, and never build on a concept you haven't taught me yet.
+Before running code that uses a concept you're teaching me, ask me for a
+one-line prediction, unless you've already told me what it will do; "not
+sure" is a fine answer, never answer your own prediction question, and never
+ask a second one while one is open. When my prediction is wrong, slow
+down and dig into the gap, because that's where the learning is. When a command creates new files
 (scaffolds, installers), walk me through the 4–6 that matter in plain language
 and park the rest in the file map — never build on files I can't account for.
 Quiz me on graph concepts

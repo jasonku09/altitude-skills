@@ -14,18 +14,22 @@ If the current section has no task breakdown yet, break **this section only** in
 
 ## Step 2 — Review one stale leaf (free)
 
-Scan the graph for concepts with status `practicing` or `understood` whose `last-reviewed` is more than ~7 days old. If any exist, pick **one** — prefer one relevant to today's task — and ask a single review question before starting.
+Scan the graph for concepts with status `practicing` or `understood` whose `last-reviewed` is more than ~7 days old. If any exist, pick **one** — prefer one relevant to today's task — and ask a single review question before starting. Never pick a review concept from today's task's own concepts unless it already stands at `practicing` or `understood` from an earlier lesson: a `seed` or `introduced` leaf has not been learned yet, and nothing stale means no review question.
 
 - Pass → update `last-reviewed`.
 - Struggle → downgrade `understood` to `practicing`, note it in `evidence`, and give a 2–3 sentence refresher. No shame, no lecture — forgetting is how memory works; that's why we review.
 
 Every few lessons, swap the concept question for a repo-tour question from `learning/file-map.md` — "quick tour check: what's `package-lock.json` for?" This is the one place a plain "what is it for?" is right: the tour was lessons ago, so recalling it is retrieval rather than reading back. Pass → refresh its date. Struggle → back to `parked`, with a plain-language refresher.
 
+## Step 3 — Teaching knobs, drills, and check-ins (free)
+
+Free mode has no envelope, so SKILL.md's defaults are the knobs for every free lesson: two drills per new concept, function-sized gaps, predictions on `teach` runs only. A new concept is one whose graph status is `seed` or missing; its drills go in `learning/scratch/<graph name>.<ext>`, and a correct drill counts as a correct fill-in in Step 4's evidence, with a `learning/scratch/` line added to `learning/file-map.md` the first time the folder is created. A direct knob change under SKILL.md's "Direct knob changes" has nothing to write to in free mode: apply it for the rest of the session and say that it holds for this session. There is no method check-in in free mode — nothing directs one, so never ask one.
+
 ## Step 3 — When prior knowledge surfaces (free)
 
 In free mode, give the same immediate accommodation — the concept joins this session's `exercise` set on their word alone — and record the concept as `understood` in `learning/knowledge-graph.md` with the evidence note `self-reported prior knowledge`. There is no account mutation or map handoff in standalone free mode.
 
-**The fast-forward offer (free).** Free mode has no envelope roles, so the graph decides the all-known test: today's task is all-`exercise` when every concept it exercises stands at `understood` in `learning/knowledge-graph.md` (or joined this session's `exercise` set under the rule above, which records that same status), and it is mixed the moment one of them is `seed`, `introduced`, `practicing`, or missing from the graph. **`practicing` is not enough.** It is the cap on first contact, so every concept from last session's lesson sits there; only a passed retrieval on a later day makes it `understood`. A `practicing` concept keeps the larger fill-in gaps Step 3 gives it in free mode — that rule is untouched — and a task carrying one gets no offer. Make SKILL.md's fast-forward offer on exactly that test, at the task's start, once; a mixed task gets none.
+**The fast-forward offer (free).** Free mode has no envelope roles, so the graph decides the all-known test: today's task is all-`exercise` when every concept it exercises stands at `understood` in `learning/knowledge-graph.md` (or joined this session's `exercise` set under the rule above, which records that same status), and it is mixed the moment one of them is `seed`, `introduced`, `practicing`, or missing from the graph. **`practicing` is not enough.** It is the cap on first contact, so every concept from last session's lesson sits there; only a passed retrieval on a later day makes it `understood`. A `practicing` concept still gets the full hands-on method in free mode — learner-written lines at the step-size grain, no fresh drill since it was introduced before — and a task carrying one gets no offer. Make SKILL.md's fast-forward offer on exactly that test, at the task's start, once; a mixed task gets none.
 
 ## Step 4 — Close the loop (free)
 
