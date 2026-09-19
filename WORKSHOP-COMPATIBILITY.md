@@ -34,7 +34,7 @@ server completion/evidence validation and rollout sequencing remain required.
 Every server-planned lesson requires CLI 0.8.1 or later and plugin 0.5.8 or later,
 including historical Beginner tasks whose requirements are null. Those lessons still
 execute their existing hands-on method once the client is supported, and their data
-and recorded progress are preserved untouched. An unsupported or unreportable client
+and recorded progress are preserved untouched. A client with a known incompatible version
 gets explicit update-required copy naming `altitude update`, the plugin update and a
 restart of the learner's agent, and that queued progress stays saved and syncs
 automatically once both are updated — never an old-client retry without the new
@@ -42,7 +42,8 @@ flags, a legacy-client exemption, a silent free or Beginner substitute, or a
 compatibility answer borrowed from another concurrent session.
 
 Session affinity is what makes the "no borrowed answer" half of that hold, and it
-rests on the host exposing a real session ID. Both supported hosts do: Claude Code
+rests on the host exposing a real session ID, either in the current hook context
+or in its environment. Both supported hosts do: Claude Code
 through `CLAUDE_CODE_SESSION_ID`, and Codex through `CODEX_THREAD_ID`. The
 constraint therefore does not drop Codex from the supported set.
 
@@ -57,13 +58,13 @@ passed `{verified:true, command_id_equals_all_hook_ids:true, hook_count:2}`. Rea
 that for what it is: one build on one platform, not a claim about every Codex
 version or OS. `hooks/codex-field-mapping.json` is not the evidence — it maps a
 stdin payload field and never names an environment variable. A host that exposes
-none does not get an unscoped read, which would let another concurrent session's
-marker answer the compatibility question — bound lesson execution pauses there
+neither a current hook identity nor a session environment variable cannot identify
+its caller and must not use another concurrent session's marker — bound lesson execution pauses there
 instead, with the standalone free method, the editor hooks, and every tool
-unaffected. Closing that gap needs a session-neutral way for the CLI to identify
-its caller, which is CLI work in the separate monorepo and cannot be added from
-this repo; until it ships, treat "bound journeys require a session-ID-exposing
-host" as a documented constraint.
+unaffected. The companion CLI recovery change reads an unambiguous current host environment
+when a task command omits its ID and prints the exact identity through real hooks.
+It never selects the newest session. "bound journeys require a session-ID-exposing
+host" remains a documented constraint; a current hook identity satisfies it.
 That probe covered session identity and nothing else: no Codex Altitude paid lesson
 has been run, so full Codex paid-lesson acceptance stays a release prerequisite. A
 session whose identity cannot be read, or does not match the one the hooks report,
@@ -77,6 +78,29 @@ refreshes a cold copy — must not create, replace, or clear that session's plug
 identity, and must never stand a missing marker in for a present one. The agent must
 re-read under the same session afterwards, so a refresh that registered the session
 as marker-less would turn that next read into false version evidence.
+
+## Session recovery change (not published)
+
+The companion monorepo branch `ws/runtime-session-recovery` extends the local CLI
+task envelope, leaving the server down-sync contract unchanged. `session_required`
+means the current session lacks a usable plugin observation or the running CLI
+version cannot be identified;
+`requirements_unavailable` means an Intermediate task lacks its server requirements.
+Both carry `recovery_message`. Only `supported` permits teaching; neither state
+sends the learner through another software update. Known incompatible versions
+retain `update_required` and the server's update instructions.
+
+The plugin uses the exact current hook command or the host's own session variable.
+If that session's record is missing, its normal hook re-observes the plugin on the
+next learner prompt; then the agent retries the same scoped read. Reads do not
+create or edit session records. An unresolved recovery pauses and goes to support
+instead of repeating updates. Missing lesson requirements get one online reload
+and then support, with no fabricated requirements or progress loss.
+
+This source change still needs coordinated CLI/plugin publication with version
+bumps. It does not raise the compatibility floor, publish an artifact, or activate
+a server flag. Merge it with the pending pedagogy plugin changes before selecting
+the release version; old CLIs retain their historical runtime behavior.
 
 Publication is staged, and none of it happens in this PR. The version floor is
 enforced by the plugin as well as the server: it lives in the skill markdown, and
@@ -149,3 +173,23 @@ in the agent's own update-required wording, and session IDs dictated bare in `cm
 Repository tests pin those sentences, but a markdown assertion is not an agent
 following them; rerun the live scratch sessions before release and treat the
 September 7 results as evidence about the older text only.
+
+
+## Local recovery acceptance, 2026-09-18
+
+A real Claude Code 2.1.276 session loaded this plugin worktree and the companion
+built CLI against a localhost Beginner fixture. A test wrapper removed only the
+scratch session's plugin observation before its first lesson read. The agent got
+`session_required`, followed recovery guidance, and requested a new learner prompt
+without issuing updates or manual hooks. The second real prompt hook restored the
+observation, and the same session read returned `supported`. No lesson completion
+was emitted. This demonstrates recovery, not a diagnosis of the reporting learner's machine or a
+production/marketplace upgrade test.
+
+The CLI matrix also checked explicit matching, omitted/empty with a current Claude
+host ID, omitted with a Codex host ID, explicit wrong ID, no identity, and ambiguous
+host IDs. Codex environment cases are process fixtures, not a real Codex session.
+The server and scratch flusher were stopped. Raw evidence lives at
+`~/.cache/altitude-runtime-recovery/` (including `REPORT.md`, results and matrix);
+the harness is `~/.cache/altitude-runtime-recovery/reproduce.py`. The two-turn test
+passed again after the final CLI changes.

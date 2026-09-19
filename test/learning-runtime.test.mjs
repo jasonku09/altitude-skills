@@ -526,3 +526,40 @@ test('the compatibility doc states the CLI contract for a refresh run outside th
   assert.match(doc, /must not create, replace, or clear/);
   assert.match(doc, /re-read under the same session/i);
 });
+
+test('missing session records trigger recovery before another update or lesson execution', () => {
+  for (const path of [...ENTRY_POINTS, PAID]) {
+    const text = read(path);
+    assert.match(text, /`session_required`/, `${path} cannot route the reproduced session failure`);
+    assert.match(text, /`recovery_message`/, `${path} loses the runtime recovery instruction`);
+    assert.match(text, /current session's hook/, `${path} cannot recover identity without a host variable`);
+    assert.match(text, /Never choose the newest session/, `${path} could borrow another agent's compatibility`);
+    assert.match(text, /Never run `altitude hook`/, `${path} could manufacture a version observation`);
+    assert.match(text, /fresh read[^\n]*`supported`/, `${path} could resume without verifying recovery`);
+  }
+});
+
+test('missing lesson requirements get reload/support guidance instead of an update loop', () => {
+  for (const path of [...ENTRY_POINTS, PAID]) {
+    assert.match(read(path), /`requirements_unavailable`/);
+    assert.match(read(path), /do not update[^\n]*requirements/i);
+  }
+});
+
+test('session recovery preserves explicit session affinity and pending progress', () => {
+  for (const path of [...ENTRY_POINTS, PAID]) {
+    const text = read(path);
+    assert.match(text, /correct the `--session` value/);
+    assert.match(text, /hooks[^\n]*next learner prompt/i);
+    assert.match(text, /do not edit[^\n]*session records/i);
+    assert.match(text, /preserve[^\n]*queued/i);
+  }
+});
+
+test('compatibility notes distinguish the recovery release from earlier upgrade-only behavior', () => {
+  const doc = read('WORKSHOP-COMPATIBILITY.md');
+  assert.match(doc, /session_required/);
+  assert.match(doc, /requirements_unavailable/);
+  assert.match(doc, /next learner prompt/);
+  assert.doesNotMatch(doc, /An unsupported or unreportable client\s+gets explicit update-required/);
+});
