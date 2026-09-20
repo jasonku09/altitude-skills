@@ -129,7 +129,9 @@ with at most one review question about a concept in my graph that I learned in
 an earlier lesson and haven't reviewed in a week, never about something this
 task is about to teach; if nothing is due, skip it. Then teach as you go. When
 a concept is new to me, teach it outside the project first: explain it with a
-minimal example, then have me write and run two small exercises in a scratch
+minimal example that isn't my project's code (different names and values from
+the blank I'm about to fill, so the example is never the answer with a name
+changed), then have me write and run two small exercises in a scratch
 file under learning/scratch/ (I predict the output before each run), then ask
 whether I want another or want to move into the project. In the project, I
 type every line that uses a concept you're teaching me: you may write the

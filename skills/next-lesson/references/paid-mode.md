@@ -1,6 +1,6 @@
 <!-- Release note (plugin 0.6.1): since 0.6.0 this plugin expects the server to send `teaching_knobs`, `due_review`, and `method_checkin`.
      On a server that does not send them, the tutor uses the default knobs, asks no review question, and never asks a check-in.
-     Do not publish 0.6.0 or later before the server that serves these fields is deployed; 0.6.1 is a prose-only patch on 0.6.0 with no new CLI or server requirement (handover in words, never in code; the file watch runs in the background on hosts that wake the agent when a background command exits, in the foreground elsewhere).
+     Do not publish 0.6.0 or later before the server that serves these fields is deployed; 0.6.1 is a prose-only patch on 0.6.0 with no new CLI or server requirement (handover in words, never in code; introduction example on different material than the gap; the file watch runs in the background on hosts that wake the agent when a background command exits, in the foreground elsewhere; watch baseline taken once and carried into every chunk and re-arm).
      The enforced runtime floor stays CLI 0.8.1 / plugin 0.5.8 and the session hooks stay fail-open; `altitude teaching set` and `altitude emit teaching-checkin` need CLI 0.9.0 and degrade to "could not be recorded" on older CLIs. -->
 # next-lesson — paid mode
 

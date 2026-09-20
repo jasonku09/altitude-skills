@@ -173,3 +173,70 @@ test("the release notes mention the watch change and move no floor", async () =>
   assert.match(paid.split("-->")[0], /background/, "the paid-mode release comment mentions the watch change");
   assert.match(paid.split("-->")[0], /CLI 0\.8\.1 \/ plugin 0\.5\.8/, "the floor is unchanged");
 });
+
+/**
+ * The save lost between poll chunks (learner-model replay, 2026-09-20). A
+ * foreground tutor chained 25-second poll chunks and opened every chunk with a
+ * fresh `last=$(stat …)`. The learner's finished save landed in the 11 seconds
+ * between two chunks, became the next chunk's baseline, and was never seen: five
+ * more chunks reported no change and the finished code sat unreviewed. A
+ * background watcher re-armed mid-turn has the same hole if it takes its own
+ * reading at start. One rule for both: the baseline is a number the tutor
+ * carries, not a reading a command takes when it happens to start.
+ */
+const BASELINE_RULE =
+  "**The baseline is taken once, when the watch is armed, and carried as a literal value into every command that watches after it.**";
+
+test("the baseline is taken once and carried as a literal, on every host", async () => {
+  const watch = watchSection(await readNextLesson());
+  const rule = watch.split("\n\n").find((p) => p.includes(BASELINE_RULE));
+  assert.ok(rule, "the baseline rule is one emphasized instruction inside the watch section");
+
+  assert.ok(rule.startsWith("**The watch.**"), "the rule lives in the host-independent watch paragraph");
+  assert.match(rule, /right after you write the skeleton/, "when the baseline is taken");
+  assert.match(rule, /`base=\d+`/, "the literal is shown as a literal (macOS/Linux)");
+  assert.match(rule, /PowerShell: `\$base = \d+`, the `Ticks` value/, "the PowerShell variant carries the Ticks value the same way");
+  assert.match(rule, /never against a fresh reading taken when the command starts/, "the hole is named");
+  assert.match(rule, /becomes the new baseline and is never seen/, "the mechanism of the miss is stated");
+  assert.match(rule, /compares once before its first sleep/, "a save that landed while nothing polled is caught at once");
+  assert.match(rule, /Re-take the baseline only when you read the file in response to a change/, "the only re-take");
+  assert.match(rule, /take the time first and read the file second/, "a save that lands during the read is not swallowed");
+});
+
+test("foreground chunks share one baseline, and the replayed miss is named", async () => {
+  const watch = watchSection(await readNextLesson());
+  const foreground = sliceBetween(watch, "**Otherwise the watch runs in the foreground", "is work in progress, not a submission");
+
+  assert.match(foreground, /several calls make one window and one baseline/, "chunks make one window AND one baseline");
+  assert.match(foreground, /takes no reading of its own/, "a later chunk never re-reads the baseline");
+  assert.match(foreground, /The miss, in replay/);
+  assert.match(foreground, /each opened with `last=\$\(stat …\)`/, "the anti-pattern is quoted");
+  assert.match(foreground, /in the 11 seconds between two chunks/, "where the save landed");
+  assert.match(foreground, /sat unreviewed/, "what it cost the learner");
+});
+
+test("a re-armed background watcher compares against the carried baseline, not the time at re-arm", async () => {
+  const watch = watchSection(await readNextLesson());
+  const background = sliceBetween(watch, BACKGROUND_RULE, "**Otherwise the watch runs in the foreground");
+
+  assert.doesNotMatch(background, /it records the modification time/, "the watcher no longer takes its own baseline");
+  assert.match(background, /takes the baseline you carry as a literal/, "the watcher is handed its baseline");
+  assert.match(background, /A re-armed watcher gets the same carried baseline, never the time at re-arm/, "re-arm rule");
+  assert.match(background, /a save that landed while you were mid-turn/, "the swallowed save is named");
+  assert.match(background, /reports it at once/, "the new watcher exits SAVED on its first comparison");
+});
+
+test("a silent re-arm after a work-in-progress save re-takes the baseline time-first", async () => {
+  const watch = watchSection(await readNextLesson());
+  const wip = watch.split("\n\n").find((p) => p.includes("is work in progress, not a submission"));
+
+  assert.match(wip, /from the time you took just before that read/, "the re-arm's baseline predates the read");
+});
+
+test("the 0.6.1 notes mention the carried baseline", async () => {
+  const compat = await readFile(join(repoRoot, "WORKSHOP-COMPATIBILITY.md"), "utf8");
+  const paid = await readFile(join(repoRoot, "skills", "next-lesson", "references", "paid-mode.md"), "utf8");
+
+  assert.match(compat.replace(/\s+/g, " "), /Plugin 0\.6\.1.*baseline/i);
+  assert.match(paid.split("-->")[0], /watch baseline taken once and carried/);
+});

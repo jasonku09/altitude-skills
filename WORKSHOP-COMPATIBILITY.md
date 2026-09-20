@@ -29,7 +29,13 @@ and wake the agent when it exits (Claude Code: Bash `run_in_background`): the tu
 the watcher and ends its turn, so the introduction, the handover, and the expiry question
 each arrive as the final message of a turn instead of as text before a blocking poll,
 which Claude Code did not reliably send. Hosts without that capability (Codex today) keep
-the foreground watch unchanged. It adds no
+the foreground watch. Two more prose rules ride the same patch, both found replaying the
+lesson on the models learners use: the introduction's example (and every drill) teaches
+the concept on different material than the gap, never the gap's own code under another
+name, and the handover never points back at the example as the thing to copy; and the
+watch baseline is taken once, when the watch is armed, and carried as a literal into every
+later poll chunk and every re-armed watcher, so a save that lands between two commands is
+no longer swallowed as the next command's starting point. It adds no
 CLI, server, or envelope requirement and moves no floor, so it inherits 0.6.0's
 publication order unchanged and can be published on its own once 0.6.0's
 prerequisites are live.
