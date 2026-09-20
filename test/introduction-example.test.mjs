@@ -118,3 +118,50 @@ test("the 0.6.1 notes mention the introduction-example rule", async () => {
   assert.match(compat.replace(/\s+/g, " "), /Plugin 0\.6\.1.*introduction's example/i);
   assert.match(paid.split("-->")[0], /introduction example on different material than the gap/);
 });
+
+/**
+ * "Different material" read as "no material" (learner-model replay, 2026-09-20).
+ * After the rule above landed, one learner model gave no code example at all in
+ * 2 of 7 introductions: a union was described as a variable that "may be either
+ * a boolean (true/false) or text", and the `|` operator never appeared before
+ * the learner's save. The rule already says showing the syntax stays; this pins
+ * the sentence that makes the example itself non-optional.
+ */
+test("different material is never no material: the introduction always shows a runnable example of the syntax", async () => {
+  const skill = await read("skills/next-lesson/SKILL.md");
+  const rule = paragraphContaining(skill, RULE);
+
+  assert.match(rule, /\*\*Different material is never no material:\*\*/, "one emphasized sentence-opener inside the rule");
+  assert.match(rule, /always shows a runnable minimal example of the taught syntax/, "the example is not optional");
+  assert.match(rule, /on that different material/, "and it is still on different material");
+  assert.match(rule, /described only in words/, "the opposite miss is named");
+  assert.match(rule, /the `\|` never on screen before the gap/, "the replayed miss: the operator was never shown");
+  assert.ok(
+    rule.indexOf("**Different material is never no material:**") > rule.indexOf("Showing the syntax is the point of the example and stays"),
+    "it follows the sentence it hardens",
+  );
+});
+
+test("the 0.6.1 notes mention that the example is always shown", async () => {
+  const compat = await read("WORKSHOP-COMPATIBILITY.md");
+  const paid = await read("skills/next-lesson/references/paid-mode.md");
+
+  assert.match(compat.replace(/\s+/g, " "), /Plugin 0\.6\.1.*always shows a runnable example/i);
+  assert.match(paid.split("-->")[0], /always a runnable example/);
+});
+
+/**
+ * Lane 5 replay: with the sentence above in place, one introduction in twelve on
+ * the same learner model still described the concept in words only. The rule
+ * paragraph is long; the numbered Introduce step is where the tutor acts, so the
+ * step itself says the example is code.
+ */
+test("the Introduce step itself says the example is shown as code", async () => {
+  const skill = await read("skills/next-lesson/SKILL.md");
+  const introduce = skill.split("\n").find((l) => l.startsWith("1. **Introduce**"));
+
+  assert.match(introduce, /with a minimal example/, "unchanged opener");
+  assert.match(introduce, /shown as code, in a fenced block/, "the example is code on screen, not a description");
+  assert.match(introduce, /a sentence about what the syntax would do is not an example/, "the words-only introduction is ruled out where the tutor acts");
+  assert.match(introduce, /on different material than the gap/, "still points at the rule");
+});

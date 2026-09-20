@@ -35,7 +35,14 @@ the concept on different material than the gap, never the gap's own code under a
 name, and the handover never points back at the example as the thing to copy; and the
 watch baseline is taken once, when the watch is armed, and carried as a literal into every
 later poll chunk and every re-armed watcher, so a save that lands between two commands is
-no longer swallowed as the next command's starting point. It adds no
+no longer swallowed as the next command's starting point. Two hardenings of those rules
+followed from the same replays: the window's deadline is carried as a literal the same way,
+so a foreground poll chunk that merely runs out of its tool-timeout slice reports `WAITING`
+and is chained silently, and the expiry question is asked only when the carried 3-minute
+deadline has passed (a re-armed watcher gets the remainder of its window, never a fresh
+3 minutes); the baseline reading also checks that the marker is still in the file, so a save
+that beat a slow first reading is reviewed instead of becoming the baseline; and the introduction always shows a runnable example of the taught syntax, so
+"different material" cannot be read as "no example". It adds no
 CLI, server, or envelope requirement and moves no floor, so it inherits 0.6.0's
 publication order unchanged and can be published on its own once 0.6.0's
 prerequisites are live.
