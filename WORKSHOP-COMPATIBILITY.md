@@ -23,7 +23,13 @@ server that serves those fields, publish CLI 0.9.0, then publish plugin 0.6.0.
 
 Plugin 0.6.1 is a prose-only patch on 0.6.0: a `teach` gap's handover now says what
 the gap must do, in words, and never the code that does it (the exact code still
-reaches a learner only through hint-ladder rung 3 or the impatience rule). It adds no
+reaches a learner only through hint-ladder rung 3 or the impatience rule). It also moves
+the file watch to a background watch on hosts that can run a command in the background
+and wake the agent when it exits (Claude Code: Bash `run_in_background`): the tutor starts
+the watcher and ends its turn, so the introduction, the handover, and the expiry question
+each arrive as the final message of a turn instead of as text before a blocking poll,
+which Claude Code did not reliably send. Hosts without that capability (Codex today) keep
+the foreground watch unchanged. It adds no
 CLI, server, or envelope requirement and moves no floor, so it inherits 0.6.0's
 publication order unchanged and can be published on its own once 0.6.0's
 prerequisites are live.
