@@ -136,8 +136,11 @@ type every line that uses a concept you're teaching me: you may write the
 structure you're not teaching (imports, a function's signature, config) and
 tell me in one line what each piece is for, and you mark each place for my
 code with a "TODO(you)" line in the actual file, one function body at a time,
-for me to replace in my editor; then read what I really saved and respond to
-my real code. Take really small steps — never dump a big block of code on me.
+for me to replace in my editor. When you hand a blank over, tell me in words
+what each blank has to do, never the code that does it, however small the blank
+is: on a one-line blank the code is the whole answer. Then read what I really
+saved and respond to my real code. Take really small steps — never dump a big
+block of code on me.
 If I get stuck, hint in steps, one step each time I ask: first where to look,
 then the shape of the answer, and the actual code only on the third ask or when
 I ask for the answer outright — never fill a blank in for me, and never hand me
