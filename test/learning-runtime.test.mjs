@@ -20,10 +20,11 @@ const ENTRY_POINTS = ['skills/begin/SKILL.md', 'skills/next-lesson/SKILL.md'];
 const PAID = 'skills/next-lesson/references/paid-mode.md';
 
 test('both plugin manifests carry this branch\'s release, above the 0.5.8 floor', () => {
-  // The lesson executor landed in 0.5.8; this branch ships it inside 0.6.0.
+  // The lesson executor landed in 0.5.8 and the pedagogy baseline in 0.6.0; this
+  // branch is 0.6.1, a prose-only patch (the handover never contains the answer).
   // The enforced floor stays 0.5.8 — minima move only for compatibility needs.
   for (const path of ['.claude-plugin/plugin.json', '.codex-plugin/plugin.json']) {
-    assert.equal(JSON.parse(read(path)).version, '0.6.0', path);
+    assert.equal(JSON.parse(read(path)).version, '0.6.1', path);
   }
 });
 

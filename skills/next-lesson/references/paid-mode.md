@@ -1,6 +1,6 @@
-<!-- Release note (plugin 0.6.0): this version expects the server to send `teaching_knobs`, `due_review`, and `method_checkin`.
+<!-- Release note (plugin 0.6.1): since 0.6.0 this plugin expects the server to send `teaching_knobs`, `due_review`, and `method_checkin`.
      On a server that does not send them, the tutor uses the default knobs, asks no review question, and never asks a check-in.
-     Do not publish 0.6.0 before the server that serves these fields is deployed.
+     Do not publish 0.6.0 or later before the server that serves these fields is deployed; 0.6.1 is a prose-only patch on 0.6.0 with no new CLI or server requirement.
      The enforced runtime floor stays CLI 0.8.1 / plugin 0.5.8 and the session hooks stay fail-open; `altitude teaching set` and `altitude emit teaching-checkin` need CLI 0.9.0 and degrade to "could not be recorded" on older CLIs. -->
 # next-lesson — paid mode
 

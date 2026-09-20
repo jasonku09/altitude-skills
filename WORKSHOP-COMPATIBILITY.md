@@ -21,6 +21,13 @@ commands, `altitude teaching set` and `altitude emit teaching-checkin`, need CLI
 be recorded rather than claiming it landed. Publication order for it: deploy the
 server that serves those fields, publish CLI 0.9.0, then publish plugin 0.6.0.
 
+Plugin 0.6.1 is a prose-only patch on 0.6.0: a `teach` gap's handover now says what
+the gap must do, in words, and never the code that does it (the exact code still
+reaches a learner only through hint-ladder rung 3 or the impatience rule). It adds no
+CLI, server, or envelope requirement and moves no floor, so it inherits 0.6.0's
+publication order unchanged and can be published on its own once 0.6.0's
+prerequisites are live.
+
 The paid task's requirements override legacy hands-on instructions. The free
 standalone method keeps its existing behavior. Server-only planning, pedagogy,
 capability judgment, and entitlement remain in the Altitude application.
@@ -134,7 +141,7 @@ accept. A bound project whose client is too old keeps its binding, its generated
 plan, and its queued events while it waits for the update.
 
 Rollback is per artifact and needs no data migration. Reverting the plugin one
-release — 0.6.0 back to 0.5.8, or 0.5.8 back to 0.5.7 — restores the previous
+release — 0.6.1 back to 0.6.0, 0.6.0 back to 0.5.8, or 0.5.8 back to 0.5.7 — restores the previous
 instructions with the binding and plan intact; reverting the CLI to the last
 published build restores the previous envelope, and the server keeps accepting
 version-less claims until enforcement is enabled. Roll enforcement back
