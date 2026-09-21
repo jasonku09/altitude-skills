@@ -192,10 +192,10 @@ test("asking the expiry question re-arms the watch in the same turn, never ends 
     "the old wording still reads as ending the turn to wait for a reply",
   );
   // Both ways the answer can arrive, so neither a save nor a reply is stranded.
-  assert.match(watch, /a real save lands in the next window/, "a save during the wait must still be caught");
+  assert.match(watch, /on `SAVED`, read the file and respond to their real code/, "a save during the wait must still be reviewed");
   assert.match(
     watch,
-    /a\s+chat reply reaches you when that poll returns/,
+    /on a foreground host anything the learner types mid-poll reaches you when the poll returns/,
     "a reply must arrive on the poll's return, per the mid-poll rule below",
   );
 });

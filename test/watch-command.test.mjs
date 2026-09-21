@@ -46,15 +46,34 @@ test("watch command: SAVED reviews real code and work in progress never wakes th
   assert.match(saved, /`already: true`.*read and review.*even if the gap is empty/);
 });
 
-test("watch command: EXPIRED starts the next wait first and question_due is only permission to ask once", () => {
+test("watch command: question_due is only permission to ask once on EXPIRED", () => {
   const expiry = paragraph("**The expiry message");
-  assert.match(expiry, /`EXPIRED`.*start the next `wait` FIRST/);
   assert.match(expiry, /Only when `question_due` is true and the learner has not already spoken during this fill-in/);
   assert.match(expiry, /Still working, or want a hint\?/);
   assert.match(expiry, /zero hint content, zero code/);
   assert.match(expiry, /once per fill-in/);
   assert.match(expiry, /otherwise silence/);
-  assert.match(expiry, /foreground.*first.*slice.*question.*next/s);
+  assert.match(expiry, /never on `WAITING` alone and never just because a command returned/);
+  assert.match(expiry, /never with a new `start`/);
+});
+
+test("watch command: foreground expiry speaks first and immediately waits in the same turn", () => {
+  const expiry = paragraph("**The expiry message");
+  const foreground = expiry.slice(expiry.indexOf("On a foreground host"), expiry.indexOf("On a background host"));
+  assert.match(foreground, /`EXPIRED`, send the one-line question if it is due \(otherwise send nothing\), then call `wait` again at once in that same turn/);
+  assert.match(foreground, /asking the question never ends your turn/);
+});
+
+test("watch command: background expiry starts wait before ending with the question or silence", () => {
+  const expiry = paragraph("**The expiry message");
+  const background = expiry.slice(expiry.indexOf("On a background host"), expiry.indexOf("This reply,"));
+  assert.match(background, /start the next `wait` first, then end the turn with the question as your whole reply/);
+  assert.match(background, /when no question is due, with no reply text, or "Still watching\." where the host will not end a turn on nothing/);
+  assert.match(background, /the turn ends and the watch does not/);
+});
+
+test("watch command: expiry has no pending question or first-slice outcome mechanism", () => {
+  assert.doesNotMatch(skill, /pending question|first (?:short )?slice|question from `EXPIRED` is still due|asking a stale question|start the next `wait` FIRST/);
 });
 
 test("watch command: STOPPED is a plain stop and SUPERSEDED is silence", () => {
