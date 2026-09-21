@@ -111,11 +111,11 @@ test("the no-plugin prompt asks for an example that is not the blank's answer", 
   assert.match(flat, /different names and values from the blank I'm about to fill/);
 });
 
-test("the 0.6.1 notes mention the introduction-example rule", async () => {
+test("the 0.7.0 notes mention the introduction-example rule", async () => {
   const compat = await read("WORKSHOP-COMPATIBILITY.md");
   const paid = await read("skills/next-lesson/references/paid-mode.md");
 
-  assert.match(compat.replace(/\s+/g, " "), /Plugin 0\.6\.1.*introduction's example/i);
+  assert.match(compat.replace(/\s+/g, " "), /Plugin 0\.7\.0.*introduction's example/i);
   assert.match(paid.split("-->")[0], /introduction example on different material than the gap/);
 });
 
@@ -142,11 +142,11 @@ test("different material is never no material: the introduction always shows a r
   );
 });
 
-test("the 0.6.1 notes mention that the example is always shown", async () => {
+test("the 0.7.0 notes mention that the example is always shown", async () => {
   const compat = await read("WORKSHOP-COMPATIBILITY.md");
   const paid = await read("skills/next-lesson/references/paid-mode.md");
 
-  assert.match(compat.replace(/\s+/g, " "), /Plugin 0\.6\.1.*always shows a runnable example/i);
+  assert.match(compat.replace(/\s+/g, " "), /Plugin 0\.7\.0.*always shows a runnable example/i);
   assert.match(paid.split("-->")[0], /always a runnable example/);
 });
 

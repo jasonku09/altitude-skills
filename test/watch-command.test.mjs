@@ -1,0 +1,115 @@
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { createHash } from "node:crypto";
+import test from "node:test";
+
+const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
+const skill = read("skills/next-lesson/SKILL.md");
+const watch = skill.slice(skill.indexOf("**The watch.**"), skill.indexOf("**The hint ladder.**"));
+const paragraph = (rule) => {
+  const result = watch.split("\n\n").find((p) => p.startsWith(rule));
+  assert.ok(result, `missing watch rule: ${rule}`);
+  return result;
+};
+
+test("watch command: arm the skeleton in the same turn with the marker count and teaching windows", () => {
+  const arm = paragraph("**The watch.**");
+  assert.match(arm, /altitude watch start <file> --markers <N> --window-seconds 180 --max-windows 4 --json/);
+  assert.match(arm, /N is the number of markers you just wrote/);
+  assert.match(arm, /right after writing the skeleton, in that same turn/);
+  assert.match(arm, /`SAVED` with `already: true`.*read the file and review/);
+  assert.match(arm, /`ARMED`.*go on to `wait`/);
+  assert.match(arm, /fewer than N.*work in progress/);
+  assert.match(arm, /CLI owns the baseline, deadline, marker checks, and window count/);
+  assert.doesNotMatch(watch, /stat -[fc]|base=\d|deadline=\d|LastWriteTime|POLL_ERROR/);
+});
+
+test("watch command: hosts choose background wake or foreground slices by capability", () => {
+  const background = paragraph("**If your host can run a command in the background");
+  assert.match(background, /altitude watch wait <file> --json/);
+  assert.match(background, /background command/);
+  assert.match(background, /final message of the turn/);
+  assert.match(background, /If you are not certain your host wakes you, it does not/);
+  const foreground = paragraph("**Otherwise the watch runs in the foreground");
+  assert.match(foreground, /altitude watch wait <file> --json --slice-seconds <S>/);
+  assert.match(foreground, /under your tool's timeout/);
+  assert.match(foreground, /`WAITING`.*call `wait` again at once.*nothing in chat/);
+  assert.match(foreground, /A chunk ending is not the window ending/);
+});
+
+test("watch command: SAVED reviews real code and work in progress never wakes the tutor", () => {
+  const saved = paragraph("**A save with a");
+  assert.match(saved, /marker deleted and nothing written in its place/);
+  assert.match(saved, /`altitude watch wait` handles both states silently; the tutor is never even woken for them/);
+  assert.match(saved, /no review, no comment, not even "I see you've started\."/);
+  assert.match(saved, /`SAVED`.*read the file and respond to their real code/);
+  assert.match(saved, /`already: true`.*read and review.*even if the gap is empty/);
+});
+
+test("watch command: EXPIRED starts the next wait first and question_due is only permission to ask once", () => {
+  const expiry = paragraph("**The expiry message");
+  assert.match(expiry, /`EXPIRED`.*start the next `wait` FIRST/);
+  assert.match(expiry, /Only when `question_due` is true and the learner has not already spoken during this fill-in/);
+  assert.match(expiry, /Still working, or want a hint\?/);
+  assert.match(expiry, /zero hint content, zero code/);
+  assert.match(expiry, /once per fill-in/);
+  assert.match(expiry, /otherwise silence/);
+  assert.match(expiry, /foreground.*first.*slice.*question.*next/s);
+});
+
+test("watch command: STOPPED is a plain stop and SUPERSEDED is silence", () => {
+  const stop = paragraph("**One live watcher per gap**");
+  assert.match(stop, /`SUPERSEDED`.*nothing at all.*another watcher owns the gap/);
+  assert.match(stop, /starting a new `wait` supersedes the old one/);
+  assert.match(stop, /TaskStop.*courtesy, not a correctness requirement/);
+  assert.match(stop, /altitude watch stop <file>/);
+  assert.match(stop, /reviewed via "check", finished, or abandoned/);
+  const expiry = paragraph("**The expiry message");
+  assert.match(expiry, /`STOPPED`.*save and say "check" when they're back.*no hint/);
+});
+
+test("watch command: ERROR is not learner evidence and only NOT_ARMED re-starts", () => {
+  const error = paragraph("**Read the command's own outcome");
+  assert.match(error, /`ERROR`.*never.*learner who typed nothing/);
+  assert.match(error, /`NOT_ARMED`.*re-run `start`.*same flags.*handle its result/);
+  assert.match(error, /every other.*save and say "check"/);
+  assert.match(error, /false evidence entry/);
+  assert.match(error, /JSON `ERROR`.*not.*fallback/);
+});
+
+test("watch command: only observable no-JSON start failure loads the fallback for the session", () => {
+  const fallback = paragraph("**Fallback only on observable command failure.**");
+  assert.match(fallback, /Only if `altitude watch start` did not return a JSON result with an `outcome`/);
+  assert.match(fallback, /unknown command.*usage text.*nonzero exit with no `outcome`/);
+  assert.match(fallback, /\[references\/watch-fallback\.md\]\(references\/watch-fallback\.md\)/);
+  assert.match(fallback, /rest of the session/);
+  assert.match(fallback, /never.*version.*host.*guess/);
+  assert.match(fallback, /not the `update_required` path/);
+  assert.match(fallback, /never blocks the lesson on updating/);
+  assert.equal((skill.match(/\]\(references\/watch-fallback\.md\)/g) || []).length, 1);
+});
+
+test("watch command: fallback update nudge is once at session close, never mid-gap", () => {
+  const close = skill.slice(skill.indexOf("6. The update lines"));
+  assert.match(close, /If the watch fallback was used/);
+  assert.match(close, /once, at session close and never mid-gap/);
+  assert.match(close, /`altitude update` gets them a more reliable save-watcher/);
+  assert.match(close, /never block.*lesson.*updat/);
+});
+
+test("watch fallback: the 0.6.1 watch mechanics and replay misses are preserved verbatim", () => {
+  const fallback = read("skills/next-lesson/references/watch-fallback.md");
+  const original = fallback.slice(fallback.indexOf("**The watch.**"));
+  assert.equal(createHash("sha256").update(original).digest("hex"), "bd07e6beeda2831133dc1f4ef5e06e349bbedf95c77a08146f66a4192080d547");
+});
+
+
+test("watch command: compatibility documents the optional CLI feature without moving either floor", () => {
+  const compat = read("WORKSHOP-COMPATIBILITY.md");
+  const release = compat.slice(compat.indexOf("Plugin 0.7.0"), compat.indexOf("The following 0.6.1 notes"));
+  assert.match(release, /CLI 0\.10\.0 when present and falls back\s+below it/);
+  assert.match(release, /CLI 0\.8\.1 \/ plugin 0\.5\.8/);
+  assert.match(release, /no JSON result with\s+an `outcome`/);
+  assert.match(release, /not\s+the paid runtime's `update_required` path/);
+  assert.match(read("README.md"), /Plugin 0\.7\.0 uses `altitude watch` from CLI 0\.10\.0/);
+});
