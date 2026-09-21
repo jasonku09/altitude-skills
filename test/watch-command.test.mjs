@@ -1,10 +1,10 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { createHash } from "node:crypto";
 import test from "node:test";
 
 const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
 const skill = read("skills/next-lesson/SKILL.md");
+const fallbackText = read("skills/next-lesson/references/watch-fallback.md");
 const watch = skill.slice(skill.indexOf("**The watch.**"), skill.indexOf("**The hint ladder.**"));
 const paragraph = (rule) => {
   const result = watch.split("\n\n").find((p) => p.startsWith(rule));
@@ -68,7 +68,7 @@ test("watch command: background expiry starts wait before ending with the questi
   const expiry = paragraph("**The expiry message");
   const background = expiry.slice(expiry.indexOf("On a background host"), expiry.indexOf("This reply,"));
   assert.match(background, /start the next `wait` first, then end the turn with the question as your whole reply/);
-  assert.match(background, /when no question is due, with no reply text, or "Still watching\." where the host will not end a turn on nothing/);
+  assert.match(background, /when no question is due, with no reply text/);
   assert.match(background, /the turn ends and the watch does not/);
 });
 
@@ -81,8 +81,7 @@ test("watch command: STOPPED is a plain stop and SUPERSEDED is silence", () => {
   assert.match(stop, /`SUPERSEDED`.*nothing at all.*another watcher owns the gap/);
   assert.match(stop, /starting a new `wait` supersedes the old one/);
   assert.match(stop, /TaskStop.*courtesy, not a correctness requirement/);
-  assert.match(stop, /altitude watch stop <file>/);
-  assert.match(stop, /reviewed via "check", finished, or abandoned/);
+  assert.match(paragraph("**Stop only a watcher that may still be live.**"), /altitude watch stop <file> --json/);
   const expiry = paragraph("**The expiry message");
   assert.match(expiry, /`STOPPED`.*save and say "check" when they're back.*no hint/);
 });
@@ -96,12 +95,10 @@ test("watch command: ERROR is not learner evidence and only NOT_ARMED re-starts"
   assert.match(error, /JSON `ERROR`.*not.*fallback/);
 });
 
-test("watch command: only observable no-JSON start failure loads the fallback for the session", () => {
+test("watch command: only observable no-result start failure loads the fallback", () => {
   const fallback = paragraph("**Fallback only on observable command failure.**");
-  assert.match(fallback, /Only if `altitude watch start` did not return a JSON result with an `outcome`/);
-  assert.match(fallback, /unknown command.*usage text.*nonzero exit with no `outcome`/);
+  assert.match(fallback, /Only if `altitude watch start` returns no result/);
   assert.match(fallback, /\[references\/watch-fallback\.md\]\(references\/watch-fallback\.md\)/);
-  assert.match(fallback, /rest of the session/);
   assert.match(fallback, /never.*version.*host.*guess/);
   assert.match(fallback, /not the `update_required` path/);
   assert.match(fallback, /never blocks the lesson on updating/);
@@ -110,16 +107,85 @@ test("watch command: only observable no-JSON start failure loads the fallback fo
 
 test("watch command: fallback update nudge is once at session close, never mid-gap", () => {
   const close = skill.slice(skill.indexOf("6. The update lines"));
-  assert.match(close, /If the watch fallback was used/);
+  assert.match(close, /If the command was unknown/);
   assert.match(close, /once, at session close and never mid-gap/);
   assert.match(close, /`altitude update` gets them a more reliable save-watcher/);
   assert.match(close, /never block.*lesson.*updat/);
 });
 
-test("watch fallback: the 0.6.1 watch mechanics and replay misses are preserved verbatim", () => {
-  const fallback = read("skills/next-lesson/references/watch-fallback.md");
-  const original = fallback.slice(fallback.indexOf("**The watch.**"));
-  assert.equal(createHash("sha256").update(original).digest("hex"), "bd07e6beeda2831133dc1f4ef5e06e349bbedf95c77a08146f66a4192080d547");
+test("watch fallback: the 0.6.1 shell mechanics and replay misses remain available", () => {
+  assert.match(fallbackText, /stat -f %m.*stat -c %Y/);
+  assert.match(fallbackText, /LastWriteTime\.Ticks.*Start-Sleep/);
+  assert.match(fallbackText, /baseline is taken once/);
+  assert.match(fallbackText, /deadline is taken once/);
+  assert.match(fallbackText, /24 seconds after writing the skeleton/);
+  assert.match(fallbackText, /31 seconds into a 3-minute watch/);
+  assert.match(fallbackText, /finished save landed in the 11 seconds between two chunks/);
+});
+
+test("watch smoke: SAVED, already, and check require a fresh disk read before review", () => {
+  const rule = paragraph("**Read the gap file itself before every review.**");
+  assert.match(rule, /`SAVED`.*`already: true`.*"check".*next tool call reads the gap file from disk/);
+  assert.match(rule, /Every word of the review comes from that read/);
+  assert.match(rule, /THAT a save landed, never WHAT was saved/);
+  for (const text of [skill, fallbackText]) {
+    const readRule = text.split("\n\n").find((p) => p.startsWith("**Read the gap file itself"));
+    assert.ok(readRule);
+    assert.match(readRule, /next tool call reads the gap file from disk/);
+    assert.match(readRule, /The miss, in replay:.*background command's output.*never opened the file.*right only by luck/);
+    assert.doesNotMatch(text, /that wake is the next window's start or the review/);
+  }
+});
+
+test("watch smoke: stop is only for a possibly live watch, never terminal results", () => {
+  const rule = paragraph("**Stop only a watcher that may still be live.**");
+  assert.match(rule, /"check".*missed-wake.*`wait` may still be running/);
+  assert.match(rule, /abandoned or replaced mid-watch/);
+  assert.match(rule, /after the disk read/);
+  assert.match(rule, /never after `SAVED` or `STOPPED`/);
+  assert.match(rule, /already ended the watch and deleted its state/);
+  assert.match(rule, /The miss, in both smoke replays:.*`stop` after `SAVED`.*narrated it/);
+  for (const text of [skill, fallbackText]) {
+    assert.doesNotMatch(text, /When the gap is finished, reviewed, or abandoned, stop its watcher|reviewed via "check", finished, or abandoned/);
+  }
+  assert.match(fallbackText, /Stop only a watcher that may still be live/);
+  assert.match(fallbackText, /never run `altitude watch stop` for a shell watcher/);
+});
+
+test("watch smoke: plumbing stays out of learner chat, including silent re-arms", () => {
+  for (const text of [skill, fallbackText]) {
+    const rule = text.split("\n\n").find((p) => p.startsWith("**The watch is plumbing; the learner never hears about it.**"));
+    assert.ok(rule);
+    assert.match(rule, /No learner-visible sentence about watchers, commands, exits, windows, slices, re-arming or outcomes/);
+    assert.match(rule, /"save and I'll read it".*one-time "say check" line.*expiry question.*stop message/);
+    assert.match(rule, /command description shown by the host stays as it is/);
+    assert.match(rule, /The miss, in replay: "The save-watcher has exited\. I'll read what it reported\." and "I'll stop that watcher, since the gap is now reviewed\."/);
+    assert.doesNotMatch(text, /Still watching\./);
+  }
+});
+
+test("watch smoke: fallback scope and update advice depend on observable cause", () => {
+  for (const text of [skill, fallbackText]) {
+    const rule = text.split("\n\n").find((p) => p.startsWith("**Fallback is per cause, not a one-way door.**"));
+    assert.ok(rule);
+    assert.match(rule, /unknown command: watch.*usage text that lists no `watch`.*rest of the session/);
+    assert.match(rule, /permission error, crash, empty output.*this gap only.*try `altitude watch start` again at the next gap/);
+    assert.match(rule, /do not tell the learner to update/);
+    assert.match(rule, /The miss, in replay:.*harness wrapper fault.*silently downgraded the whole session/);
+    assert.doesNotMatch(text, /without retrying the command path at each gap|never retry the command path|follow it for the rest of the session|Remember that fallback was used|If the watch fallback was used/);
+  }
+  assert.match(skill, /If the command was unknown.*once, at session close/);
+});
+
+test("watch smoke: no result means no stdout JSON line with outcome under --json", () => {
+  for (const text of [skill, fallbackText]) {
+    const rule = text.split("\n\n").find((p) => p.startsWith("**Define no result by stdout under `--json`.**"));
+    assert.ok(rule);
+    assert.match(rule, /stdout has no line that parses as JSON with an `outcome` field/);
+    assert.match(rule, /Without `--json`.*plain text.*skill always passes `--json`/);
+    assert.match(rule, /The miss.*nonzero exit with no `outcome`.*JSON line/);
+    assert.doesNotMatch(text, /returns no JSON result with an `outcome`, as specified|unknown command, usage text, or a nonzero exit/);
+  }
 });
 
 

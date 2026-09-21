@@ -108,7 +108,10 @@ test("one live watcher per gap", async () => {
   assert.match(watch, /starting a new `wait` supersedes the old one/, "the CLI enforces ownership");
   assert.match(watch, /TaskStop.*courtesy, not a correctness requirement/, "host cleanup is optional");
   assert.match(watch, /never start a second because a chat turn came in/, "a chat turn does not re-arm a live watcher");
-  assert.match(watch, /When the gap is finished, reviewed, or abandoned, stop its watcher/, "no watcher outlives its gap");
+  const stop = watch.split("\n\n").find((p) => p.startsWith("**Stop only a watcher that may still be live.**"));
+  assert.ok(stop, "cleanup has its own rule");
+  assert.match(stop, /"check".*missed-wake.*`wait` may still be running.*abandoned or replaced mid-watch/, "no live watcher outlives its gap");
+  assert.match(stop, /never after `SAVED` or `STOPPED`/, "terminal outcomes need no cleanup call");
 });
 
 test("hosts without the capability keep the foreground watch through wait slices", async () => {
