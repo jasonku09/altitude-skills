@@ -172,10 +172,14 @@ test("asking the expiry question re-arms the watch in the same turn, never ends 
   // while README promises "it's watching the file, not the chat". It also made
   // the four-window stop below unreachable: that stop needs windows to keep
   // expiring with no save and no message.
+  // Since the background watch (test/background-watch.test.mjs) the invariant is
+  // "never ends the watch"; "never ends your turn" is how a FOREGROUND host keeps
+  // it, and stays an emphasized clause for those hosts. On a background host the
+  // turn does end, with the next watcher already running.
   assert.match(
     watch,
-    /\*\*Asking the question never ends your turn\*\*/,
-    "the expiry question must be bound to not ending the turn, as one emphasized clause",
+    /On a foreground host \*\*asking the question never ends your turn\*\*/,
+    "on a foreground host the expiry question must be bound to not ending the turn, as one emphasized clause",
   );
   assert.match(
     watch,

@@ -73,7 +73,7 @@ test("exercise concepts are used without the teaching apparatus but stay load-be
   const paid = await readPaidMode();
   assert.match(
     paid,
-    /\*\*The review question comes only from `current_task\.due_review`\.\*\*/,
+    /\*\*The review question comes only from `journey\.current_task\.due_review`\.\*\*/,
   );
   assert.match(
     skill,

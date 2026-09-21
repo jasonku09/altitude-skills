@@ -21,6 +21,35 @@ commands, `altitude teaching set` and `altitude emit teaching-checkin`, need CLI
 be recorded rather than claiming it landed. Publication order for it: deploy the
 server that serves those fields, publish CLI 0.9.0, then publish plugin 0.6.0.
 
+Plugin 0.6.1 is a prose-only patch on 0.6.0: a `teach` gap's handover now says what
+the gap must do, in words, and never the code that does it (the exact code still
+reaches a learner only through hint-ladder rung 3 or the impatience rule). It also moves
+the file watch to a background watch on hosts that can run a command in the background
+and wake the agent when it exits (Claude Code: Bash `run_in_background`): the tutor starts
+the watcher and ends its turn, so the introduction, the handover, and the expiry question
+each arrive as the final message of a turn instead of as text before a blocking poll,
+which Claude Code did not reliably send. Hosts without that capability (Codex today) keep
+the foreground watch. Two more prose rules ride the same patch, both found replaying the
+lesson on the models learners use: the introduction's example (and every drill) teaches
+the concept on different material than the gap, never the gap's own code under another
+name, and the handover never points back at the example as the thing to copy; and the
+watch baseline is taken once, when the watch is armed, and carried as a literal into every
+later poll chunk and every re-armed watcher, so a save that lands between two commands is
+no longer swallowed as the next command's starting point. Two hardenings of those rules
+followed from the same replays: the window's deadline is carried as a literal the same way,
+so a foreground poll chunk that merely runs out of its tool-timeout slice reports `WAITING`
+and is chained silently, and the expiry question is asked only when the carried 3-minute
+deadline has passed (a re-armed watcher gets the remainder of its window, never a fresh
+3 minutes); the baseline reading also checks that the marker is still in the file, so a save
+that beat a slow first reading is reviewed instead of becoming the baseline; the introduction always shows a runnable example of the taught syntax, so
+"different material" cannot be read as "no example"; and every server field the tutor teaches
+from is named by its exact path in the task output (`journey.teaching_knobs`,
+`journey.current_task.due_review`, `journey.current_task.method_checkin`), so a `null` read
+from the top level is treated as a wrong path instead of a reason to use the default knobs. It adds no
+CLI, server, or envelope requirement and moves no floor, so it inherits 0.6.0's
+publication order unchanged and can be published on its own once 0.6.0's
+prerequisites are live.
+
 The paid task's requirements override legacy hands-on instructions. The free
 standalone method keeps its existing behavior. Server-only planning, pedagogy,
 capability judgment, and entitlement remain in the Altitude application.
@@ -134,7 +163,7 @@ accept. A bound project whose client is too old keeps its binding, its generated
 plan, and its queued events while it waits for the update.
 
 Rollback is per artifact and needs no data migration. Reverting the plugin one
-release — 0.6.0 back to 0.5.8, or 0.5.8 back to 0.5.7 — restores the previous
+release — 0.6.1 back to 0.6.0, 0.6.0 back to 0.5.8, or 0.5.8 back to 0.5.7 — restores the previous
 instructions with the binding and plan intact; reverting the CLI to the last
 published build restores the previous envelope, and the server keeps accepting
 version-less claims until enforcement is enabled. Roll enforcement back

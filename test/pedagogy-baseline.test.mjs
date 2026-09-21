@@ -163,7 +163,7 @@ test("B: the three knobs have defaults, and free mode always uses them", async (
   const section = teachingSection(await readNextLesson());
 
   assert.match(section, /`drills`, `step_size`, and `check_density`/, "the three knobs must be named together");
-  assert.match(section, /Read them from `teaching_knobs`/, "the envelope field must be named");
+  assert.match(section, /Read them from `journey\.teaching_knobs`/, "the envelope field must be named");
   assert.match(
     section,
     /\*\*when the field is absent, and always in free mode, use the defaults: `drills` 2, `step_size` `function`, `check_density` `teach_runs`\.\*\*/,
@@ -277,7 +277,7 @@ test("F: the review question comes only from due_review in paid mode; nothing du
   assert.match(step2, /a `seed` or `introduced` leaf of today's task is never review material/, "untaught leaves stay off limits");
   assert.match(step2, /Paid mode has no such carve-out: `due_review` only/, "paid mode stays strictly due_review");
   assert.doesNotMatch(step2, /never from this task's own concepts/, "the absolute wording that contradicted free-mode.md is gone");
-  assert.match(step2, /`current_task\.due_review`/, "the envelope field must be named");
+  assert.match(step2, /`journey\.current_task\.due_review`/, "the envelope field must be named");
   assert.match(step2, /`evidence_reminder`/, "the reminder is what the situated question is written from");
   assert.match(step2, /\*\*No `due_review` means no review question\*\*/, "absence must be emphasized as no question");
   assert.match(step2, /not an invitation to pick a concept from the current task/, "absence must not fall back to the task");
@@ -286,7 +286,7 @@ test("F: the review question comes only from due_review in paid mode; nothing du
   assert.doesNotMatch(skill, /paid mode asks against the server journey's `teach` concepts/, "the old Step 2 still draws from the task");
 
   const paid = await readPaidMode();
-  assert.match(paid, /\*\*The review question comes only from `current_task\.due_review`\.\*\*/, "paid mode must state the sole source");
+  assert.match(paid, /\*\*The review question comes only from `journey\.current_task\.due_review`\.\*\*/, "paid mode must state the sole source");
   assert.match(paid, /--concepts <due_review\.concept_id>/, "the quiz moment must be tagged with the due concept only");
   assert.match(paid, /\*\*When `due_review` is absent, ask no review question at all\*\*/, "absence must be emphasized in paid mode too");
   assert.match(paid, /never pick one from the current task's `concepts`/, "the task's own concepts are off limits");
@@ -316,7 +316,7 @@ test("G: the method check-in is asked at the close, after the recap, only when t
     /\*\*The method check-in comes after the recap, only when the envelope says so\.\*\*/,
     "the check-in rule must be one emphasized instruction",
   );
-  assert.match(close, /`current_task\.method_checkin`/, "the envelope field must be named");
+  assert.match(close, /`journey\.current_task\.method_checkin`/, "the envelope field must be named");
   assert.match(close, /`required`, always ask/, "required means always");
   assert.match(close, /`allowed`, ask only when you observed/, "allowed means only on an observed signal");
   assert.match(close, /three or more hint rungs/, "signal: hints heavy");
@@ -614,12 +614,14 @@ test("README: the check-in cadence is stated in plain words and the settings hav
 test("paid mode opens with a four-line release note naming the server fields this version expects", async () => {
   const paid = await readPaidMode();
   const lines = paid.split("\n");
-  assert.match(lines[0], /^<!-- Release note \(plugin 0\.6\.0\):/, "the note is the first line and names the version");
+  assert.match(lines[0], /^<!-- Release note \(plugin 0\.6\.1\):/, "the note is the first line and names the version");
   const end = lines.findIndex((line) => line.includes("-->"));
   assert.equal(end, 3, "the note is exactly four lines");
   const note = lines.slice(0, 4).join("\n");
   assert.match(note, /expects the server to send `teaching_knobs`, `due_review`, and `method_checkin`/, "the three fields");
   assert.match(note, /uses the default knobs, asks no review question, and never asks a check-in/, "the behavior without them");
-  assert.match(note, /Do not publish 0\.6\.0 before the server that serves these fields is deployed/, "the publish order");
+  assert.match(note, /Do not publish 0\.6\.0 or later before the server that serves these fields is deployed/, "the publish order");
+  assert.match(note, /0\.6\.1 is a prose-only patch on 0\.6\.0 with no new CLI or server requirement/, "the patch adds no requirement");
+  assert.match(note, /The enforced runtime floor stays CLI 0\.8\.1 \/ plugin 0\.5\.8/, "the floor did not move");
   assert.match(lines[4], /^# next-lesson — paid mode/, "the heading follows the note");
 });
