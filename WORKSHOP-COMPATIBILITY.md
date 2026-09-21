@@ -41,8 +41,11 @@ so a foreground poll chunk that merely runs out of its tool-timeout slice report
 and is chained silently, and the expiry question is asked only when the carried 3-minute
 deadline has passed (a re-armed watcher gets the remainder of its window, never a fresh
 3 minutes); the baseline reading also checks that the marker is still in the file, so a save
-that beat a slow first reading is reviewed instead of becoming the baseline; and the introduction always shows a runnable example of the taught syntax, so
-"different material" cannot be read as "no example". It adds no
+that beat a slow first reading is reviewed instead of becoming the baseline; the introduction always shows a runnable example of the taught syntax, so
+"different material" cannot be read as "no example"; and every server field the tutor teaches
+from is named by its exact path in the task output (`journey.teaching_knobs`,
+`journey.current_task.due_review`, `journey.current_task.method_checkin`), so a `null` read
+from the top level is treated as a wrong path instead of a reason to use the default knobs. It adds no
 CLI, server, or envelope requirement and moves no floor, so it inherits 0.6.0's
 publication order unchanged and can be published on its own once 0.6.0's
 prerequisites are live.
