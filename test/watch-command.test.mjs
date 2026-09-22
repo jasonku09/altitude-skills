@@ -167,6 +167,12 @@ test("watch review: both SAVED outcomes supply the learner's file content", () =
   assert.doesNotMatch(watch, /Read the gap file itself before every review|THAT a save landed, never WHAT was saved|command output is not the learner's code|if your last tool call before the review is not a read of that file|Reading a wake's output file is not reading the gap/);
 });
 
+test("watch review: address the learner in the second person and name Sonnet's third-person miss", () => {
+  const rule = paragraph("**Review from the content the command returns.**");
+  assert.match(rule, /Every word of the review comes from `content` in the result you just read[^.]*; write it to the learner in the second person — `content` is their file, not a record of a third party\./);
+  assert.ok(rule.includes('The named miss: Sonnet opened its review to the learner with "Their save is in — and it\'s exactly right"'));
+});
+
 test("watch review: preserve the unread-file misses and name Luna's recurrence", () => {
   const rule = paragraph("**Review from the content the command returns.**");
   assert.match(rule, /The miss, in replay:.*background command's output.*never opened the file.*right only by luck/);
