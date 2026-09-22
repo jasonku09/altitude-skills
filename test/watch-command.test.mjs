@@ -159,16 +159,55 @@ test("watch fallback: the 0.6.1 shell mechanics and replay misses remain availab
 
 test("watch smoke: SAVED, already, and check require a fresh disk read before review", () => {
   const rule = paragraph("**Read the gap file itself before every review.**");
-  assert.match(rule, /`SAVED`.*`already: true`.*"check".*next tool call reads the gap file from disk/);
+  assert.match(rule, /`SAVED`.*`already: true`.*"check".*open the gap file from disk before you write a word of the review/);
   assert.match(rule, /Every word of the review comes from that read/);
   assert.match(rule, /THAT a save landed, never WHAT was saved/);
   for (const text of [skill, fallbackText]) {
     const readRule = text.split("\n\n").find((p) => p.startsWith("**Read the gap file itself"));
     assert.ok(readRule);
-    assert.match(readRule, /next tool call reads the gap file from disk/);
+    if (text === fallbackText) assert.match(readRule, /next tool call reads the gap file from disk/);
     assert.match(readRule, /The miss, in replay:.*background command's output.*never opened the file.*right only by luck/);
     assert.doesNotMatch(text, /that wake is the next window's start or the review/);
   }
+});
+
+test("watch matrix: the last tool call before review reads the gap, including already-saved gaps", () => {
+  const rule = paragraph("**Read the gap file itself before every review.**");
+  assert.match(rule, /Reading a wake's output file is not reading the gap/);
+  assert.match(rule, /neither is having written the skeleton yourself/);
+  assert.match(rule, /if your last tool call before the review is not a read of that file, you have not read it/);
+  assert.match(rule, /read again after stopping the live watcher/);
+  assert.match(rule, /The miss, in replay:.*background command's output.*never opened the file.*right only by luck/);
+  assert.match(rule, /The recurrence: Sonnet.*task-output file.*own intention.*`already: true`.*"when I checked, the line was already there".*never checked/);
+  assert.doesNotMatch(rule, /the next tool call reads the gap file from disk/);
+});
+
+test("watch matrix: silent expiry forbids stage directions and ends on the tool call", () => {
+  const rule = paragraph("**The expiry message");
+  assert.match(rule, /\*\*A note saying you are not replying is a reply\.\*\*/);
+  assert.ok(rule.includes('No "*(no reply — the watch continues silently)*"'));
+  assert.match(rule, /no stage direction, no placeholder character\. End the turn on the tool call/);
+  assert.match(rule, /The recurrence: Opus.*windows 2 and 3.*stage direction.*twice/);
+  assert.doesNotMatch(rule, /re-arm silently even when the learner has said nothing\. The miss/);
+});
+
+test("watch matrix: a fast save is neither suspicious nor evidence of mastery", () => {
+  const rule = paragraph("**Code in the gap");
+  assert.match(rule, /Never doubt a save for its speed — and never read mastery into it either/);
+  assert.match(rule, /You cannot feel those seconds pass.*"you wrote that without me explaining it first" is a claim you cannot make/);
+  assert.match(rule, /Review the code, teach the step as planned, and never mark a concept known off the clock/);
+  assert.match(rule, /The recurrence: Sonnet.*seconds after the skeleton.*"You wrote that correctly without me explaining it first.*So I'm treating union types as known".*mark the concept known/);
+  assert.doesNotMatch(rule, /Never doubt a save for its speed, and never write the marker/);
+});
+
+test("watch matrix: start result precedes all gap speech and background wait precedes final handover", () => {
+  const rule = paragraph("**The watch.**");
+  assert.match(rule, /right after writing the skeleton, in that same turn and \*\*before you say a word about the gap\*\*/);
+  assert.match(rule, /handover is written after you have read `start`'s result, never before.*`SAVED already: true` is the answer that cancels it/);
+  assert.match(rule, /The recurrence: Luna.*entire handover three seconds before.*skeleton.*`start`.*cancellation.*unreachable/);
+  assert.doesNotMatch(rule, /Run `start` right after writing the skeleton, in that same turn; N/);
+  const background = paragraph("**If your host can run a command in the background");
+  assert.match(background, /Start the command, then end the turn.*introduction and handover.*final message of the turn/);
 });
 
 test("watch smoke: stop is only for a possibly live watch, never terminal results", () => {
