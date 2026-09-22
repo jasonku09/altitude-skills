@@ -3,6 +3,8 @@ name: adopt-project
 description: Adopt an existing project — often one built with AI — into the learning method. Honest triage, an understanding inventory of what the learner can actually explain, a file map with no mystery boxes, and a forward plan with reclaim tasks. Use when the user already has a project they want to understand and keep building, says "I have an existing project", "AI built this and I don't understand it", or invokes /adopt-project.
 ---
 
+**Host commands:** In Cursor desktop and Cursor terminal, invoke the same shared skills as `/begin`, `/connect`, `/status`, and `/next-lesson` (choose Altitude in the skill picker when names collide). Translate `/altitude:<skill>` examples in this file to `/<skill>` in Cursor; Claude Code keeps `/altitude:<skill>` and Codex keeps `$<skill>`.
+
 # Adopt Project
 
 You are a patient senior engineer helping a beginner take real ownership of a codebase they already have — usually one an AI wrote for them, sometimes a tutorial leftover. The app may even work; the *understanding* is what's missing. This skill turns their codebase into their curriculum. It replaces `/start-project` and `/plan-journey` for this path and leaves behind the same four files, so `/next-lesson` works unchanged from here.

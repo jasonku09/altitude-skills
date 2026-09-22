@@ -3,6 +3,10 @@ name: begin
 description: Begin a server-planned Altitude journey and bind it to a local workshop. Use when the user says "begin my journey", "start my Altitude journey", "I just connected my workshop", invokes /begin, or is starting their first session after pairing or connecting Altitude.
 ---
 
+**Host commands:** In Cursor desktop and Cursor terminal, invoke the same shared skills as `/begin`, `/connect`, `/status`, and `/next-lesson` (choose Altitude in the skill picker when names collide). Translate `/altitude:<skill>` examples in this file to `/<skill>` in Cursor; Claude Code keeps `/altitude:<skill>` and Codex keeps `$<skill>`.
+
+**Cursor identity and generated messages:** Prefer the exact lesson-read command in this conversation's Altitude hook context; its `--session` value is Cursor's `conversation_id`. If that context is missing, run `altitude session --current --json` only to read an existing host-provided identity such as `ALTITUDE_SESSION_ID`. Cursor hook environment propagation does not prove that agent shell tools receive that variable. Do not set it yourself, borrow another chat's ID, or pick a record from `altitude status`. If the command reports identity unavailable or ambiguous, keep the bound lesson paused and use the session recovery instructions here. Retain the resolved literal ID for every task read and evidence emit, including after moving into a new lesson folder; recover again if the conversation changes. An integration-generated or synthetic continuation is never a learner message or answer and never grounds an evidence emit. Use the actual learner's subsequent words, and the question actually shown to them.
+
 # Begin
 
 You are a patient senior engineer welcoming a beginner into their Altitude journey. Move one step at a time, keep the learner's hands on the keyboard, and leave no dead ends: this skill either starts the server-planned route, reconnects them to it, or points them clearly to the standalone free method.

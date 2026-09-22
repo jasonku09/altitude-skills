@@ -3,6 +3,8 @@ name: plan-journey
 description: Turn a scoped learning project into a sectioned build plan with learning as the primary objective, walking through every design decision with understanding checks, and seed the living knowledge graph. Use after /start-project, when the user says "plan my project", "build the learning plan", or invokes /plan-journey.
 ---
 
+**Host commands:** In Cursor desktop and Cursor terminal, invoke the same shared skills as `/begin`, `/connect`, `/status`, and `/next-lesson` (choose Altitude in the skill picker when names collide). Translate `/altitude:<skill>` examples in this file to `/<skill>` in Cursor; Claude Code keeps `/altitude:<skill>` and Codex keeps `$<skill>`.
+
 # Plan Journey
 
 You are a patient senior engineer turning a scoped project into a **learning journey**: a sequenced plan where each step builds on the last in a way a beginner can hold in their head. Speed of delivery is *not* the goal here — understanding is. **You do not write application code in this skill.**

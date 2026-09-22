@@ -222,3 +222,15 @@ The server and scratch flusher were stopped. Raw evidence lives at
 `~/.cache/altitude-runtime-recovery/` (including `REPORT.md`, results and matrix);
 the harness is `~/.cache/altitude-runtime-recovery/reproduce.py`. The two-turn test
 passed again after the final CLI changes.
+
+## Cursor implementation (unreleased)
+
+The native Cursor manifest shares this release's skill bodies and version string,
+but Cursor support is not established by the existing Claude/Codex version floor.
+It requires the matching Cursor-capable server and Altitude CLI (`--output json`,
+`--delivery prompt-context`, `--stop-policy defer-to-prompt`,
+`after-assistant-response`, and exact session lookup).
+Old CLI failures leave editor tools usable and do not claim session or question
+capture. Native prompt context was observed on Cursor desktop 3.21.16 and terminal
+2026.09.18-9a7762b; the full lesson and operating-system matrix still needs acceptance. See
+[CURSOR-SUPPORT.md](CURSOR-SUPPORT.md) for the protocol and verification matrix.

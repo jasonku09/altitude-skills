@@ -1,0 +1,49 @@
+{
+  "version": 1,
+  "hooks": {
+    "sessionStart": [
+      {
+        "command": "node -e \"Promise.resolve().then(()=>{const p=require('node:path');let r=process.env.ALTITUDE_CURSOR_PLUGIN_ROOT;if(!r){const c=JSON.parse(require('node:fs').readFileSync(p.join(require('node:os').homedir(),'.cursor','altitude','plugin.json'),'utf8'));if(c.version!==1||c.owner!=='altitude-cursor')throw Error('registration');r=c.pluginRoot}if(typeof r!=='string'||!p.isAbsolute(r))throw Error('root');return import(require('node:url').pathToFileURL(p.join(r,'bin','altitude-cursor-hook.mjs')).href)}).then(m=>m.main('session-start')).catch(()=>{process.stderr.write('Altitude Cursor hook bootstrap unavailable; run Altitude /connect to register the active plugin installation.\\n');process.stdout.write('{}\\n');process.exitCode=0})\"",
+        "timeout": 30,
+        "failClosed": false
+      }
+    ],
+    "preToolUse": [
+      {
+        "command": "node -e \"Promise.resolve().then(()=>{const p=require('node:path');let r=process.env.ALTITUDE_CURSOR_PLUGIN_ROOT;if(!r){const c=JSON.parse(require('node:fs').readFileSync(p.join(require('node:os').homedir(),'.cursor','altitude','plugin.json'),'utf8'));if(c.version!==1||c.owner!=='altitude-cursor')throw Error('registration');r=c.pluginRoot}if(typeof r!=='string'||!p.isAbsolute(r))throw Error('root');return import(require('node:url').pathToFileURL(p.join(r,'bin','altitude-cursor-hook.mjs')).href)}).then(m=>m.main('diff')).catch(()=>{process.stderr.write('Altitude Cursor hook bootstrap unavailable; run Altitude /connect to register the active plugin installation.\\n');process.stdout.write('{\\\"permission\\\":\\\"allow\\\"}\\n');process.exitCode=0})\"",
+        "timeout": 30,
+        "failClosed": false,
+        "matcher": "^(Write|Edit|Delete)$"
+      }
+    ],
+    "beforeSubmitPrompt": [
+      {
+        "command": "node -e \"Promise.resolve().then(()=>{const p=require('node:path');let r=process.env.ALTITUDE_CURSOR_PLUGIN_ROOT;if(!r){const c=JSON.parse(require('node:fs').readFileSync(p.join(require('node:os').homedir(),'.cursor','altitude','plugin.json'),'utf8'));if(c.version!==1||c.owner!=='altitude-cursor')throw Error('registration');r=c.pluginRoot}if(typeof r!=='string'||!p.isAbsolute(r))throw Error('root');return import(require('node:url').pathToFileURL(p.join(r,'bin','altitude-cursor-hook.mjs')).href)}).then(m=>m.main('user-prompt-submit')).catch(()=>{process.stderr.write('Altitude Cursor hook bootstrap unavailable; run Altitude /connect to register the active plugin installation.\\n');process.stdout.write('{\\\"continue\\\":true}\\n');process.exitCode=0})\"",
+        "timeout": 30,
+        "failClosed": false
+      }
+    ],
+    "afterAgentResponse": [
+      {
+        "command": "node -e \"Promise.resolve().then(()=>{const p=require('node:path');let r=process.env.ALTITUDE_CURSOR_PLUGIN_ROOT;if(!r){const c=JSON.parse(require('node:fs').readFileSync(p.join(require('node:os').homedir(),'.cursor','altitude','plugin.json'),'utf8'));if(c.version!==1||c.owner!=='altitude-cursor')throw Error('registration');r=c.pluginRoot}if(typeof r!=='string'||!p.isAbsolute(r))throw Error('root');return import(require('node:url').pathToFileURL(p.join(r,'bin','altitude-cursor-hook.mjs')).href)}).then(m=>m.main('after-assistant-response')).catch(()=>{process.stderr.write('Altitude Cursor hook bootstrap unavailable; run Altitude /connect to register the active plugin installation.\\n');process.stdout.write('{}\\n');process.exitCode=0})\"",
+        "timeout": 30,
+        "failClosed": false
+      }
+    ],
+    "stop": [
+      {
+        "command": "node -e \"Promise.resolve().then(()=>{const p=require('node:path');let r=process.env.ALTITUDE_CURSOR_PLUGIN_ROOT;if(!r){const c=JSON.parse(require('node:fs').readFileSync(p.join(require('node:os').homedir(),'.cursor','altitude','plugin.json'),'utf8'));if(c.version!==1||c.owner!=='altitude-cursor')throw Error('registration');r=c.pluginRoot}if(typeof r!=='string'||!p.isAbsolute(r))throw Error('root');return import(require('node:url').pathToFileURL(p.join(r,'bin','altitude-cursor-hook.mjs')).href)}).then(m=>m.main('stop')).catch(()=>{process.stderr.write('Altitude Cursor hook bootstrap unavailable; run Altitude /connect to register the active plugin installation.\\n');process.stdout.write('{}\\n');process.exitCode=0})\"",
+        "timeout": 30,
+        "failClosed": false,
+        "loop_limit": 1
+      }
+    ],
+    "sessionEnd": [
+      {
+        "command": "node -e \"Promise.resolve().then(()=>{const p=require('node:path');let r=process.env.ALTITUDE_CURSOR_PLUGIN_ROOT;if(!r){const c=JSON.parse(require('node:fs').readFileSync(p.join(require('node:os').homedir(),'.cursor','altitude','plugin.json'),'utf8'));if(c.version!==1||c.owner!=='altitude-cursor')throw Error('registration');r=c.pluginRoot}if(typeof r!=='string'||!p.isAbsolute(r))throw Error('root');return import(require('node:url').pathToFileURL(p.join(r,'bin','altitude-cursor-hook.mjs')).href)}).then(m=>m.main('session-end')).catch(()=>{process.stderr.write('Altitude Cursor hook bootstrap unavailable; run Altitude /connect to register the active plugin installation.\\n');process.stdout.write('{}\\n');process.exitCode=0})\"",
+        "timeout": 30,
+        "failClosed": false
+      }
+    ]
+  }
+}

@@ -81,14 +81,11 @@ cp -r altitude-skills/skills/* ~/.claude/skills/
 
 That copies the skills and nothing else: **no session hooks**, and no auto-update (re-run the clone + copy for new versions). The free method needs neither, so this route is complete for `/start-project` → `/plan-journey` → `/next-lesson`. **With an Altitude subscription, install the plugin instead.** The hooks are what capture session evidence and run the gates, they live outside `skills/`, and a copied install has no `/altitude:` commands to connect or begin with — and nothing would tell you: gates fail open, so the only symptom is a learning map that never fills.
 
-**Using Cursor instead?** These skills use the open [Agent Skills](https://agentskills.io) format, which Cursor supports — copy them in for the free standalone method:
+**Using Cursor instead?** Cursor desktop and terminal have a development preview: this repository now includes a native Cursor plugin in `.cursor-plugin/plugin.json`. It loads the same seven shared skills plus `hooks/cursor.json`; copying only `skills/` still provides only the standalone free method. Use `/connect`, `/begin`, and `/next-lesson` in Cursor, selecting Altitude in the skill picker if another plugin uses the same name.
 
-```bash
-git clone https://github.com/jasonku09/altitude-skills.git
-cp -r altitude-skills/skills/* ~/.cursor/skills/   # pick via / in Agent chat, or automatic
-```
+Full subscribed lesson support is **not yet verified or released**. The adapter requires the matching Cursor-capable Altitude CLI and server; current release numbers alone do not establish compatibility. Automatic recall uses native prompt context on the desktop and terminal versions verified in the acceptance notes; the plugin emits no generated learner turns. See [Cursor development and acceptance](CURSOR-SUPPORT.md) for local plugin loading, exact session handling, and the outstanding desktop/terminal and operating-system checks. [PROMPTS.md](PROMPTS.md) remains available for any agent without installation.
 
-Same caveats as the copy above, plus one more: Cursor has no Altitude hooks at all, so a subscribed journey needs Claude Code or Codex. And [PROMPTS.md](PROMPTS.md) works with any agent at all, no install needed.
+For the **free standalone method only**, copying the shared skills to `~/.cursor/skills/` remains available. A skills-only copy has no session hooks and cannot establish subscribed journey support. Use the complete native plugin for development acceptance of that route.
 
 ## How to use it
 

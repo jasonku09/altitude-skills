@@ -1,0 +1,8 @@
+{
+  "name": "altitude",
+  "owner": { "name": "Jason Ku" },
+  "metadata": { "description": "Altitude shared skills and native Cursor workshop hooks" },
+  "plugins": [
+    { "name": "altitude", "source": ".", "description": "Learn to code by building with Altitude" }
+  ]
+}
