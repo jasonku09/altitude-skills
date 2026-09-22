@@ -76,6 +76,38 @@ test("watch command: expiry has no pending question or first-slice outcome mecha
   assert.doesNotMatch(skill, /pending question|first (?:short )?slice|question from `EXPIRED` is still due|asking a stale question|start the next `wait` FIRST/);
 });
 
+test("watch replay: later background expiries end with no reply, including no reassurance", () => {
+  const expiry = paragraph("**The expiry message");
+  assert.match(expiry, /\*\*On a background host, a later expiry ends your turn with no reply text at all\./);
+  assert.match(expiry, /not a second question, and not a nudge or a reassurance\*\*/);
+  assert.match(expiry, /The miss, in replay: "Take your time — no rush\.".*"No rush\. Take the time you need\.".*"Still here whenever you're ready\."/);
+  assert.match(expiry, /messages to someone who has stepped away.*stop below is what the silence is saving them for/);
+});
+
+test("watch replay: tool-call preambles and wake commentary are learner-visible plumbing", () => {
+  const plumbing = paragraph("**The watch is plumbing;");
+  assert.match(plumbing, /\*\*This includes your own narration around a tool call\.\*\*/);
+  assert.match(plumbing, /host that shows the learner everything you say/);
+  for (const miss of [
+    "Now I'll arm the save-watch on the gap",
+    "The watch is armed",
+    "The watcher has exited again, so I'll read its outcome and the sandbox file together",
+    "The window ran out with the marker still in the file",
+    "I'll re-arm the watch first, then ask the one check-in question",
+  ]) assert.ok(plumbing.includes(`"${miss}"`), `missing narration miss: ${miss}`);
+  assert.match(plumbing, /Between the handover and the review, say nothing at all about the mechanism/);
+  assert.match(plumbing, /the call needs no announcement and the wake needs no commentary/);
+});
+
+test("watch replay: SAVED already cancels the unsent handover instead of assigning finished work", () => {
+  const arm = paragraph("**The watch.**");
+  assert.match(arm, /`SAVED` with `already: true`.*read the file and review, never rewrite the marker over their code/);
+  assert.match(arm, /\*\*do not send the handover you were about to send\*\*/);
+  assert.match(arm, /gap is already filled.*telling them to replace a marker that is gone/);
+  assert.match(arm, /The miss, in replay:.*`already: true`.*"Replace the `TODO\(you\)` line with your own declaration.*Save the file; I'll read the saved code".*two seconds later.*correct/);
+  assert.match(arm, /told to redo finished work/);
+});
+
 test("watch command: STOPPED is a plain stop and SUPERSEDED is silence", () => {
   const stop = paragraph("**One live watcher per gap**");
   assert.match(stop, /`SUPERSEDED`.*nothing at all.*another watcher owns the gap/);
