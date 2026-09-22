@@ -27,17 +27,25 @@ owns the baseline, deadline, marker check at arming, work-in-progress saves, and
 watcher ownership. The tutor sends the same 180-second windows and four-window
 limit, reviews real saves, and keeps the same speech rules: background commands
 on hosts that wake the agent on exit, foreground slices elsewhere, no hints in
-expiry questions, and chat first. Only a `start` that returns no JSON result with
-an `outcome` (unknown command, usage text, or a nonzero exit with no `outcome`)
-loads `skills/next-lesson/references/watch-fallback.md` for the rest of the session;
-a JSON `ERROR` is handled as a command failure, never learner evidence or an
-update requirement. The introduction's example still uses different material from
-the gap and always shows a runnable example of the taught syntax. The fallback
-preserves the 0.6.1 shell rules verbatim. At session close, once and never mid-gap, the tutor says `altitude update` gets a
-more reliable save-watcher. The lesson never waits for that update. This is not
-the paid runtime's `update_required` path. Publish CLI 0.10.0 before plugin 0.7.0
-to make the command available immediately; older supported CLIs still teach via
-the fallback. No server or envelope requirement is added.
+expiry questions, and chat first. Only a `start` with no result loads
+`skills/next-lesson/references/watch-fallback.md`. Under `--json` (which the skill
+always passes), no result means stdout has no line that parses as JSON with an
+`outcome` field; exit code does not define it. A JSON `ERROR` is a result, handled
+as a command failure, never learner evidence or an update requirement.
+
+With no result, `unknown command: watch` or usage text listing no `watch`
+establishes an older CLI: use the fallback for the rest of the session without
+retrying at each gap. Only this cause gets the single update mention at session
+close, never mid-gap: `altitude update` gets a more reliable save-watcher. Any
+other no-result failure (permission error, crash, empty output) uses the fallback
+for that gap only; try `altitude watch start` again at the next gap, with no update
+mention. The lesson never waits for that update. This is not
+the paid runtime's `update_required` path. The fallback retains the 0.6.1 shell
+mechanics with the current review and speech safeguards. The introduction's
+example still uses different material from the gap and always shows a runnable
+example of the taught syntax. Publish CLI 0.10.0 before plugin 0.7.0 to make the
+command available immediately; older supported CLIs still teach via the fallback.
+No server or envelope requirement is added.
 
 The following 0.6.1 notes describe the previous release; its shell mechanics now
 apply only in that fallback.

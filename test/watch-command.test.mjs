@@ -5,6 +5,8 @@ import test from "node:test";
 const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
 const skill = read("skills/next-lesson/SKILL.md");
 const fallbackText = read("skills/next-lesson/references/watch-fallback.md");
+const compatibility = read("WORKSHOP-COMPATIBILITY.md");
+const watchRelease = compatibility.slice(compatibility.indexOf("Plugin 0.7.0"), compatibility.indexOf("The following 0.6.1 notes")).replace(/\s+/g, " ");
 const watch = skill.slice(skill.indexOf("**The watch.**"), skill.indexOf("**The hint ladder.**"));
 const paragraph = (rule) => {
   const result = watch.split("\n\n").find((p) => p.startsWith(rule));
@@ -221,12 +223,29 @@ test("watch smoke: no result means no stdout JSON line with outcome under --json
 });
 
 
+test("watch compatibility: no result is defined by stdout JSON, independently of exit code", () => {
+  assert.match(watchRelease, /Only a `start` with no result loads `skills\/next-lesson\/references\/watch-fallback\.md`/);
+  assert.match(watchRelease, /Under `--json` \(which the skill always passes\), no result means stdout has no line that parses as JSON with an `outcome` field; exit code does not define it/);
+  assert.match(watchRelease, /A JSON `ERROR` is a result, handled as a command failure, never learner evidence or an update requirement/);
+  assert.doesNotMatch(watchRelease, /nonzero exit with no `outcome`/);
+});
+
+test("watch compatibility: only an observably older CLI gets session fallback and update advice", () => {
+  assert.match(watchRelease, /With no result, `unknown command: watch` or usage text listing no `watch` establishes an older CLI: use the fallback for the rest of the session without retrying at each gap/);
+  assert.match(watchRelease, /Only this cause gets the single update mention at session close, never mid-gap: `altitude update` gets a more reliable save-watcher/);
+  assert.match(watchRelease, /The lesson never waits for that update/);
+  assert.doesNotMatch(watchRelease, /preserves the 0\.6\.1 shell rules verbatim/);
+});
+
+test("watch compatibility: every other no-result failure falls back for one gap and retries", () => {
+  assert.match(watchRelease, /Any other no-result failure \(permission error, crash, empty output\) uses the fallback for that gap only; try `altitude watch start` again at the next gap, with no update mention/);
+});
+
 test("watch command: compatibility documents the optional CLI feature without moving either floor", () => {
   const compat = read("WORKSHOP-COMPATIBILITY.md");
   const release = compat.slice(compat.indexOf("Plugin 0.7.0"), compat.indexOf("The following 0.6.1 notes"));
   assert.match(release, /CLI 0\.10\.0 when present and falls back\s+below it/);
   assert.match(release, /CLI 0\.8\.1 \/ plugin 0\.5\.8/);
-  assert.match(release, /no JSON result with\s+an `outcome`/);
   assert.match(release, /not\s+the paid runtime's `update_required` path/);
   assert.match(read("README.md"), /Plugin 0\.7\.0 uses `altitude watch` from CLI 0\.10\.0/);
 });
