@@ -19,7 +19,7 @@ test("watch command: arm the skeleton in the same turn with the marker count and
   assert.match(arm, /altitude watch start <file> --markers <N> --window-seconds 180 --max-windows 4 --json/);
   assert.match(arm, /N is the number of markers you just wrote/);
   assert.match(arm, /right after writing the skeleton, in that same turn/);
-  assert.match(arm, /`SAVED` with `already: true`.*read the file and review/);
+  assert.match(arm, /`SAVED` with `already: true`.*read the returned `content` and review/);
   assert.match(arm, /`ARMED`.*go on to `wait`/);
   assert.match(arm, /fewer than N.*work in progress/);
   assert.match(arm, /CLI owns the baseline, deadline, marker checks, and window count/);
@@ -44,8 +44,8 @@ test("watch command: SAVED reviews real code and work in progress never wakes th
   assert.match(saved, /marker deleted and nothing written in its place/);
   assert.match(saved, /`altitude watch wait` handles both states silently; the tutor is never even woken for them/);
   assert.match(saved, /no review, no comment, not even "I see you've started\."/);
-  assert.match(saved, /`SAVED`.*read the file and respond to their real code/);
-  assert.match(saved, /`already: true`.*read and review.*even if the gap is empty/);
+  assert.match(saved, /`SAVED`.*read the returned `content` and respond to their real code/);
+  assert.match(saved, /`already: true`.*read and review the returned `content`.*even if the gap is empty/);
 });
 
 test("watch command: question_due is only permission to ask once on EXPIRED", () => {
@@ -80,7 +80,7 @@ test("watch command: expiry has no pending question or first-slice outcome mecha
 
 test("watch replay: later background expiries end with no reply, including no reassurance", () => {
   const expiry = paragraph("**The expiry message");
-  assert.match(expiry, /\*\*On a background host, a later expiry ends your turn with no reply text at all\./);
+  assert.match(expiry, /\*\*On a background host, a later expiry is silent: end your turn with no reply text whenever the host accepts it\./);
   assert.match(expiry, /not a second question, and not a nudge or a reassurance\*\*/);
   assert.match(expiry, /The miss, in replay: "Take your time — no rush\.".*"No rush\. Take the time you need\.".*"Still here whenever you're ready\."/);
   assert.match(expiry, /messages to someone who has stepped away.*stop below is what the silence is saving them for/);
@@ -103,7 +103,7 @@ test("watch replay: tool-call preambles and wake commentary are learner-visible 
 
 test("watch replay: SAVED already cancels the unsent handover instead of assigning finished work", () => {
   const arm = paragraph("**The watch.**");
-  assert.match(arm, /`SAVED` with `already: true`.*read the file and review, never rewrite the marker over their code/);
+  assert.match(arm, /`SAVED` with `already: true`.*read the returned `content` and review under the rule below, never rewrite the marker over their code/);
   assert.match(arm, /\*\*do not send the handover you were about to send\*\*/);
   assert.match(arm, /gap is already filled.*telling them to replace a marker that is gone/);
   assert.match(arm, /The miss, in replay:.*`already: true`.*"Replace the `TODO\(you\)` line with your own declaration.*Save the file; I'll read the saved code".*two seconds later.*correct/);
@@ -157,38 +157,64 @@ test("watch fallback: the 0.6.1 shell mechanics and replay misses remain availab
   assert.match(fallbackText, /finished save landed in the 11 seconds between two chunks/);
 });
 
-test("watch smoke: SAVED, already, and check require a fresh disk read before review", () => {
-  const rule = paragraph("**Read the gap file itself before every review.**");
-  assert.match(rule, /`SAVED`.*`already: true`.*"check".*open the gap file from disk before you write a word of the review/);
-  assert.match(rule, /Every word of the review comes from that read/);
-  assert.match(rule, /THAT a save landed, never WHAT was saved/);
-  for (const text of [skill, fallbackText]) {
-    const readRule = text.split("\n\n").find((p) => p.startsWith("**Read the gap file itself"));
-    assert.ok(readRule);
-    if (text === fallbackText) assert.match(readRule, /next tool call reads the gap file from disk/);
-    assert.match(readRule, /The miss, in replay:.*background command's output.*never opened the file.*right only by luck/);
-    assert.doesNotMatch(text, /that wake is the next window's start or the review/);
-  }
+test("watch review: both SAVED outcomes supply the learner's file content", () => {
+  const rule = paragraph("**Review from the content the command returns.**");
+  assert.match(rule, /every `SAVED` result.*`wait`.*`start`.*`already: true`.*`content`.*`content_bytes`.*`content_truncated`/);
+  assert.match(rule, /Every word of the review comes from `content` in the result you just read/);
+  assert.match(rule, /that text IS the learner's file, read by the command at the moment of the save/);
+  assert.match(rule, /quoting anything else is quoting your own expectation/);
+  assert.match(rule, /never rewrite the marker over their code/);
+  assert.doesNotMatch(watch, /Read the gap file itself before every review|THAT a save landed, never WHAT was saved|command output is not the learner's code|if your last tool call before the review is not a read of that file|Reading a wake's output file is not reading the gap/);
 });
 
-test("watch matrix: the last tool call before review reads the gap, including already-saved gaps", () => {
-  const rule = paragraph("**Read the gap file itself before every review.**");
-  assert.match(rule, /Reading a wake's output file is not reading the gap/);
-  assert.match(rule, /neither is having written the skeleton yourself/);
-  assert.match(rule, /if your last tool call before the review is not a read of that file, you have not read it/);
-  assert.match(rule, /read again after stopping the live watcher/);
+test("watch review: preserve the unread-file misses and name Luna's recurrence", () => {
+  const rule = paragraph("**Review from the content the command returns.**");
   assert.match(rule, /The miss, in replay:.*background command's output.*never opened the file.*right only by luck/);
-  assert.match(rule, /The recurrence: Sonnet.*task-output file.*own intention.*`already: true`.*"when I checked, the line was already there".*never checked/);
-  assert.doesNotMatch(rule, /the next tool call reads the gap file from disk/);
+  assert.match(rule, /Sonnet.*task-output file.*own intention.*`already: true`.*"when I checked, the line was already there".*never checked/);
+  assert.ok(rule.includes('Luna wrote "The fill-in is already present in the file, so I\'m reviewing that saved version rather than reopening it"'));
+  assert.match(rule, /"looks correct".*never read/);
+});
+
+test("watch review: incomplete content and reviews without SAVED require disk before any review words", () => {
+  const rule = paragraph("**Review from the content the command returns.**");
+  assert.match(rule, /`content_truncated` is true, or `content` is absent for any reason, read the gap file from disk before you write a word of the review/);
+  assert.match(rule, /On "check", a missed-wake message, or any review you start yourself without a `SAVED` result in hand, read the gap file from disk.*there is no result to review from/);
+  assert.match(rule, /read again after stopping the live watcher/);
+});
+
+test("watch review: legacy fallback keeps its disk-read rule because it has no content", () => {
+  assert.match(watch, /The fallback reference keeps its disk-read rule unchanged: its shell watcher returns no `content`/);
+  const rule = fallbackText.split("\n\n").find((p) => p.startsWith("**Read the gap file itself"));
+  assert.ok(rule);
+  assert.match(rule, /`SAVED`.*`already: true`.*"check".*missed-wake.*next tool call reads the gap file from disk/);
+  assert.match(rule, /Every word of the review comes from that read/);
+  assert.match(rule, /THAT a save landed, never WHAT was saved/);
+  assert.match(rule, /The miss, in replay:.*background command's output.*never opened the file.*right only by luck/);
+  for (const text of [skill, fallbackText]) {
+    assert.doesNotMatch(text, /that wake is the next window's start or the review/);
+  }
 });
 
 test("watch matrix: silent expiry forbids stage directions and ends on the tool call", () => {
   const rule = paragraph("**The expiry message");
   assert.match(rule, /\*\*A note saying you are not replying is a reply\.\*\*/);
   assert.ok(rule.includes('No "*(no reply — the watch continues silently)*"'));
-  assert.match(rule, /no stage direction, no placeholder character\. End the turn on the tool call/);
+  assert.match(rule, /no stage direction\. End the turn on the tool call when the host accepts it/);
+  assert.doesNotMatch(rule, /no placeholder character/);
   assert.match(rule, /The recurrence: Opus.*windows 2 and 3.*stage direction.*twice/);
   assert.doesNotMatch(rule, /re-arm silently even when the learner has said nothing\. The miss/);
+});
+
+test("watch silence: only a host-demanded visible reply permits a single ellipsis", () => {
+  const rule = paragraph("**The expiry message");
+  assert.match(rule, /When the host will not accept a turn with no visible text and asks you for one, your whole reply is a single ellipsis character `…`/);
+  assert.match(rule, /no words, no nudge, no reassurance, no mention of the watch/);
+  assert.match(rule, /This is the only text a silent window may carry.*replaces the older watch-status wording.*never used anywhere else/);
+  assert.match(rule, /Claude Code.*synthetic prompt demanding visible output/);
+  assert.ok(rule.includes('"Whenever you’re ready."') || rule.includes('"Whenever you\'re ready."'));
+  assert.ok(rule.includes('"The file\'s still open on your side — no rush from me."'));
+  assert.match(rule, /Opus.*re-prompted twice.*host.*not.*disobeying/);
+  assert.doesNotMatch(skill, /Still watching\.|no second question, no message at all\.|a later expiry ends your turn with no reply text at all/);
 });
 
 test("watch matrix: a fast save is neither suspicious nor evidence of mastery", () => {
