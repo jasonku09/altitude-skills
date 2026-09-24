@@ -123,13 +123,25 @@ ancestor workspace binding. The adapter never selects
 `workspace_roots[0]` or substitutes the plugin process's working directory. Open
 the bound lesson folder in a separate workspace when attribution is ambiguous.
 
-Session-start context carries the core's exact lesson-read command. Its `env`
-response also provides `ALTITUDE_SESSION_ID` for subsequent hooks, but this is not
-proof that Cursor's shell tools inherit it; the live terminal shell probe did not
-receive that variable. Skills prefer the literal ID in the
-current context, use `altitude session --current --json` only to resolve an existing
-host identity, and retain `--session` on every task read and evidence emit. Neither
-status output nor the most recently active chat is a valid substitute.
+Session-start and prompt-submit context carry JSON session metadata whenever the
+core confirms this callback's exact `session.id`, including in an unbound folder
+with no lesson context. This lets `/begin` identify its own chat before binding;
+the metadata does not activate a lesson or create learner evidence. Bound-session
+context also carries the core's exact lesson-read command. The session-start `env`
+response provides `ALTITUDE_SESSION_ID` for subsequent hooks, but this is not proof
+that Cursor's shell tools inherit it; the live terminal shell probe did not receive
+that variable. Skills use the current context's literal ID as data, safely quote it
+for `--session` on every task read and evidence emit, and use
+`altitude session --current --json` only to resolve an existing host identity when
+context is unavailable. Invalid or mismatched core results never supply metadata.
+Neither status output nor the most recently active chat is a valid substitute.
+
+For first-journey setup, `/begin` requires reopening the new journey folder as
+Cursor's actual workspace before binding or teaching. A shell `cd` alone does not
+move the workspace root reported by hooks. Desktop learners use Open Folder;
+terminal learners leave and relaunch Cursor from the new folder, then resume
+`/begin` without creating another nested folder. A new chat resolves a new exact
+identity. The adapter does not infer descendant bindings from a parent workspace.
 
 The current server retires the plan gate; this adapter therefore registers no
 `ExitPlanMode` matcher. Source inspection found native generic `Write`/`Delete`
@@ -178,8 +190,8 @@ validating installations with other turn-generating plugins.
 Hook-owned recall questions are not emitted again manually by the shared skill.
 The exact current-session result exposes question ownership, and an explicit
 `--question-id` lets the CLI reject duplicate manual reporting for that question.
-Full automatic-question/answer/server-progress acceptance remains required; a
-context marker arriving in a probe is not a completed lesson trial.
+The September 24 trial below exercises actual question/answer capture and server
+progress. A context marker alone is not evidence that a question was asked.
 
 ## Evidence and remaining checks
 
@@ -201,6 +213,19 @@ acceptance. The monorepo's `docs/evidence/cursor-linux-2026-09-22.json` records 
 scope. The 41 Cursor shim/setup tests passed natively; the full suite passed
 242/242 on rerun after an unchanged Codex stdout test flaked on both this tree
 and its original baseline.
+
+September 24 fresh-workshop testing found and fixed three onboarding gaps: exact
+chat identity was absent from empty lesson context, core lacked a temporary
+unbound plugin-version observation, and a shell directory change left Cursor's
+hook workspace in the parent folder. Regression tests failed before each fix.
+The plugin suite passed 272 tests locally; Ubuntu passed the 271-test identity
+patch plus the new workspace-handoff checks. The companion core passed 768 tests
+and typecheck. The full trial used pinned Cursor terminal 2026.09.18-9a7762b with
+Sonnet 5, actual isolated Next/PostgreSQL routes, and live browser review grading.
+See the companion validation report for the final lesson result and fixture limits.
+The scripted operator wrote the learner code and answers. The tutor requested
+chat messages after saves instead of arming a background watch, so this trial
+does not qualify teaching-model compliance or replace the separate watcher trial.
 
 ### Upcoming save-watcher release
 

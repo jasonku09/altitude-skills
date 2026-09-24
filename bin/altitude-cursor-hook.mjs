@@ -93,6 +93,17 @@ function parseResult(raw, status, sessionId) {
   return result;
 }
 
+function contextForSession(result) {
+  // Cursor shell tools do not reliably inherit sessionStart.env. Relay only
+  // core-confirmed identity as JSON data, including before a project is bound.
+  const identity = result.session ? [
+    "Altitude current Cursor session metadata (JSON):",
+    JSON.stringify({ session_id: result.session.id }),
+    "Use this exact session_id for Altitude --session arguments in this conversation; it identifies the chat, not whether a lesson is bound.",
+  ].join("\n") : undefined;
+  return [...(identity ? [identity] : []), ...result.context].join("\n\n");
+}
+
 function openResponse(action) {
   if (["diff"].includes(action)) return { permission: "allow" };
   if (action === "user-prompt-submit") return { continue: true };
@@ -122,11 +133,13 @@ export async function main(action = process.argv[2]) {
       const reason = result.reason || "Altitude requested a workshop check before continuing.";
       response = action === "user-prompt-submit" ? { continue: false, user_message: reason } : { permission: "deny", user_message: reason, agent_message: reason };
       exitCode = 2;
-    } else if (action === "session-start") {
-      response = { ...(result.session ? { env: { ALTITUDE_SESSION_ID: result.session.id } } : {}), ...(result.context.length ? { additional_context: result.context.join("\n\n") } : {}) };
-    }
-    else if (action === "user-prompt-submit" && result.context.length) {
-      response = { continue: true, additional_context: result.context.join("\n\n") };
+    } else if (action === "session-start" || action === "user-prompt-submit") {
+      const context = contextForSession(result);
+      response = {
+        ...(action === "session-start" && result.session ? { env: { ALTITUDE_SESSION_ID: result.session.id } } : {}),
+        ...(action === "user-prompt-submit" ? { continue: true } : {}),
+        ...(context ? { additional_context: context } : {}),
+      };
     }
     // Intentionally do not return followup_message: no verified Cursor origin
     // or callback association exists yet. Core keeps delivery unacknowledged.

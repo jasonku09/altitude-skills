@@ -47,7 +47,7 @@ test("native Cursor manifest shares skills and has its own hooks and release ver
 
 test("session-start sends structured core request and scopes context to the exact chat", async (t) => {
   const fake = await fixture(t, { ...allow, context: ["Read this journey."], session: { id: "chat-a" } });
-  assert.deepEqual(output(run("session-start", payload, fake.dir)), { env: { ALTITUDE_SESSION_ID: "chat-a" }, additional_context: "Read this journey." });
+  assert.deepEqual(output(run("session-start", payload, fake.dir)), { env: { ALTITUDE_SESSION_ID: "chat-a" }, additional_context: 'Altitude current Cursor session metadata (JSON):\n{"session_id":"chat-a"}\nUse this exact session_id for Altitude --session arguments in this conversation; it identifies the chat, not whether a lesson is bound.\n\nRead this journey.' });
   const captured = JSON.parse(await readFile(fake.capture, "utf8"));
   assert.ok(captured.args.includes("--output"));
   assert.ok(captured.args.includes("json"));
@@ -56,6 +56,36 @@ test("session-start sends structured core request and scopes context to the exac
   assert.equal(captured.input.conversation_id, "chat-a");
   assert.equal(captured.input.cwd, root);
 });
+
+for (const action of ["session-start", "user-prompt-submit"]) {
+  test(`${action} exposes validated identity before a project is bound without relying on shell env`, async (t) => {
+    const fake = await fixture(t, { ...allow, session: { id: "chat-a" } });
+    const result = output(run(action, payload, fake.dir));
+    assert.match(result.additional_context, /Altitude current Cursor session metadata/);
+    assert.deepEqual(JSON.parse(result.additional_context.split("\n")[1]), { session_id: "chat-a" });
+    assert.match(result.additional_context, /not whether a lesson is bound/);
+    if (action === "user-prompt-submit") assert.equal(result.continue, true);
+  });
+
+  test(`${action} keeps unusual identity characters in JSON data`, async (t) => {
+    const id = 'chat-"\n`echo unsafe` $(echo unsafe)';
+    const fake = await fixture(t, { ...allow, session: { id } });
+    const result = output(run(action, { ...payload, conversation_id: id }, fake.dir));
+    assert.deepEqual(JSON.parse(result.additional_context.split("\n")[1]), { session_id: id });
+    assert.equal(result.additional_context.split("\n").length, 3);
+  });
+
+  for (const [label, response, status] of [
+    ["missing identity", allow, 0],
+    ["another chat", { ...allow, session: { id: "chat-b" } }, 0],
+    ["malformed identity", { ...allow, session: "chat-a" }, 0],
+    ["incoherent output", { ...allow, action: "block", session: { id: "chat-a" } }, 0],
+    ["failed CLI", { ...allow, session: { id: "chat-a" } }, 1],
+  ]) test(`${action} does not manufacture identity from ${label}`, async (t) => {
+    const fake = await fixture(t, response, status);
+    assert.deepEqual(output(run(action, payload, fake.dir)), action === "user-prompt-submit" ? { continue: true } : {});
+  });
+}
 
 test("only a coherent core exit 2 may deny an edit", async (t) => {
   const fake = await fixture(t, { ...allow, exitCode: 2, action: "block", reason: "Review this change first." }, 2);
@@ -178,11 +208,25 @@ test("Cursor shared skills identify the host and preserve exact current session 
     assert.match(text, /Cursor/);
     assert.match(text, /altitude session --current --json/);
     assert.match(text, /ALTITUDE_SESSION_ID/);
+    assert.match(text, /session metadata.*session_id/);
     assert.match(text, /synthetic/);
   }
   for (const name of ["begin", "next-lesson", "connect", "status", "start-project", "plan-journey", "adopt-project"]) {
     assert.match(await readFile(join(root, "skills", name, "SKILL.md"), "utf8"), /Cursor.*\/next-lesson/);
   }
+});
+
+test("Cursor begin reopens the actual journey workspace before binding and resumes without nested folders", async () => {
+  const text = await readFile(join(root, "skills/begin/SKILL.md"), "utf8");
+  const section = text.slice(text.indexOf("## Step 3"), text.indexOf("## Step 4"));
+  assert.match(section, /Cursor.*shell.*does not change.*workspace/s);
+  assert.match(section, /desktop.*Open Folder/s);
+  assert.match(section, /terminal.*leave.*Cursor.*relaunch/s);
+  assert.match(section, /Continue setup in this folder; folder creation is already done/);
+  assert.match(section, /do not create another nested journey folder/);
+  assert.match(section, /new conversation.*identity.*hook context/s);
+  assert.match(section, /workspace.*chosen journey folder.*before.*binding/s);
+  assert.ok(section.indexOf("Open Folder") < section.indexOf("3. Ask them to run `altitude bind`"));
 });
 
 test("native prompt context carries a core recall instruction without an extra user turn", async (t) => {
