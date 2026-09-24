@@ -19,8 +19,10 @@ as a custom marketplace once the Cursor release is published. Use Cursor's
 marketplace manager to add `https://github.com/jasonku09/altitude-skills.git`, then
 select the native Altitude plugin. In the current terminal runtime,
 `agent plugin marketplace add <git-url>` registers a marketplace; it does not
-install an individual plugin. The actual manager's install/reload/update flow
-still needs end-to-end verification for this unpublished release. The terminal
+install an individual plugin. The September 24 macOS preview trial verified a user-scoped install, a
+marketplace reindex to the 0.7.0 candidate, and installed skill discovery after
+restarting the terminal agent. This used an explicit development Git ref; the
+published default-ref update still needs its release smoke check. The terminal
 marketplace-add command directs users to `/plugins` in interactive mode to install. Prefer its
 managed versioned install over maintaining a permanent manual clone.
 
@@ -198,9 +200,9 @@ progress. A context marker alone is not evidence that a question was asked.
 
 The final ordinary terminal and desktop user-local checks passed after setup
 registered the exact active plugin root. This resolves the earlier failed
-user-local terminal probe caused by another plugin's root environment. Managed
-marketplace installation/update, complete learner journeys, and the remaining
-lifecycle/platform matrix below still require their own recorded acceptance.
+user-local terminal probe caused by another plugin's root environment. The
+managed preview update and full scripted learner trial are recorded below; they
+do not certify every entry in the lifecycle/platform matrix.
 
 September 22 native Linux checks used Ubuntu 24.04.4 x86_64, Node 24.18.0, and
 Cursor terminal 2026.09.18-9a7762b under a dedicated non-root test user. An
@@ -241,6 +243,18 @@ background wake is verified, its existing foreground rule applies: use
 before a watch result. Cancellation of a host tool does not establish a completed
 learner submission.
 
+The September 24 macOS managed preview used Cursor terminal
+2026.09.18-9a7762b: add this repository at the previous 0.6.1 commit, install
+Altitude for the user through `/plugins`, reindex the marketplace at
+`feat/cursor-support`, then restart. The installed native plugin retained all
+seven skills, and the managed cache contained the exact 0.7.0 candidate commit.
+The setup module loaded from that managed cache also replaced an older registered
+root in a disposable home, preserved unrelated hooks, was idempotent, and refused
+to let an old uninstall remove the new registration. This checks installation
+mechanics and component discovery; it does not repeat a native lesson or prove
+hook dispatch on this candidate. No real user hook registration changed. See
+[`docs/evidence/cursor-plugin-upgrade-2026-09-24.json`](docs/evidence/cursor-plugin-upgrade-2026-09-24.json).
+
 All three manifests now target 0.7.0. The existing parity regression failed before
 the Cursor manifest was aligned with the two watcher manifests. These versions
 are release candidates, not a claim of publication. The watch command is
@@ -255,8 +269,8 @@ uninstall, malformed config, and concurrent-writer refusal. The Windows test run
 Node command with paths and arguments containing shell metacharacters. It does
 **not** establish a native Windows Cursor session.
 
-Before release, record desktop and terminal versions, OS, model/configuration,
-and results for: user-scoped install/reload/update, folder change, pair/begin,
+The acceptance matrix records desktop and terminal versions, OS,
+model/configuration, and results for: user-scoped install/reload/update, folder change, pair/begin,
 learner edit and watch handoff, actual write/edit/delete tool names and denials, missing
 binary/crash/timeout, due recall delivery, real answer capture and server progress,
 cancellation, resume, compaction, concurrent chats, and multi-root workspaces.
