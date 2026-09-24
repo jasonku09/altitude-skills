@@ -31,6 +31,10 @@ async function readNextLesson() {
   return readFile(join(repoRoot, "skills", "next-lesson", "SKILL.md"), "utf8");
 }
 
+async function readFallback() {
+  return readFile(join(repoRoot, "skills", "next-lesson", "references", "watch-fallback.md"), "utf8");
+}
+
 function sliceBetween(text, startMarker, endMarker) {
   const start = text.indexOf(startMarker);
   assert.ok(start !== -1, `missing marker: ${startMarker}`);
@@ -66,7 +70,7 @@ test("the background watch is one capability-conditional rule, with Claude Code 
 });
 
 test("the background watcher exits on a real save, on expiry, or on a poll error, and says which", async () => {
-  const watch = watchSection(await readNextLesson());
+  const watch = await readFallback();
   const background = sliceBetween(watch, BACKGROUND_RULE, "**Otherwise the watch runs in the foreground");
 
   assert.match(background, /One command is one 3-minute window/, "one command per window keeps the four-window stop countable");
@@ -101,20 +105,24 @@ test("one live watcher per gap", async () => {
   const watch = watchSection(await readNextLesson());
 
   assert.match(watch, /\*\*One live watcher per gap\*\*/, "the no-stacking rule is one emphasized instruction");
-  assert.match(watch, /stop the one still running/, "re-arming replaces, never adds");
+  assert.match(watch, /starting a new `wait` supersedes the old one/, "the CLI enforces ownership");
+  assert.match(watch, /TaskStop.*courtesy, not a correctness requirement/, "host cleanup is optional");
   assert.match(watch, /never start a second because a chat turn came in/, "a chat turn does not re-arm a live watcher");
-  assert.match(watch, /When the gap is finished, reviewed, or abandoned, stop its watcher/, "no watcher outlives its gap");
+  const stop = watch.split("\n\n").find((p) => p.startsWith("**Stop only a watcher that may still be live.**"));
+  assert.ok(stop, "cleanup has its own rule");
+  assert.match(stop, /"check".*missed-wake.*`wait` may still be running.*abandoned or replaced mid-watch/, "no live watcher outlives its gap");
+  assert.match(stop, /never after `SAVED` or `STOPPED`/, "terminal outcomes need no cleanup call");
 });
 
-test("hosts without the capability keep the foreground watch, unchanged", async () => {
+test("hosts without the capability keep the foreground watch through wait slices", async () => {
   const watch = watchSection(await readNextLesson());
   const foreground = sliceBetween(watch, "**Otherwise the watch runs in the foreground", "is work in progress, not a submission");
 
   assert.match(foreground, /Codex today/, "the foreground example host is named");
   assert.match(foreground, /under your tool's timeout/, "chunking under the tool timeout survives");
-  assert.match(foreground, /issue the first poll chunk before that turn ends/, "the foreground handover turn still polls before it ends");
+  assert.match(foreground, /issue the first `wait` before that turn ends/, "the foreground handover turn still polls before it ends");
   assert.match(watch, /never end a turn on a promise to watch with no poll running/, "true on every host");
-  assert.match(watch, /Read the poll's own outcome before reading anything into its result/, "poll error is not a struggle, on every host");
+  assert.match(watch, /Read the command's own outcome before reading anything into its result/, "poll error is not a struggle, on every host");
 });
 
 test("the handover paragraph binds 'spoken' to the channel the host delivers, and names the silent miss", async () => {
@@ -148,9 +156,8 @@ test("the expiry question never ends the watch; whether it ends the turn depends
 test("silent re-arms and chat on a background host", async () => {
   const watch = watchSection(await readNextLesson());
 
-  // An emptied gap still wakes the tutor; the re-arm must not become a comment.
-  assert.match(watch, /one tool call — the new watcher — and no reply text at all/, "a silent re-arm is a turn with no text");
-  assert.match(watch, /"Still watching\."/, "the fallback where a host will not end a turn on nothing");
+  // Both partial saves and emptied gaps are now handled without waking the tutor.
+  assert.match(watch, /the tutor is never even woken for them/, "work in progress stays silent");
   // Chat no longer queues behind a poll.
   assert.match(watch, /On a background host the learner's message arrives as its own turn at once/, "chat is immediate");
   assert.match(watch, /with the watcher still running behind it/, "the watcher survives the chat turn");
@@ -166,10 +173,10 @@ test("the release notes mention the watch change and move no floor", async () =>
   const paid = await readFile(join(repoRoot, "skills", "next-lesson", "references", "paid-mode.md"), "utf8");
   for (const manifest of [".claude-plugin/plugin.json", ".codex-plugin/plugin.json"]) {
     const { version } = JSON.parse(await readFile(join(repoRoot, manifest), "utf8"));
-    assert.equal(version, "0.6.1", `${manifest}: the version stays 0.6.1`);
+    assert.equal(version, "0.7.0", `${manifest}: the version is 0.7.0`);
   }
 
-  assert.match(compat, /Plugin 0\.6\.1[^]*background watch/i, "the 0.6.1 notes mention the background watch");
+  assert.match(compat, /Plugin 0\.7\.0[^]*background/i, "the current notes mention the background watch");
   assert.match(paid.split("-->")[0], /background/, "the paid-mode release comment mentions the watch change");
   assert.match(paid.split("-->")[0], /CLI 0\.8\.1 \/ plugin 0\.5\.8/, "the floor is unchanged");
 });
@@ -188,7 +195,7 @@ const BASELINE_RULE =
   "**The baseline is taken once, when the watch is armed, and carried as a literal value into every command that watches after it.**";
 
 test("the baseline is taken once and carried as a literal, on every host", async () => {
-  const watch = watchSection(await readNextLesson());
+  const watch = await readFallback();
   const rule = watch.split("\n\n").find((p) => p.includes(BASELINE_RULE));
   assert.ok(rule, "the baseline rule is one emphasized instruction inside the watch section");
 
@@ -204,7 +211,7 @@ test("the baseline is taken once and carried as a literal, on every host", async
 });
 
 test("foreground chunks share one baseline, and the replayed miss is named", async () => {
-  const watch = watchSection(await readNextLesson());
+  const watch = await readFallback();
   const foreground = sliceBetween(watch, "**Otherwise the watch runs in the foreground", "is work in progress, not a submission");
 
   assert.match(foreground, /several calls make one window and one baseline/, "chunks make one window AND one baseline");
@@ -216,7 +223,7 @@ test("foreground chunks share one baseline, and the replayed miss is named", asy
 });
 
 test("a re-armed background watcher compares against the carried baseline, not the time at re-arm", async () => {
-  const watch = watchSection(await readNextLesson());
+  const watch = await readFallback();
   const background = sliceBetween(watch, BACKGROUND_RULE, "**Otherwise the watch runs in the foreground");
 
   assert.doesNotMatch(background, /it records the modification time/, "the watcher no longer takes its own baseline");
@@ -227,18 +234,18 @@ test("a re-armed background watcher compares against the carried baseline, not t
 });
 
 test("a silent re-arm after a work-in-progress save re-takes the baseline time-first", async () => {
-  const watch = watchSection(await readNextLesson());
+  const watch = await readFallback();
   const wip = watch.split("\n\n").find((p) => p.includes("is work in progress, not a submission"));
 
   assert.match(wip, /from the time you took just before that read/, "the re-arm's baseline predates the read");
 });
 
-test("the 0.6.1 notes mention the carried baseline", async () => {
+test("the 0.7.0 notes delegate the baseline to altitude watch", async () => {
   const compat = await readFile(join(repoRoot, "WORKSHOP-COMPATIBILITY.md"), "utf8");
   const paid = await readFile(join(repoRoot, "skills", "next-lesson", "references", "paid-mode.md"), "utf8");
 
-  assert.match(compat.replace(/\s+/g, " "), /Plugin 0\.6\.1.*baseline/i);
-  assert.match(paid.split("-->")[0], /watch baseline taken once and carried/);
+  assert.match(compat.replace(/\s+/g, " "), /Plugin 0\.7\.0.*baseline/i);
+  assert.match(paid.split("-->")[0], /CLI owns the baseline/);
 });
 
 /**
@@ -259,7 +266,7 @@ const DEADLINE_RULE =
 const CHUNK_RULE = "**A chunk ending is not the window ending.**";
 
 test("the deadline is taken once per window and carried as a literal, on every host", async () => {
-  const watch = watchSection(await readNextLesson());
+  const watch = await readFallback();
   const rule = watch.split("\n\n").find((p) => p.includes(DEADLINE_RULE));
   assert.ok(rule, "the deadline rule is one emphasized instruction inside the watch section");
 
@@ -275,7 +282,7 @@ test("the deadline is taken once per window and carried as a literal, on every h
 });
 
 test("a new deadline opens only after EXPIRED; every other re-arm gets the remainder", async () => {
-  const watch = watchSection(await readNextLesson());
+  const watch = await readFallback();
   const rule = watch.split("\n\n").find((p) => p.includes(DEADLINE_RULE));
 
   assert.match(rule, /A new window, with a new deadline, opens only when the one you carry has passed/, "what opens a window");
@@ -285,7 +292,7 @@ test("a new deadline opens only after EXPIRED; every other re-arm gets the remai
 });
 
 test("a foreground chunk that runs out of its slice says WAITING, and the tutor chains on in silence", async () => {
-  const watch = watchSection(await readNextLesson());
+  const watch = await readFallback();
   const foreground = sliceBetween(watch, "**Otherwise the watch runs in the foreground", "is work in progress, not a submission");
 
   assert.ok(foreground.includes(CHUNK_RULE), "the chunk rule is one emphasized instruction in the foreground paragraph");
@@ -302,7 +309,7 @@ test("a foreground chunk that runs out of its slice says WAITING, and the tutor 
 });
 
 test("the background watcher is handed its deadline too", async () => {
-  const watch = watchSection(await readNextLesson());
+  const watch = await readFallback();
   const background = sliceBetween(watch, BACKGROUND_RULE, "**Otherwise the watch runs in the foreground");
 
   assert.match(background, /takes the baseline you carry as a literal and the deadline beside it/, "the watcher is handed both numbers");
@@ -313,20 +320,20 @@ test("the background watcher is handed its deadline too", async () => {
 });
 
 test("the expiry question is bound to the carried deadline", async () => {
-  const watch = watchSection(await readNextLesson());
+  const watch = await readFallback();
   const expiry = watch.split("\n\n").find((p) => p.includes("**The expiry message is a question with no hint in it.**"));
 
   assert.match(expiry, /When the deadline you carry passes with no real save/, "expiry is the carried deadline");
   assert.match(expiry, /never on `WAITING`/, "a chunk running out is not an expiry");
 });
 
-test("the 0.6.1 notes mention the carried deadline", async () => {
+test("the 0.7.0 notes delegate the deadline and arming check to altitude watch", async () => {
   const compat = await readFile(join(repoRoot, "WORKSHOP-COMPATIBILITY.md"), "utf8");
   const paid = await readFile(join(repoRoot, "skills", "next-lesson", "references", "paid-mode.md"), "utf8");
 
-  assert.match(compat.replace(/\s+/g, " "), /Plugin 0\.6\.1.*window's deadline/i);
-  assert.match(paid.split("-->")[0], /window deadline carried the same way/);
-  assert.match(compat.replace(/\s+/g, " "), /Plugin 0\.6\.1.*baseline reading also checks that the marker is still in the file/i);
+  assert.match(compat.replace(/\s+/g, " "), /Plugin 0\.7\.0.*deadline/i);
+  assert.match(paid.split("-->")[0], /CLI owns the baseline, deadline, and marker check at arming/);
+  assert.match(compat.replace(/\s+/g, " "), /Plugin 0\.7\.0.*marker check at arming/i);
 });
 
 /**
@@ -339,7 +346,7 @@ test("the 0.6.1 notes mention the carried deadline", async () => {
  * after" long enough to type a line in. So the first reading checks the marker.
  */
 test("the baseline reading checks for the marker, so a save that beat it is not swallowed", async () => {
-  const watch = watchSection(await readNextLesson());
+  const watch = await readFallback();
   const rule = watch.split("\n\n").find((p) => p.includes(BASELINE_RULE));
 
   assert.match(rule, /\*\*The call that reads the baseline also checks that the marker is still in the file\.\*\*/, "one emphasized instruction");
@@ -362,7 +369,7 @@ test("the baseline reading checks for the marker, so a save that beat it is not 
  */
 test("a save that arrived fast is still the learner's: never doubted, never overwritten with the marker", async () => {
   const watch = watchSection(await readNextLesson());
-  const rule = watch.split("\n\n").find((p) => p.includes(BASELINE_RULE));
+  const rule = watch.split("\n\n").find((p) => p.includes("**Code in the gap"));
 
   assert.match(rule, /\*\*Code in the gap is the learner's code, however fast it arrived\.\*\*/, "one emphasized instruction");
   assert.match(rule, /you cannot feel them pass/, "the mechanism: the tutor's own latency is invisible to it");

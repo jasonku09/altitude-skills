@@ -21,6 +21,45 @@ commands, `altitude teaching set` and `altitude emit teaching-checkin`, need CLI
 be recorded rather than claiming it landed. Publication order for it: deploy the
 server that serves those fields, publish CLI 0.9.0, then publish plugin 0.6.0.
 
+The combined 0.7.0 release candidate also adds the native Cursor plugin. For
+Cursor, deploy the matching server/schema support and publish CLI 0.10.0 before
+publishing the plugin: older CLIs cannot identify Cursor or execute its structured
+hooks. `/connect` updates the CLI and registers the exact active plugin root;
+run it again after a plugin update and reopen Cursor when setup changes. Existing
+pairing is preserved during ordinary updates. All three host manifests target
+0.7.0; this is preparation, not a publication announcement. The older-CLI watcher
+fallback below applies to already-supported hosts and does not make an older CLI
+Cursor-compatible. See [Cursor acceptance](CURSOR-SUPPORT.md) for tested scope.
+
+Plugin 0.7.0 uses `altitude watch` from CLI 0.10.0 when present and falls back
+below it, without raising the enforced floor: CLI 0.8.1 / plugin 0.5.8. The CLI
+owns the baseline, deadline, marker check at arming, work-in-progress saves, and
+watcher ownership. The tutor sends the same 180-second windows and four-window
+limit, reviews real saves, and keeps the same speech rules: background commands
+on hosts that wake the agent on exit, foreground slices elsewhere, no hints in
+expiry questions, and chat first. Only a `start` with no result loads
+`skills/next-lesson/references/watch-fallback.md`. Under `--json` (which the skill
+always passes), no result means stdout has no line that parses as JSON with an
+`outcome` field; exit code does not define it. A JSON `ERROR` is a result, handled
+as a command failure, never learner evidence or an update requirement.
+
+With no result, `unknown command: watch` or usage text listing no `watch`
+establishes an older CLI: use the fallback for the rest of the session without
+retrying at each gap. Only this cause gets the single update mention at session
+close, never mid-gap: `altitude update` gets a more reliable save-watcher. Any
+other no-result failure (permission error, crash, empty output) uses the fallback
+for that gap only; try `altitude watch start` again at the next gap, with no update
+mention. The lesson never waits for that update. This is not
+the paid runtime's `update_required` path. The fallback retains the 0.6.1 shell
+mechanics with the current review and speech safeguards. The introduction's
+example still uses different material from the gap and always shows a runnable
+example of the taught syntax. Publish CLI 0.10.0 before plugin 0.7.0 to make the
+command available immediately; older supported CLIs still teach via the fallback.
+No server or envelope requirement is added.
+
+The following 0.6.1 notes describe the previous release; its shell mechanics now
+apply only in that fallback.
+
 Plugin 0.6.1 is a prose-only patch on 0.6.0: a `teach` gap's handover now says what
 the gap must do, in words, and never the code that does it (the exact code still
 reaches a learner only through hint-ladder rung 3 or the impatience rule). It also moves
@@ -163,7 +202,7 @@ accept. A bound project whose client is too old keeps its binding, its generated
 plan, and its queued events while it waits for the update.
 
 Rollback is per artifact and needs no data migration. Reverting the plugin one
-release — 0.6.1 back to 0.6.0, 0.6.0 back to 0.5.8, or 0.5.8 back to 0.5.7 — restores the previous
+release — 0.7.0 back to 0.6.1, 0.6.1 back to 0.6.0, 0.6.0 back to 0.5.8, or 0.5.8 back to 0.5.7 — restores the previous
 instructions with the binding and plan intact; reverting the CLI to the last
 published build restores the previous envelope, and the server keeps accepting
 version-less claims until enforcement is enabled. Roll enforcement back

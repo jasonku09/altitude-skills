@@ -164,17 +164,17 @@ test("paths: /begin checks for versioned requirements at their path under `journ
   assert.doesNotMatch(begin, /When `current_task\.learning_requirements` is present/);
 });
 
-test("paths: the 0.6.1 notes list the change and add no requirement", async () => {
+test("paths: the 0.7.0 notes list the change and add no requirement", async () => {
   const paid = await readPaidMode();
   const compat = await readFile(join(repoRoot, "WORKSHOP-COMPATIBILITY.md"), "utf8");
-  const note = between(paid, "<!-- Release note (plugin 0.6.1)", "-->");
+  const note = between(paid, "<!-- Release note (plugin 0.7.0)", "-->");
 
   assert.match(note, /every server field is read by its exact path under `journey`/, "the release note lists the change");
-  assert.match(note, /0\.6\.1 is a prose-only patch on 0\.6\.0 with no new CLI or server requirement/, "still no new requirement");
+  assert.match(note, /0\.7\.0 adds no new enforced CLI or server requirement/, "still no new requirement");
   assert.match(compat, /`journey\.teaching_knobs`/, "the compatibility notes name the path");
   assert.match(compat, /It adds no\s+CLI, server, or envelope requirement and moves no floor/, "still no floor move");
   for (const manifest of [".claude-plugin/plugin.json", ".codex-plugin/plugin.json"]) {
     const json = JSON.parse(await readFile(join(repoRoot, manifest), "utf8"));
-    assert.equal(json.version, "0.6.1", `${manifest} stays 0.6.1`);
+    assert.equal(json.version, "0.7.0", `${manifest} stays 0.7.0`);
   }
 });

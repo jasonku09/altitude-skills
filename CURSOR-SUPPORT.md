@@ -7,8 +7,9 @@ share one transport shim and the existing skills. Server-owned learning policy,
 entitlement, review selection, grading, and mastery remain outside this repository.
 
 This is an unreleased implementation, not a supported-platform announcement.
-Manifest versions remain aligned with the existing release until a coordinated
-release bumps them. The corresponding CLI/server implementation must ship first;
+The combined release candidate aligns all three plugin manifests at 0.7.0 and
+includes the shared CLI save-watcher integration. The corresponding Cursor-capable
+server and CLI 0.10.0 implementation must ship first;
 older CLIs reject the new flags and this shim fails open with a diagnostic.
 
 ## Managed installation and local plugin loading
@@ -227,23 +228,22 @@ The scripted operator wrote the learner code and answers. The tutor requested
 chat messages after saves instead of arming a background watch, so this trial
 does not qualify teaching-model compliance or replace the separate watcher trial.
 
-### Upcoming save-watcher release
+### Combined 0.7.0 release candidate
 
-[Plugin PR #26](https://github.com/jasonku09/altitude-skills/pull/26) replaces
+[Plugin PR #26](https://github.com/jasonku09/altitude-skills/pull/26), integrated
+into this release candidate, replaces
 model-written polling loops with `altitude watch start|wait|stop` (CLI 0.10.0),
-while keeping teaching instructions in the shared skill. Its full diff applies
-cleanly to these Cursor changes in a read-only `git apply --check`; it has not been
-merged into this branch. Adopt that shared watch implementation when integrating
-the releases rather than adding Cursor-specific polling. Until a host's automatic
+while keeping teaching instructions in the shared skill. The same implementation
+serves all three hosts; Cursor's exact-session and question-ownership rules remain.
+Until a host's automatic
 background wake is verified, its existing foreground rule applies: use
 `watch wait --slice-seconds` below the shell tool's timeout and handle queued chat
 before a watch result. Cancellation of a host tool does not establish a completed
 learner submission.
 
-PR #26 bumps the Claude and Codex manifests to 0.7.0. A coordinated release must
-also align the new Cursor manifest; its version-parity test intentionally catches
-a missed bump. Retain Cursor's exact-session and hook-question ownership
-instructions when taking that PR's shared skill changes. The watch command is
+All three manifests now target 0.7.0. The existing parity regression failed before
+the Cursor manifest was aligned with the two watcher manifests. These versions
+are release candidates, not a claim of publication. The watch command is
 file-scoped; it is not a replacement for the conversation ID used by task reads
 and evidence emits.
 
@@ -263,6 +263,10 @@ cancellation, resume, compaction, concurrent chats, and multi-root workspaces.
 Test existing hooks alongside Altitude: Cursor merges hook responses and another
 hook's stop follow-up can override Altitude's. An offered question must never be
 marked asked merely because the adapter printed an instruction.
+
+Dedicated Windows and further Linux testing are deferred by the user's release
+decision; native Windows and Linux desktop remain unverified. Existing Ubuntu
+terminal evidence is retained. This does not remove automated portability checks.
 
 macOS, native Windows, and Linux are intended targets. No row in that matrix is
 certified by these package tests. Recommend a model only after its recorded full

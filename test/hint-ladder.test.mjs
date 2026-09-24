@@ -85,7 +85,7 @@ test("the watch starts in the turn that hands the gap over", async () => {
   );
   assert.match(
     watch,
-    /issue the first poll chunk before that turn ends/,
+    /issue the first `wait` before that turn ends/,
     "the handover turn must issue the first poll chunk before it ends",
   );
   assert.match(
@@ -129,7 +129,7 @@ test("the expiry message is a question with no hint in it", async () => {
   // decide its own next paraphrase is different.
   assert.ok(
     watch.includes(ANTI_PATTERN_HINT),
-    "Chan's reveal must be quoted verbatim as the named miss",
+    "The unasked reveal must be quoted verbatim as the named miss",
   );
   assert.match(watch, /is the miss/, "the quoted reply must be labelled as the miss");
 
@@ -192,15 +192,15 @@ test("asking the expiry question re-arms the watch in the same turn, never ends 
     "the old wording still reads as ending the turn to wait for a reply",
   );
   // Both ways the answer can arrive, so neither a save nor a reply is stranded.
-  assert.match(watch, /a real save lands in the next window/, "a save during the wait must still be caught");
+  assert.match(watch, /on `SAVED`, read the returned `content` and respond to their real code/, "a save during the wait must still be reviewed");
   assert.match(
     watch,
-    /a\s+chat reply reaches you when that poll returns/,
+    /on a foreground host anything the learner types mid-poll reaches you when the poll returns/,
     "a reply must arrive on the poll's return, per the mid-poll rule below",
   );
 });
 
-test("a save that still contains a TODO(you) marker is work in progress: silent re-arm", async () => {
+test("a save that still contains a TODO(you) marker is work in progress: the CLI waits silently", async () => {
   const watch = watchSection(await readNextLesson());
 
   // Autosaving editors fire the mtime on every keystroke pause. Reviewing a
@@ -213,7 +213,7 @@ test("a save that still contains a TODO(you) marker is work in progress: silent 
   );
   assert.match(
     watch,
-    /re-arm the watch silently — no review, no comment/,
+    /no review, no comment/,
     "a work-in-progress save must earn no review and no comment",
   );
 });
@@ -233,8 +233,8 @@ test("a save whose gap is empty is work in progress too, in the same rule as the
   );
   assert.match(
     watch,
-    /or a gap stands empty where one of them used to be, re-arm the watch silently/,
-    "an empty gap must take the same silent re-arm as a remaining marker",
+    /`altitude watch wait` handles both states silently; the tutor is never even woken for them/,
+    "the CLI handles emptied gaps and remaining markers without waking the tutor",
   );
   // The finished test now has both halves: markers gone AND code in their place.
   assert.match(
@@ -369,7 +369,7 @@ test("an explicit request for the answer gets rung 3 and no lecture", async () =
   );
 });
 
-test("the worked example climbs Chan's gap one rung at a time and reveals the code only on rung 3", async () => {
+test("the worked example climbs the gap one rung at a time and reveals the code only on rung 3", async () => {
   const watch = watchSection(await readNextLesson());
 
   assert.match(watch, /def list_notes\(folder: Path\) -> list\[Path\]/, "the worked gap is missing");
