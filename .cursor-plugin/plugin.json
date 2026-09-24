@@ -1,0 +1,11 @@
+{
+  "name": "altitude",
+  "version": "0.7.0",
+  "description": "Learn to code by building a real project with your coding agent. Shared Altitude skills and workshop hooks for Cursor.",
+  "author": { "name": "Jason Ku" },
+  "homepage": "https://github.com/jasonku09/altitude-skills",
+  "repository": "https://github.com/jasonku09/altitude-skills",
+  "license": "MIT",
+  "skills": "./skills",
+  "hooks": "./hooks/cursor.json"
+}

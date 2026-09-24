@@ -1,0 +1,16 @@
+{
+  "fields": {
+    "session_id": "conversation_id",
+    "cwd": "cwd",
+    "tool_name": "tool_name",
+    "prompt": "prompt",
+    "last_assistant_message": "last_assistant_message",
+    "generation_id": "generation_id",
+    "stop_status": "stop_status",
+    "prompt_origin": "prompt_origin",
+    "continuation_id": "continuation_id",
+    "continuation_count": "continuation_count",
+    "agent_version": "agent_version",
+    "reason": "reason"
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "date": "2026-09-24",
+  "platform": "macOS arm64",
+  "cursorTerminal": "2026.09.18-9a7762b",
+  "sourceCommit": "265b5b6d059f93d100f086379b4c64904a059f73",
+  "pluginVersion": "0.7.0",
+  "manager": {
+    "marketplace": "altitude",
+    "initialRef": "ef29542ada80f9967019d388d18a7f0c09ba9b84",
+    "initialVersion": "0.6.1",
+    "updatedRef": "feat/cursor-support",
+    "initialUserInstallObserved": true,
+    "installedAfterReindexAndRestart": true,
+    "skillsDiscovered": 7
+  },
+  "isolatedSetup": {
+    "exactManagedRootRegistered": true,
+    "priorRootReplaced": true,
+    "unrelatedHooksPreserved": true,
+    "idempotent": true,
+    "staleUninstallPreservedNewRegistration": true,
+    "matchingUninstallRemovedOwnedConfig": true
+  },
+  "limits": [
+    "Custom git-ref marketplace preview; not a published release test.",
+    "Manager reindex and restart verified component discovery; no new learner lesson or hook-dispatch trial.",
+    "Setup exercised through its exported configure function with a disposable home; no real user hook registration changed.",
+    "Pairing maintenance is covered by the shared connect skill regression checks, not this setup smoke."
+  ]
+}
