@@ -60,12 +60,36 @@ function storage(who) {
   mkdirSync(root,{recursive:true,mode:0o700});
   return join(root,`${hash(JSON.stringify([who.host,who.session_id,who.cwd]))}.json`);
 }
-function locked(path, fn) {
-  const lock = `${path}.lock`;
-  try { mkdirSync(lock,{mode:0o700}); } catch { throw new Error('Concurrent Copilot callback; evidence skipped.'); }
-  try { return fn(); } finally { rmSync(lock,{recursive:true,force:true}); }
-}
 function read(path) { try { return JSON.parse(readFileSync(path,'utf8')); } catch { return undefined; } }
+function alive(pid) {
+  if (!Number.isSafeInteger(pid) || pid <= 0) return false;
+  try { process.kill(pid,0); return true; } catch (error) { return error.code === 'EPERM'; }
+}
+function claim(lock, token) {
+  const staged = `${lock}.${token}.tmp`;
+  mkdirSync(staged,{mode:0o700});
+  try {
+    writeFileSync(join(staged,'owner.json'),JSON.stringify({pid:process.pid,token}),{mode:0o600,flag:'wx'});
+    renameSync(staged,lock);
+    return true;
+  } catch (error) {
+    if (['EEXIST','ENOTEMPTY','EPERM','EISDIR'].includes(error.code)) return false;
+    throw error;
+  } finally { rmSync(staged,{recursive:true,force:true}); }
+}
+function evictDead(lock) {
+  const owner = read(join(lock,'owner.json'));
+  if (owner && alive(owner.pid)) return;
+  const tomb = `${lock}.${randomUUID()}.stale`;
+  try { renameSync(lock,tomb); } catch { return; }
+  if (read(join(tomb,'owner.json'))?.token === owner?.token) rmSync(tomb,{recursive:true,force:true});
+  else try { renameSync(tomb,lock); } catch { rmSync(tomb,{recursive:true,force:true}); }
+}
+function locked(path, fn) {
+  const lock = `${path}.lock`; const token = randomUUID();
+  if (!claim(lock,token)) { evictDead(lock); if (!claim(lock,token)) throw new Error('Concurrent Copilot callback; evidence skipped.'); }
+  try { return fn(); } finally { if (read(join(lock,'owner.json'))?.token === token) rmSync(lock,{recursive:true,force:true}); }
+}
 export function startReceipt(raw, who) {
   if (typeof raw.prompt !== 'string') throw new Error('Missing original learner prompt.');
   const receipt = {version:1,...who,generation_id:`copilot-${randomUUID()}`,prompt_hash:hash(raw.prompt)};
