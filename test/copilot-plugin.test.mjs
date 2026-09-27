@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { spawn, spawnSync } from 'node:child_process';
-import { mkdtemp, readFile, writeFile, mkdir, rm } from 'node:fs/promises';
+import { mkdtemp, readFile, readdir, writeFile, mkdir, rm, utimes } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -258,4 +258,16 @@ for(const variant of ['null assistant root','missing link','foreign session head
   if(variant==='changed transcript path'){stop.transcript_path=join(f.dir,'replacement/chat-a.jsonl');await mkdir(dirname(stop.transcript_path));await writeFile(stop.transcript_path,all.map(JSON.stringify).join('\n'));}
   await f.put(all);f.output(f.run('stop',stop));
   const calls=await f.calls();assert.equal(calls.length,2);assert.ok(calls[1].input.generation_id);assert.notEqual(calls[1].input.stop_status,'completed');assert.equal(calls[1].input.last_assistant_message,undefined);
+});
+for(const owner of ['live','dead','ownerless'])test(`receipt lock ${owner==='live'?'never evicts a live owner':`recovers from ${owner==="dead"?"a dead-owner":"an ownerless"} lock left by a killed callback`}`,async t=>{
+  const f=await fixture(t,'cli');await f.put(events(f.cwd).slice(0,2));
+  f.output(f.run('user-prompt-submit',f.payload('user-prompt-submit',{prompt:'Explain this'})));
+  const state=join(f.dir,'state');const [receipt]=(await readdir(state)).filter(name=>name.endsWith('.json'));const lock=join(state,`${receipt}.lock`);
+  await mkdir(lock);
+  if(owner!=='ownerless'){const pid=owner==='live'?process.pid:spawnSync(process.execPath,['-e','0']).pid;await writeFile(join(lock,'owner.json'),JSON.stringify({pid,token:'held'}));}
+  const old=new Date(time-3600000);await utimes(lock,old,old);
+  f.output(f.run('user-prompt-submit',f.payload('user-prompt-submit',{prompt:'Explain this',timestamp:time+20})));
+  const calls=await f.calls();
+  if(owner==='live'){assert.equal(calls.length,1);assert.equal(JSON.parse(await readFile(join(lock,'owner.json'),'utf8')).token,'held');}
+  else{assert.equal(calls.length,2);assert.ok(calls[1].input.generation_id);assert.deepEqual((await readdir(state)).filter(name=>name.includes('.lock')),[]);}
 });
