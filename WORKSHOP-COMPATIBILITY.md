@@ -303,3 +303,7 @@ Old CLI failures leave editor tools usable and do not claim session or question
 capture. Native prompt context was observed on Cursor desktop 3.21.16 and terminal
 2026.09.18-9a7762b; the full lesson and operating-system matrix still needs acceptance. See
 [CURSOR-SUPPORT.md](CURSOR-SUPPORT.md) for the protocol and verification matrix.
+
+## Copilot implementation (unreleased)
+
+The `.plugin/plugin.json` manifest and `.github/plugin/marketplace.json` select the shared skills and isolated Copilot hook adapter. The unchanged 0.7.0 version is not a Copilot publication claim. A matching CLI/server with `--agent copilot` is required; the older floor for existing hosts does not establish Copilot compatibility. See [Copilot support](COPILOT-SUPPORT.md) for transport checks, exact-generation completion evidence, and outstanding native acceptance.

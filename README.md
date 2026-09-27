@@ -89,6 +89,8 @@ The combined **plugin 0.7.0 / CLI 0.10.0 release candidate is not yet published*
 
 For the **free standalone method only**, copying the shared skills to `~/.cursor/skills/` remains available. A skills-only copy has no session hooks and cannot establish subscribed journey support. Use the complete native plugin for development acceptance of that route.
 
+**GitHub Copilot development support:** this branch adds a native plugin for Copilot CLI and VS Code's Local Copilot agent, sharing the same seven skills. It is unreleased and requires the matching Copilot-capable CLI/server. See [Copilot setup and acceptance](COPILOT-SUPPORT.md) for packaging, exact chat identity, and verification limits.
+
 ## How to use it
 
 - **Starting from zero?** Make an empty folder, open Claude Code in it, run `/start-project`. When it's done, run `/plan-journey`. One sitting each.
