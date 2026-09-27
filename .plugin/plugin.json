@@ -1,0 +1,74 @@
+{
+  "name": "altitude",
+  "version": "0.7.0",
+  "description": "Learn to code by building a real project. Shared Altitude skills and workshop hooks for GitHub Copilot.",
+  "author": {
+    "name": "Jason Ku"
+  },
+  "homepage": "https://github.com/jasonku09/altitude-skills",
+  "repository": "https://github.com/jasonku09/altitude-skills",
+  "license": "MIT",
+  "skills": "./skills",
+  "hooks": {
+    "SessionStart": [
+      {
+        "type": "command",
+        "bash": "if [ -n \"$PLUGIN_ROOT\" ] && [ -f \"$PLUGIN_ROOT/bin/altitude-copilot-hook.sh\" ]; then bash \"$PLUGIN_ROOT/bin/altitude-copilot-hook.sh\" session-start; else printf '%s\\n' '{}'; fi; exit 0",
+        "powershell": "try { & (Join-Path $env:PLUGIN_ROOT 'bin/altitude-copilot-hook.ps1') session-start } catch { [Console]::Out.WriteLine('{}') }; exit 0",
+        "timeoutSec": 30,
+        "timeout": 30,
+        "env": {
+          "PLUGIN_ROOT": "${PLUGIN_ROOT}"
+        }
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "type": "command",
+        "bash": "if [ -n \"$PLUGIN_ROOT\" ] && [ -f \"$PLUGIN_ROOT/bin/altitude-copilot-hook.sh\" ]; then bash \"$PLUGIN_ROOT/bin/altitude-copilot-hook.sh\" user-prompt-submit; else printf '%s\\n' '{}'; fi; exit 0",
+        "powershell": "try { & (Join-Path $env:PLUGIN_ROOT 'bin/altitude-copilot-hook.ps1') user-prompt-submit } catch { [Console]::Out.WriteLine('{}') }; exit 0",
+        "timeoutSec": 30,
+        "timeout": 30,
+        "env": {
+          "PLUGIN_ROOT": "${PLUGIN_ROOT}"
+        }
+      }
+    ],
+    "PreToolUse": [
+      {
+        "type": "command",
+        "bash": "if [ -n \"$PLUGIN_ROOT\" ] && [ -f \"$PLUGIN_ROOT/bin/altitude-copilot-hook.sh\" ]; then bash \"$PLUGIN_ROOT/bin/altitude-copilot-hook.sh\" diff; else printf '%s\\n' '{}'; fi; exit 0",
+        "powershell": "try { & (Join-Path $env:PLUGIN_ROOT 'bin/altitude-copilot-hook.ps1') diff } catch { [Console]::Out.WriteLine('{}') }; exit 0",
+        "timeoutSec": 30,
+        "timeout": 30,
+        "env": {
+          "PLUGIN_ROOT": "${PLUGIN_ROOT}"
+        }
+      }
+    ],
+    "Stop": [
+      {
+        "type": "command",
+        "bash": "if [ -n \"$PLUGIN_ROOT\" ] && [ -f \"$PLUGIN_ROOT/bin/altitude-copilot-hook.sh\" ]; then bash \"$PLUGIN_ROOT/bin/altitude-copilot-hook.sh\" stop; else printf '%s\\n' '{}'; fi; exit 0",
+        "powershell": "try { & (Join-Path $env:PLUGIN_ROOT 'bin/altitude-copilot-hook.ps1') stop } catch { [Console]::Out.WriteLine('{}') }; exit 0",
+        "timeoutSec": 30,
+        "timeout": 30,
+        "env": {
+          "PLUGIN_ROOT": "${PLUGIN_ROOT}"
+        }
+      }
+    ],
+    "SessionEnd": [
+      {
+        "type": "command",
+        "bash": "if [ -n \"$PLUGIN_ROOT\" ] && [ -f \"$PLUGIN_ROOT/bin/altitude-copilot-hook.sh\" ]; then bash \"$PLUGIN_ROOT/bin/altitude-copilot-hook.sh\" session-end; else printf '%s\\n' '{}'; fi; exit 0",
+        "powershell": "try { & (Join-Path $env:PLUGIN_ROOT 'bin/altitude-copilot-hook.ps1') session-end } catch { [Console]::Out.WriteLine('{}') }; exit 0",
+        "timeoutSec": 30,
+        "timeout": 30,
+        "env": {
+          "PLUGIN_ROOT": "${PLUGIN_ROOT}"
+        }
+      }
+    ]
+  }
+}
