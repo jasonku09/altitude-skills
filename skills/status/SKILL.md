@@ -9,4 +9,4 @@ allowed-tools: Bash(altitude status)
 **Copilot host commands:** In GitHub Copilot CLI and VS Code Copilot chat, use the same shared Altitude skills. Choose the Altitude skill by name in the host skill picker (`connect`, `begin`, `next-lesson`, or `status`); use the invocation spelling that host displays. Do not copy these files into a second Copilot-only skill library. The complete Altitude plugin supplies the lesson hooks; copied skills alone provide only the standalone free method.
 
 Run `altitude status` and summarize its output. If it reports that the device is disconnected,
-tell the user to run the connect skill (`/altitude:connect` in Claude Code, `$connect` in Codex, `/connect` in Cursor).
+tell the user to run the connect skill (`/altitude:connect` in Claude Code, `$connect` in Codex, `/connect` in Cursor, Altitude's `connect` skill in Copilot).
