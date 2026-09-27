@@ -259,15 +259,22 @@ for(const variant of ['null assistant root','missing link','foreign session head
   await f.put(all);f.output(f.run('stop',stop));
   const calls=await f.calls();assert.equal(calls.length,2);assert.ok(calls[1].input.generation_id);assert.notEqual(calls[1].input.stop_status,'completed');assert.equal(calls[1].input.last_assistant_message,undefined);
 });
-for(const owner of ['live','dead','ownerless'])test(`receipt lock ${owner==='live'?'never evicts a live owner':`recovers from ${owner==="dead"?"a dead-owner":"an ownerless"} lock left by a killed callback`}`,async t=>{
+const lockCases={
+  'never evicts a live owner, however old its lock directory is':{pid:()=>process.pid,acquired:()=>Date.now(),evicted:false},
+  'recovers from a dead-owner lock left by a killed callback':{pid:()=>spawnSync(process.execPath,['-e','0']).pid,acquired:()=>Date.now(),evicted:true},
+  'recovers when a stale owner PID was reused by a live process':{pid:()=>process.pid,acquired:()=>Date.now()-3600000,evicted:true},
+  'recovers from a lock whose owner claims a future lease':{pid:()=>process.pid,acquired:()=>Date.now()+3600000,evicted:true},
+  'recovers from an ownerless lock left by a killed callback':{evicted:true},
+};
+for(const [label,owner] of Object.entries(lockCases))test(`receipt lock ${label}`,async t=>{
   const f=await fixture(t,'cli');await f.put(events(f.cwd).slice(0,2));
   f.output(f.run('user-prompt-submit',f.payload('user-prompt-submit',{prompt:'Explain this'})));
   const state=join(f.dir,'state');const [receipt]=(await readdir(state)).filter(name=>name.endsWith('.json'));const lock=join(state,`${receipt}.lock`);
   await mkdir(lock);
-  if(owner!=='ownerless'){const pid=owner==='live'?process.pid:spawnSync(process.execPath,['-e','0']).pid;await writeFile(join(lock,'owner.json'),JSON.stringify({pid,token:'held'}));}
+  if(owner.pid)await writeFile(join(lock,'owner.json'),JSON.stringify({pid:owner.pid(),token:'held',acquired:owner.acquired()}));
   const old=new Date(time-3600000);await utimes(lock,old,old);
   f.output(f.run('user-prompt-submit',f.payload('user-prompt-submit',{prompt:'Explain this',timestamp:time+20})));
   const calls=await f.calls();
-  if(owner==='live'){assert.equal(calls.length,1);assert.equal(JSON.parse(await readFile(join(lock,'owner.json'),'utf8')).token,'held');}
+  if(!owner.evicted){assert.equal(calls.length,1);assert.equal(JSON.parse(await readFile(join(lock,'owner.json'),'utf8')).token,'held');}
   else{assert.equal(calls.length,2);assert.ok(calls[1].input.generation_id);assert.deepEqual((await readdir(state)).filter(name=>name.includes('.lock')),[]);}
 });

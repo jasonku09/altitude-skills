@@ -61,6 +61,7 @@ function storage(who) {
   return join(root,`${hash(JSON.stringify([who.host,who.session_id,who.cwd]))}.json`);
 }
 function read(path) { try { return JSON.parse(readFileSync(path,'utf8')); } catch { return undefined; } }
+const LOCK_LEASE_MS = 60_000;
 function alive(pid) {
   if (!Number.isSafeInteger(pid) || pid <= 0) return false;
   try { process.kill(pid,0); return true; } catch (error) { return error.code === 'EPERM'; }
@@ -69,7 +70,7 @@ function claim(lock, token) {
   const staged = `${lock}.${token}.tmp`;
   mkdirSync(staged,{mode:0o700});
   try {
-    writeFileSync(join(staged,'owner.json'),JSON.stringify({pid:process.pid,token}),{mode:0o600,flag:'wx'});
+    writeFileSync(join(staged,'owner.json'),JSON.stringify({pid:process.pid,token,acquired:Date.now()}),{mode:0o600,flag:'wx'});
     renameSync(staged,lock);
     return true;
   } catch (error) {
@@ -79,7 +80,8 @@ function claim(lock, token) {
 }
 function evictDead(lock) {
   const owner = read(join(lock,'owner.json'));
-  if (owner && alive(owner.pid)) return;
+  const age = Date.now() - owner?.acquired;
+  if (owner && alive(owner.pid) && Math.abs(age) <= LOCK_LEASE_MS) return;
   const tomb = `${lock}.${randomUUID()}.stale`;
   try { renameSync(lock,tomb); } catch { return; }
   if (read(join(tomb,'owner.json'))?.token === owner?.token) rmSync(tomb,{recursive:true,force:true});
@@ -88,7 +90,9 @@ function evictDead(lock) {
 function locked(path, fn) {
   const lock = `${path}.lock`; const token = randomUUID();
   if (!claim(lock,token)) { evictDead(lock); if (!claim(lock,token)) throw new Error('Concurrent Copilot callback; evidence skipped.'); }
-  try { return fn(); } finally { if (read(join(lock,'owner.json'))?.token === token) rmSync(lock,{recursive:true,force:true}); }
+  const acquired = Date.now();
+  const held = () => { if (Math.abs(Date.now() - acquired) > LOCK_LEASE_MS || read(join(lock,'owner.json'))?.token !== token) throw new Error('Copilot callback lock lease expired; evidence skipped.'); };
+  try { return fn(held); } finally { if (read(join(lock,'owner.json'))?.token === token) rmSync(lock,{recursive:true,force:true}); }
 }
 export function startReceipt(raw, who) {
   if (typeof raw.prompt !== 'string') throw new Error('Missing original learner prompt.');
@@ -105,11 +109,11 @@ export function startReceipt(raw, who) {
     receipt.user_event_hash = hash(JSON.stringify(user));
   }
   const path = storage(who);
-  locked(path,()=>{
+  locked(path,held=>{
     const previous = read(path);
     if (previous && previous.timestamp >= receipt.timestamp) throw new Error('Duplicate or out-of-order prompt callback.');
     const temporary = `${path}.${randomUUID()}.tmp`;
-    try { writeFileSync(temporary,JSON.stringify(receipt),{mode:0o600,flag:'wx'});renameSync(temporary,path); }
+    try { writeFileSync(temporary,JSON.stringify(receipt),{mode:0o600,flag:'wx'});held();renameSync(temporary,path); }
     finally { rmSync(temporary,{force:true}); }
   });
   return receipt;
@@ -121,7 +125,7 @@ export function currentReceipt(who) {
 }
 export function clearReceipt(who, receipt) {
   const path = storage(who);
-  locked(path,()=>{ if (read(path)?.generation_id === receipt.generation_id) rmSync(path,{force:true}); });
+  locked(path,held=>{ if (read(path)?.generation_id === receipt.generation_id) { held(); rmSync(path,{force:true}); } });
 }
 export function completedReply(raw, who, receipt) {
   if (raw.stop_hook_active !== false || (who.host === 'cli' && raw.stopReason !== 'end_turn')) throw new Error('Host did not confirm an ordinary completed turn.');
