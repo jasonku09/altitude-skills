@@ -243,6 +243,29 @@ following them; rerun the live scratch sessions before release and treat the
 September 7 results as evidence about the older text only.
 
 
+## Wrong-folder lessons (not published)
+
+A learner whose agent was opened in `~/Projects` ran `/begin`, which created and
+bound `~/Projects/stitch` and then taught the first lesson from the parent chat.
+The hooks reported the parent folder, so session capture never attached to the
+project and every quiz save was refused. Two changes follow.
+
+`/begin` no longer continues into the first lesson. It binds the folder, writes
+the plan, gives a tutor-authored welcome and journey walkthrough, and then either
+tells the learner to type next lesson in the same chat (when the chat was opened
+in the journey folder) or gives host-specific steps to open that folder in a new
+chat. A journey already under way still continues into the lesson from `/begin`,
+but only when the same folder check passes.
+
+The companion monorepo change adds the `outside_project` value to the local CLI's
+`learning_runtime.status`, with a `recovery_message` naming the journey folder,
+when the session's hooks report a folder other than the bound project. Both
+entry points pause on it, relay the message with the reopen steps, emit no
+evidence, and never fall back to free mode; `/begin` treats it as expected right
+after creating a new folder. Older CLIs that never report it keep their existing
+behavior. This adds no floor and needs no version bump of its own; it ships with
+the next coordinated plugin release.
+
 ## Local recovery acceptance, 2026-09-18
 
 A real Claude Code 2.1.276 session loaded this plugin worktree and the companion

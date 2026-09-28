@@ -27,9 +27,9 @@ Connect the current coding agent installation to Altitude:
    - If the status command fails or its output cannot be read, relay the short diagnostic and stop the pairing decision here; do not infer disconnection or start pairing merely because status failed. Preserve the existing local state and the registration just refreshed.
 
 2. Start the pairing command for your agent in the background:
-   - **Claude Code:** `altitude connect --agent claude-code --agent-version <version> --next-hint "Open your coding agent in your project folder and run /altitude:begin to start your first lesson."`
-   - **Codex:** `altitude connect --agent codex --agent-version <version> --next-hint "Open your coding agent in your project folder and run $begin to start your first lesson."`
-   - **Cursor desktop or terminal:** `altitude connect --agent cursor --agent-version <observed version> --next-hint "Open your coding agent in your project folder and run /begin to start your first lesson."`
+   - **Claude Code:** `altitude connect --agent claude-code --agent-version <version> --next-hint "Open your coding agent in your project folder and run /altitude:begin to start your journey."`
+   - **Codex:** `altitude connect --agent codex --agent-version <version> --next-hint "Open your coding agent in your project folder and run $begin to start your journey."`
+   - **Cursor desktop or terminal:** `altitude connect --agent cursor --agent-version <observed version> --next-hint "Open your coding agent in your project folder and run /begin to start your journey."`
 
    **Codex aside — the sandbox:** in Codex's default modes the shell has no internet access, so a plain background `altitude connect` fails before it can print a code. Request escalated permissions for that one command with a one-line justification ("Altitude needs network access to pair this computer with your account"). If that is declined, or the host has no such mechanism, do not retry blindly and do not call the install broken: give the learner the exact `altitude connect` line above to run in their own terminal, ask them to paste back the URL and code it prints, and continue from step 3 with those.
 3. Relay the verification URL and one-time code from its output to the user immediately.
