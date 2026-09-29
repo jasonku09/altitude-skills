@@ -134,3 +134,77 @@ test('the README describes begin as ending in a welcome', () => {
 test('the compatibility notes record the outside_project status', () => {
   assert.match(read('WORKSHOP-COMPATIBILITY.md'), /outside_project/);
 });
+
+/**
+ * Codex acceptance follow-ups (2026-09-28). A real `codex exec` run gave the
+ * vague "open that folder as the project" instead of Codex CLI steps because
+ * the tutor could not tell which Codex surface it was in. And the CLI now also
+ * reports `outside_project` from a PARENT folder of a linked project, where
+ * `binding` is null because the chat's own folder is not linked: that must
+ * never read as "no binding, so free mode" or "no binding, so bind a new one".
+ */
+
+test('the reopen steps cover every surface of the host when the tutor cannot tell which one it is in', () => {
+  for (const path of [BEGIN, NEXT]) {
+    const block = reopenBlock(read(path), path);
+    assert.match(block, /only the steps for the host they are actually in/, `${path} lost the only-this-host rule`);
+    assert.match(block, /cannot tell which surface/i, `${path} has no rule for an unknown surface`);
+    assert.match(block, /each surface of that host/i, `${path} does not give each surface's steps`);
+    assert.match(block, /Codex CLI[^\n]*Codex (IDE )?extension/, `${path} does not name the Codex surfaces`);
+    assert.match(block, /never a vague/i, `${path} still allows a generic reopen line`);
+    assert.match(block, /never[^\n]*another host/i, `${path} could list other hosts' steps`);
+  }
+});
+
+const outsideRule = (path) =>
+  read(path).split('\n').find((line) => line.includes('`learning_runtime.status` is `outside_project`'));
+
+test('outside_project names the folder through recovery_message even when binding is null, and never searches subfolders', () => {
+  for (const path of [BEGIN, NEXT, PAID]) {
+    const rule = outsideRule(path);
+    assert.match(rule, /`binding` (may be|is) null/, `${path} assumes a binding comes with outside_project`);
+    assert.match(rule, /parent folder/, `${path} does not cover the parent-folder case`);
+    assert.match(rule, /`recovery_message`[^\n]*source of the folder path|folder path[^\n]*`recovery_message`/, `${path} does not take the folder from recovery_message`);
+    assert.match(rule, /never search[^\n]*subfolders/i, `${path} could search subfolders for the binding`);
+  }
+});
+
+test('next-lesson checks outside_project before any binding-null route to free mode', () => {
+  const next = read(NEXT);
+  const outside = next.indexOf('`learning_runtime.status` is `outside_project`');
+  const bindingNull = next.search(/when `binding` is null or names another folder/i);
+  assert.ok(outside !== -1 && bindingNull !== -1);
+  assert.ok(outside < bindingNull, 'outside_project must be routed before the binding-null route');
+  const nullLine = next.split('\n').find((line) => /when `binding` is null or names another folder/i.test(line));
+  assert.match(nullLine, /`outside_project`/, 'the binding-null route does not defer to outside_project');
+  const freeBullet = next.split('\n').find((line) => line.startsWith('- **Free mode:**'));
+  assert.match(freeBullet, /`outside_project`/, 'the free-mode choice does not exclude outside_project');
+});
+
+test('paid-mode and free-mode references never route an outside_project read to free mode', () => {
+  const paid = read(PAID);
+  const outside = paid.indexOf('`learning_runtime.status` is `outside_project`');
+  for (const marker of ['`binding` is null', 'free mode']) {
+    const at = paid.indexOf(marker);
+    if (at !== -1 && at !== paid.indexOf(marker, outside)) assert.ok(outside < at, `paid-mode routes "${marker}" before outside_project`);
+  }
+  const free = read('skills/next-lesson/references/free-mode.md');
+  assert.match(free, /`outside_project`/, 'free-mode does not send an outside_project read back to the pause');
+});
+
+test('begin never creates or binds a new folder when the read says outside_project with no binding', () => {
+  const rule = outsideRule(BEGIN);
+  assert.match(rule, /Already bound/);
+  assert.match(rule, /never create a new (journey )?folder/i);
+  assert.match(rule, /never run `altitude bind`/i);
+  const step5 = section(read(BEGIN), '## Step 5', '## Already bound');
+  assert.match(step5, /when `binding` is null[^\n]*`recovery_message`/i, "Step 5's folder check needs the binding");
+  const bound = section(read(BEGIN), '## Already bound');
+  assert.match(bound, /`outside_project`/, 'Already bound does not take the parent-folder read');
+});
+
+test('no skill or note quotes the retired "run next lesson again" recovery wording', () => {
+  for (const path of [BEGIN, NEXT, PAID, 'skills/next-lesson/references/free-mode.md', 'WORKSHOP-COMPATIBILITY.md', 'README.md']) {
+    assert.doesNotMatch(read(path), /run next lesson again/i, `${path} quotes the old CLI message`);
+  }
+});

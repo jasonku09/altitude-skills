@@ -263,7 +263,14 @@ when the session's hooks report a folder other than the bound project. Both
 entry points pause on it, relay the message with the reopen steps, emit no
 evidence, and never fall back to free mode; `/begin` treats it as expected right
 after creating a new folder. Older CLIs that never report it keep their existing
-behavior. This adds no floor and needs no version bump of its own; it ships with
+behavior.
+A follow-up CLI change also reports `outside_project` when the chat and the
+command run in a parent folder of a linked project. There `binding` is null,
+because the parent is not linked, and `recovery_message` alone names the journey
+folder; both skills check the status before any null-binding route, so that read
+never becomes free mode, a fresh `/begin` bind, or a subfolder search. When the
+tutor cannot tell which surface of its host it is in, the reopen steps give each
+of that host's surfaces in one short line instead of a generic line. This adds no floor and needs no version bump of its own; it ships with
 the next coordinated plugin release.
 
 ## Local recovery acceptance, 2026-09-18
