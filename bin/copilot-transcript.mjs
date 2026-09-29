@@ -1,7 +1,8 @@
 // Copilot wire transport only: correlate one host prompt with its completed reply.
 // No lesson state, grading, question extraction or content lives in this module.
 import { createHash, randomUUID } from 'node:crypto';
-import { mkdirSync, readFileSync, realpathSync, renameSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
+import { mkdirSync, readFileSync, readdirSync, realpathSync, renameSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { basename, dirname, isAbsolute, join } from 'node:path';
 
@@ -61,41 +62,81 @@ function storage(who) {
   return join(root,`${hash(JSON.stringify([who.host,who.session_id,who.cwd]))}.json`);
 }
 function read(path) { try { return JSON.parse(readFileSync(path,'utf8')); } catch { return undefined; } }
-const LOCK_LEASE_MS = 60_000;
 function alive(pid) {
   if (!Number.isSafeInteger(pid) || pid <= 0) return false;
-  try { process.kill(pid,0); return true; } catch (error) { return error.code === 'EPERM'; }
+  try { process.kill(pid,0); return true; } catch (error) { return error.code !== 'ESRCH'; }
 }
-function claim(lock, token) {
-  const staged = `${lock}.${token}.tmp`;
-  mkdirSync(staged,{mode:0o700});
+function processBirth(pid) {
+  if (!Number.isSafeInteger(pid) || pid <= 0) return undefined;
+  // Direct argv, numeric PID, stable locale. Failure is unknown identity, never
+  // evidence that a live writer is dead. Start time distinguishes PID reuse.
+  const windows=process.platform==='win32';
+  const result=spawnSync(windows?'powershell.exe':'ps',windows
+    ? ['-NoProfile','-NonInteractive','-Command',`(Get-Process -Id ${pid} -ErrorAction Stop).StartTime.ToUniversalTime().ToString("o")`]
+    : ['-p',String(pid),'-o','lstart='],{encoding:'utf8',timeout:2000,windowsHide:true,env:{...process.env,LC_ALL:'C',TZ:'UTC'}});
+  if(result.status!==0 || !nonempty(result.stdout))return undefined;
+  const started=Date.parse(windows?result.stdout.trim():`${result.stdout.trim()} UTC`);
+  return Number.isFinite(started)?new Date(started).toISOString():undefined;
+}
+function liveOwner(owner) {
+  if(!owner || !Number.isSafeInteger(owner.pid) || owner.pid<=0)return true;
+  if(!alive(owner.pid))return false;
+  const birth=processBirth(owner.pid);
+  if(!birth)return true;
+  if(nonempty(owner.birth)) {
+    const parsed=Date.parse(owner.birth);
+    if(!Number.isFinite(parsed) || new Date(parsed).toISOString()!==owner.birth)return true;
+    return birth===owner.birth;
+  }
+  // Migration from the old lock format: a process born after acquisition
+  // cannot be the original writer. Clock ambiguity keeps the lock exclusive.
+  const started=Date.parse(birth);
+  return !(Number.isFinite(started) && Number.isFinite(owner.acquired) && started>owner.acquired+1000);
+}
+export function locked(path, fn) {
+  // Each claimant owns one immutable, never-reused path. Everyone publishes
+  // before scanning; simultaneous contenders either see an existing writer or
+  // both withdraw. No observer ever renames/restores another writer's lock.
+  const directory=`${path}.claims`;
+  mkdirSync(directory,{recursive:true,mode:0o700});
+  const token=randomUUID();const claim=join(directory,`${process.pid}-${token}.json`);
+  const owner={pid:process.pid,token,birth:processBirth(process.pid)};
+  const staged=`${path}.${token}.claim-tmp`;
   try {
-    writeFileSync(join(staged,'owner.json'),JSON.stringify({pid:process.pid,token,acquired:Date.now()}),{mode:0o600,flag:'wx'});
-    renameSync(staged,lock);
-    return true;
-  } catch (error) {
-    if (['EEXIST','ENOTEMPTY','EPERM','EISDIR'].includes(error.code)) return false;
-    throw error;
-  } finally { rmSync(staged,{recursive:true,force:true}); }
+    writeFileSync(staged,JSON.stringify(owner),{mode:0o600,flag:'wx'});
+    renameSync(staged,claim);
+  } finally { rmSync(staged,{force:true}); }
+  try {
+    // Legacy locks are never removed: an old paused writer still owns them.
+    // Dead legacy owners are harmless to the new, separate claim namespace.
+    let legacy;
+    try { legacy=JSON.parse(readFileSync(join(`${path}.lock`,'owner.json'),'utf8')); }
+    catch(error) { if(error.code!=='ENOENT')throw error; }
+    if(legacy && liveOwner(legacy))throw new ReceiptConcurrencyError('Concurrent Copilot callback; evidence skipped.');
+    for(const entry of readdirSync(directory)) {
+      if(entry===`${process.pid}-${token}.json`)continue;
+      const other=join(directory,entry);
+      const match=/^(\d+)-[0-9a-f-]+\.json$/.exec(entry);
+      if(!match)throw new ReceiptConcurrencyError('Unknown Copilot callback claim; evidence skipped.');
+      // The filename also pins the PID if a stored claim is damaged.
+      // Unreadable/malformed live claims remain exclusive.
+      const stored=read(other);const competing=stored?.pid===Number(match[1])?stored:{pid:Number(match[1])};
+      if(liveOwner(competing))throw new ReceiptConcurrencyError('Concurrent Copilot callback; evidence skipped.');
+      rmSync(other,{force:true}); // unique dead-owner path can never be reused
+    }
+    const held=()=>{if(read(claim)?.token!==token)throw new Error('Copilot callback ownership lost; evidence skipped.');};
+    return fn(held);
+  } finally { rmSync(claim,{force:true}); }
 }
-function evictDead(lock) {
-  const owner = read(join(lock,'owner.json'));
-  const age = Date.now() - owner?.acquired;
-  if (owner && alive(owner.pid) && Math.abs(age) <= LOCK_LEASE_MS) return;
-  const tomb = `${lock}.${randomUUID()}.stale`;
-  try { renameSync(lock,tomb); } catch { return; }
-  if (read(join(tomb,'owner.json'))?.token === owner?.token) rmSync(tomb,{recursive:true,force:true});
-  else try { renameSync(tomb,lock); } catch { rmSync(tomb,{recursive:true,force:true}); }
-}
-function locked(path, fn) {
-  const lock = `${path}.lock`; const token = randomUUID();
-  if (!claim(lock,token)) { evictDead(lock); if (!claim(lock,token)) throw new Error('Concurrent Copilot callback; evidence skipped.'); }
-  const acquired = Date.now();
-  const held = () => { if (Math.abs(Date.now() - acquired) > LOCK_LEASE_MS || read(join(lock,'owner.json'))?.token !== token) throw new Error('Copilot callback lock lease expired; evidence skipped.'); };
-  try { return fn(held); } finally { if (read(join(lock,'owner.json'))?.token === token) rmSync(lock,{recursive:true,force:true}); }
+export class ReceiptOrderError extends Error {}
+export class ReceiptConcurrencyError extends Error {}
+function assertPromptOrder(previous, who) {
+  if(previous && previous.timestamp >= who.timestamp)throw new ReceiptOrderError('Duplicate or out-of-order prompt callback.');
 }
 export function startReceipt(raw, who) {
   if (typeof raw.prompt !== 'string') throw new Error('Missing original learner prompt.');
+  const path = storage(who);
+  assertPromptOrder(read(path),who);
   const receipt = {version:1,...who,generation_id:`copilot-${randomUUID()}`,prompt_hash:hash(raw.prompt)};
   if (who.host === 'vscode') {
     // Local writes user.message before firing this hook. Pin its unique native
@@ -108,10 +149,8 @@ export function startReceipt(raw, who) {
     receipt.user_event_id = user.id;
     receipt.user_event_hash = hash(JSON.stringify(user));
   }
-  const path = storage(who);
   locked(path,held=>{
-    const previous = read(path);
-    if (previous && previous.timestamp >= receipt.timestamp) throw new Error('Duplicate or out-of-order prompt callback.');
+    assertPromptOrder(read(path),who);
     const temporary = `${path}.${randomUUID()}.tmp`;
     try { writeFileSync(temporary,JSON.stringify(receipt),{mode:0o600,flag:'wx'});held();renameSync(temporary,path); }
     finally { rmSync(temporary,{force:true}); }
@@ -120,6 +159,7 @@ export function startReceipt(raw, who) {
 }
 export function currentReceipt(who) {
   const receipt = read(storage(who));
+  if (receipt?.timestamp > who.timestamp)throw new ReceiptOrderError('Stop callback predates the current prompt receipt.');
   if (!receipt || receipt.version !== 1 || receipt.host !== who.host || receipt.session_id !== who.session_id || receipt.cwd !== who.cwd || !nonempty(receipt.generation_id) || !nonempty(receipt.prompt_hash) || !Number.isSafeInteger(receipt.timestamp) || receipt.timestamp > who.timestamp) throw new Error('No matching prompt receipt.');
   return receipt;
 }

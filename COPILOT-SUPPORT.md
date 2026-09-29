@@ -207,7 +207,7 @@ version is bumped here.
 
 Fresh terminal and VS Code Local lessons used Claude Sonnet 5 throughout, verified in native model records. Both completed the learner-written program, advanced the task, survived same-chat restart, and passed four independent real browser reviews each. Eight metered Sonnet 5 grades were persisted; capability state remained practicing rather than mastered. No client runtime changed after the 382 passing tests.
 
-An open shared-core evidence-quality finding prevents a blanket acceptance claim: VS Code deferred a queued recall check and delivered a scratch-writing handoff. The next learner message, “Saved the scratch file; I have not run it yet,” was still captured as a quiz answer against the bounded completed response. Session and turn identity were correct, but no recall question had been asked. It produced practice evidence only. The transport cannot treat completed response provenance as proof of pedagogical intent; this needs follow-up before shipping.
+The September 26 trial identified a shared-core evidence-quality finding (resolved in the September 28 follow-up below): VS Code deferred a queued recall check and delivered a scratch-writing handoff. The next learner message, “Saved the scratch file; I have not run it yet,” was still captured as a quiz answer against the bounded completed response. Session and turn identity were correct, but no recall question had been asked. It produced practice evidence only. The transport cannot treat completed response provenance as proof of pedagogical intent; the September 28 verification protocol addresses that distinction.
 
 CLI produced two exact automatic pairs. VS Code produced two automatic claims (one being that non-question) and three manual claims matching actual native emissions and verbatim learner answers. All quiz IDs/pairs were unique, belonged to the correct first task and chat, and preceded task completion. Neither host generated a quiz for the next task.
 
@@ -235,8 +235,64 @@ task and `learning_runtime.status: supported`. The editor used a complete plugin
 artifact in an isolated profile. This checks source-plugin replacement and
 resume; the VS Code marketplace update UI and native Windows/Linux remain
 unverified. The explicit **check** fallback is documented for saves that do not
-resume Copilot. The shared false-quiz-capture finding remains open.
+resume Copilot. The shared false-quiz-capture finding is addressed by the September 28 follow-up below.
 
 Before rebasing, all workspace unit suites passed: 934 CLI, 236 shared, 3,058 web,
 436 content and 160 nightly tests, plus workspace typechecking. The client suite
 passed 382 tests. Final gate validation against the rebased branch is separate.
+
+
+## Evidence verification and degraded context — September 28
+
+The coordinated core now requires a declared question and an exact match in the
+completed native reply before the next learner answer becomes automatic quiz
+evidence. Real isolated Sonnet 5 chats passed both cases in CLI and VS Code Local:
+a writing handoff followed by “Saved” produced zero quizzes; a declared, displayed
+question and the next exact answer produced one correctly attributed quiz. These
+checks used a local mock backend and fake credentials; they are separate from the
+earlier real browser grading trials.
+
+A receipt storage or transcript verification failure must not discard teaching
+context. If a prompt receipt cannot be created, the adapter calls the explicit
+`altitude hook-context user-prompt-submit` boundary with the exact chat identity
+and prompt. Missing Stop receipts use `altitude hook-context stop --gate retro`.
+These context-only commands never claim a generation or completed response. Core
+supplies lesson guidance and retains server retro instructions for the next prompt
+without recording unverified quiz evidence. A valid receipt whose completed reply
+cannot be verified still sends the ordinary aborted Stop for that exact generation.
+Failures remain diagnostic on stderr; tool permission failures remain open.
+
+The fallback requires the coordinated core release. Older CLIs reject the distinct
+`hook-context` command; the adapter then returns an empty hook result. It never
+retries a legacy evidence hook without a generation and never invents SessionStart.
+Proven duplicate or out-of-order callbacks skip all core calls. Live lock
+contention uses `--uncertain-order`: core delivers context and preserves the
+current pending question and credit data while marking automatic evidence
+unavailable. The next verified learner prompt closes the retained answer window
+without recording a quiz, then resumes normal capture. This can conservatively
+lose one valid quiz, but cannot pair an old question with a later wrong answer.
+The adapter leaves the live writer and newer receipt untouched.
+
+Receipt writers now publish unique immutable ownership claims before scanning for
+competitors. Every claimant either sees the active owner or withdraws alongside
+another contender. They never rename or restore another owner's lock. Dead owners
+and confirmed PID reuse can be cleaned up; a live owner's process birth identity is
+queried through POSIX `ps` or Windows PowerShell. If that query is unavailable,
+ownership remains exclusive. A paused live writer never loses exclusivity merely
+because time has elapsed. Legacy locks are left in place and bypassed only when the
+owner is dead or its process birth proves PID reuse. An ambiguous live owner can
+therefore suppress evidence until it exits; context still reaches the lesson through
+the explicit fallback with uncertain ordering.
+
+Regression tests exercise the literal manifest shell commands with native Pascal
+payloads from both hosts, including unavailable receipt storage, missing Stop
+receipts, old-CLI rejection, and preserving newer receipts. A child-process barrier
+reproduced overlapping live writers under the old lease implementation and confirms
+exclusion under immutable claims. Native Windows/PowerShell and Linux acceptance
+remain unverified; source-level coverage is not a platform qualification.
+
+Final client validation: all 402 tests passed, both adapter modules passed Node
+syntax checks, and literal manifest prompt/Stop commands against the actual
+published CLI 0.10.0 returned empty hook results with isolated core state unchanged
+on both native payload shapes. Live native acceptance of this new fallback is a
+separate coordinated check; these shell tests do not establish host discovery.

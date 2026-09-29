@@ -80,7 +80,7 @@ for(const host of ['cli','vscode']) {
     if(variant==='wrong user'){if(host==='cli')es[3].data.originatingMessageId='another-user';else es[1].id='another-user';}
     if(variant==='changed path'){const next=join(f.dir,'other/chat-a.jsonl');await mkdir(dirname(next));await writeFile(next,es.map(JSON.stringify).join('\n'));stop.transcript_path=next;stop.transcriptPath=next;}
     await f.put(es);f.output(f.run('stop',stop));
-    const calls=await f.calls().catch(()=>[]);for(const call of calls.filter(c=>c.args[1]==='stop')) {assert.ok(call.input.generation_id);assert.notEqual(call.input.stop_status,'completed');assert.equal(call.input.last_assistant_message,undefined);}
+    const calls=await f.calls().catch(()=>[]);for(const call of calls.filter(c=>c.args[0]==='hook' && c.args[1]==='stop')) {assert.ok(call.input.generation_id);assert.notEqual(call.input.stop_status,'completed');assert.equal(call.input.last_assistant_message,undefined);}
   });
   test(`${host} repeated turn ID and identical text do not reuse preceding question`,async t=>{
     const f=await fixture(t,host);const first=events(f.cwd,host);const second=events(f.cwd,host,'b',200).slice(1);second[0].parentId=first.at(-1).id;await f.put([...first,...second.slice(0,1)]);
@@ -114,7 +114,7 @@ test('CLI final response becoming durable during stop is captured once',async t=
   await new Promise(resolve=>setTimeout(resolve,150)); await f.put(es);
   assert.equal(await exit,0,err);assert.deepEqual(JSON.parse(out),{});
   assert.equal((await f.calls()).at(-1).input.stop_status,'completed');
-  f.output(f.run('stop'));assert.equal((await f.calls()).length,2);
+  f.output(f.run('stop'));assert.equal((await f.calls()).length,3);assert.equal((await f.calls()).at(-1).args[0],'hook-context');
 });
 
 test('a late stop cannot attribute a new prompt to the preceding turn',async t=>{
@@ -263,7 +263,7 @@ const lockCases={
   'never evicts a live owner, however old its lock directory is':{pid:()=>process.pid,acquired:()=>Date.now(),evicted:false},
   'recovers from a dead-owner lock left by a killed callback':{pid:()=>spawnSync(process.execPath,['-e','0']).pid,acquired:()=>Date.now(),evicted:true},
   'recovers when a stale owner PID was reused by a live process':{pid:()=>process.pid,acquired:()=>Date.now()-3600000,evicted:true},
-  'recovers from a lock whose owner claims a future lease':{pid:()=>process.pid,acquired:()=>Date.now()+3600000,evicted:true},
+  'preserves a live owner with an ambiguous future acquisition time':{pid:()=>process.pid,acquired:()=>Date.now()+3600000,evicted:false},
   'recovers from an ownerless lock left by a killed callback':{evicted:true},
 };
 for(const [label,owner] of Object.entries(lockCases))test(`receipt lock ${label}`,async t=>{
@@ -275,6 +275,89 @@ for(const [label,owner] of Object.entries(lockCases))test(`receipt lock ${label}
   const old=new Date(time-3600000);await utimes(lock,old,old);
   f.output(f.run('user-prompt-submit',f.payload('user-prompt-submit',{prompt:'Explain this',timestamp:time+20})));
   const calls=await f.calls();
-  if(!owner.evicted){assert.equal(calls.length,1);assert.equal(JSON.parse(await readFile(join(lock,'owner.json'),'utf8')).token,'held');}
-  else{assert.equal(calls.length,2);assert.ok(calls[1].input.generation_id);assert.deepEqual((await readdir(state)).filter(name=>name.includes('.lock')),[]);}
+  if(!owner.evicted){assert.equal(calls.length,2);assert.equal(calls[1].args[0],'hook-context');assert.ok(calls[1].args.includes('--uncertain-order'));assert.equal(JSON.parse(await readFile(join(lock,'owner.json'),'utf8')).token,'held');}
+  else{assert.equal(calls.length,2);assert.ok(calls[1].input.generation_id);assert.deepEqual(await readdir(join(state,receipt+'.claims')),[]);assert.ok((await readdir(state)).includes(receipt+'.lock')); /* Never mutate a legacy owner's path. */}
+});
+
+// Exercise the distributed literal shell hook and Pascal native payload, not
+// just the adapter's explicit host test seams.
+async function nativeHook(f, host, name, extra={}, env={}) {
+  const config=JSON.parse(await readFile(join(root,'.plugin/plugin.json'),'utf8')).hooks;
+  const raw={hook_event_name:name,session_id:'chat-a',cwd:f.cwd,timestamp:iso(name==='Stop'?100:host==='cli'?10:21),transcript_path:f.path,...extra};
+  return spawnSync('/bin/bash',['-c',config[name][0].bash],{input:JSON.stringify(raw),encoding:'utf8',env:{...process.env,PLUGIN_ROOT:root,ALTITUDE_CLI_PATH:f.cli,ALTITUDE_COPILOT_STATE_DIR:join(f.dir,'state'),...env}});
+}
+for(const host of ['cli','vscode']) {
+  test(`native ${host} unavailable receipt store preserves prompt lesson context without evidence`,async t=>{
+    const f=await fixture(t,host,{...allow,context:['Continue the bound lesson with this exact guidance.']});await f.put(events(f.cwd,host).slice(0,2));
+    const unavailable=join(f.dir,'not-a-directory');await writeFile(unavailable,'blocked');
+    const result=await nativeHook(f,host,'UserPromptSubmit',{prompt:'Explain this'},{ALTITUDE_COPILOT_STATE_DIR:unavailable});
+    const out=f.output(result);assert.match(out.additionalContext,/Continue the bound lesson/);assert.equal(out.additionalContext,out.hookSpecificOutput.additionalContext);assert.match(result.stderr,/evidence skipped/);
+    const [call]=await f.calls();assert.equal(call.args[0],'hook-context');assert.equal(call.args[1],'user-prompt-submit');assert.equal(call.input.prompt,'Explain this');assert.equal(call.input.session_id,'chat-a');assert.equal(call.input.generation_id,undefined);
+  });
+  test(`native ${host} missing Stop receipt still runs context-only retro`,async t=>{
+    const f=await fixture(t,host);await f.put(events(f.cwd,host));
+    const result=await nativeHook(f,host,'Stop',{stop_reason:'end_turn',stop_hook_active:false});assert.deepEqual(f.output(result),{});assert.match(result.stderr,/evidence skipped/);
+    const [call]=await f.calls();assert.equal(call.args[0],'hook-context');assert.equal(call.args[1],'stop');assert.ok(call.args.includes('retro'));assert.equal(call.input.generation_id,undefined);assert.equal(call.input.last_assistant_message,undefined);assert.equal(call.input.stop_status,undefined);
+  });
+  test(`native ${host} duplicate prompt preserves newer receipt and never advances context state`,async t=>{
+    const f=await fixture(t,host);await f.put(events(f.cwd,host).slice(0,2));await nativeHook(f,host,'UserPromptSubmit',{prompt:'Explain this'});
+    const state=join(f.dir,'state');const name=(await readdir(state)).find(x=>x.endsWith('.json'));const before=await readFile(join(state,name),'utf8');
+    const duplicate=await nativeHook(f,host,'UserPromptSubmit',{prompt:'Explain this'});assert.deepEqual(f.output(duplicate),{});assert.match(duplicate.stderr,/Duplicate or out-of-order/);assert.equal((await f.calls()).length,1);assert.equal(await readFile(join(state,name),'utf8'),before);
+  });
+  test(`native ${host} old CLI rejects degraded command without legacy evidence retry`,async t=>{
+    const f=await fixture(t,host,'',1);await f.put(events(f.cwd,host).slice(0,2));const unavailable=join(f.dir,'blocked');await writeFile(unavailable,'blocked');
+    const result=await nativeHook(f,host,'UserPromptSubmit',{prompt:'Explain this'},{ALTITUDE_COPILOT_STATE_DIR:unavailable});assert.deepEqual(f.output(result),{});
+    const calls=await f.calls();assert.equal(calls.length,1);assert.equal(calls[0].args[0],'hook-context');assert.equal(calls[0].input.generation_id,undefined);
+  });
+}
+
+test('a paused live receipt writer keeps exclusivity after its old lease expires',async t=>{
+  const f=await fixture(t);const target=join(f.dir,'receipt.json');
+  // The first child signals from inside its critical section, then waits on
+  // stdin. No scheduling sleeps: the contender runs only after ownership.
+  const child=spawn(process.execPath,['--input-type=module','-e',`
+    import {locked} from ${JSON.stringify(new URL('../bin/copilot-transcript.mjs',import.meta.url).href)};
+    import fs from 'node:fs';
+    locked(${JSON.stringify(target)},()=>{process.stdout.write('held\\n');fs.readSync(0,Buffer.alloc(1),0,1,null);});
+  `],{stdio:['pipe','pipe','pipe']});
+  t.after(()=>child.kill());
+  await new Promise((resolve,reject)=>{child.stdout.once('data',resolve);child.once('error',reject);});
+  const legacy=join(target+'.lock','owner.json');
+  // On the prior protocol this forces the exact stale-read branch while its
+  // writer remains alive. Unique-claim owners never lose exclusion to time.
+  const owner=JSON.parse(await readFile(legacy,'utf8').catch(()=>'null'));
+  if(owner)await writeFile(legacy,JSON.stringify({...owner,acquired:Date.now()-120000}));
+  const result=spawnSync(process.execPath,['--input-type=module','-e',`
+    import {locked} from ${JSON.stringify(new URL('../bin/copilot-transcript.mjs',import.meta.url).href)};
+    try { locked(${JSON.stringify(target)},()=>process.stdout.write('overlap')); } catch { process.stdout.write('excluded'); }
+  `],{encoding:'utf8'});
+  const exit=new Promise(resolve=>child.once('close',resolve));child.stdin.end('x');await exit;
+  assert.equal(result.stdout,'excluded');
+});
+
+for(const variant of ['dead owner','reused PID','live owner','unknown process identity'])test(`immutable receipt claims handle ${variant} without replacing another claim`,async t=>{
+  const f=await fixture(t);const target=join(f.dir,'receipt.json');const directory=target+'.claims';await mkdir(directory);
+  const pid=variant==='dead owner'?spawnSync(process.execPath,['-e','0']).pid:process.pid;
+  const token='11111111-1111-4111-8111-111111111111';const claim=join(directory,`${pid}-${token}.json`);
+  const actual=spawnSync('ps',['-p',String(pid),'-o','lstart='],{encoding:'utf8',env:{...process.env,LC_ALL:'C',TZ:'UTC'}}).stdout?.trim();
+  await writeFile(claim,JSON.stringify({pid,token,birth:variant==='live owner'?new Date(actual+' UTC').toISOString():'2000-01-01T00:00:00.000Z'}));
+  const result=spawnSync(process.execPath,['--input-type=module','-e',`
+    import {locked} from ${JSON.stringify(new URL('../bin/copilot-transcript.mjs',import.meta.url).href)};
+    try { locked(${JSON.stringify(target)},()=>process.stdout.write('entered')); } catch { process.stdout.write('excluded'); }
+  `],{encoding:'utf8',env:{...process.env,...(variant==='unknown process identity'?{PATH:join(f.dir,'no-process-inspector')}:{})}});
+  const live=['live owner','unknown process identity'].includes(variant);
+  assert.equal(result.stdout,live?'excluded':'entered');
+  assert.deepEqual(await readdir(directory),live?[`${pid}-${token}.json`]:[]);
+});
+
+for(const host of ['cli','vscode'])test(`native ${host} live receipt writer preserves fresh prompt context without advancing its turn`,async t=>{
+  const f=await fixture(t,host,{...allow,context:['Continue the bound lesson safely.']});await f.put(events(f.cwd,host).slice(0,2));
+  await nativeHook(f,host,'UserPromptSubmit',{prompt:'Explain this'});
+  const state=join(f.dir,'state');const receipt=(await readdir(state)).find(x=>x.endsWith('.json'));const before=await readFile(join(state,receipt),'utf8');
+  const directory=join(state,receipt+'.claims');const name=`${process.pid}-11111111-1111-4111-8111-111111111111.json`;
+  await writeFile(join(directory,name),JSON.stringify({pid:process.pid}));
+  const result=await nativeHook(f,host,'UserPromptSubmit',{prompt:'Explain this',timestamp:iso(31)});
+  const out=f.output(result);assert.match(out.additionalContext,/Continue the bound lesson safely/);assert.match(result.stderr,/Concurrent/);
+  const call=(await f.calls()).at(-1);assert.equal(call.args[0],'hook-context');assert.ok(call.args.includes('--uncertain-order'));assert.equal(call.input.generation_id,undefined);
+  assert.equal(await readFile(join(state,receipt),'utf8'),before);assert.deepEqual(await readdir(directory),[name]);
 });
