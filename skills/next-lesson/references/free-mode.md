@@ -1,6 +1,6 @@
 # next-lesson — free mode
 
-Binding rules for sessions where Step 1 chose **free mode** — and for **paused subscriptions**, which run as free mode against the existing plan. Read this file in full right after choosing the mode, before orienting further. Nothing here repeats SKILL.md — both apply, and the step headings below name where each rule slots into SKILL.md's flow.
+Binding rules for sessions where Step 1 chose **free mode** — and for **paused subscriptions**, which run as free mode against the existing plan. Read this file in full right after choosing the mode, before orienting further. A lesson read whose runtime status is `outside_project` never reaches this file, even when `binding` is null: it pauses under SKILL.md's hard rules, so stop here and take that pause instead. Nothing here repeats SKILL.md — both apply, and the step headings below name where each rule slots into SKILL.md's flow.
 
 ## Paused subscription
 

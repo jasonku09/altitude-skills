@@ -16,7 +16,7 @@ The metaphor: concepts learned in isolation are loose leaves — hard to sort, e
 
 | Skill | What it does |
 |---|---|
-| `/begin` | Starts a journey planned on the Altitude web app, binds it to a local workshop, writes its plan locally, and rolls into the first task |
+| `/begin` | Starts a journey planned on the Altitude web app, binds it to a local workshop, writes its plan locally, and welcomes you with a tour of your journey |
 | `/start-project` | Interviews you for a project idea sized to your experience, defines the MVP, maps the trunk |
 | `/plan-journey` | Walks every design decision with you (and checks you understand it), builds the sectioned learning plan, seeds your knowledge graph |
 | `/next-lesson` | Executes one task in either mode: local plans keep evidence in your knowledge graph; bound subscriber journeys sync progress and mastery with Altitude |
@@ -55,7 +55,7 @@ Then type these two lines inside that session:
 
 `/plugin` exists only in the terminal app. Pasted into an IDE extension's chat panel it answers "plugin isn't available in this environment" — that's the wrong window, not a broken install. (The VS Code and JetBrains extensions are documented to have their own graphical `/plugins` manager — note the plural — which should also get you there; the terminal route above is the one we test.)
 
-**When the install asks where to put the plugin, choose the user scope** — the "for yourself, across all projects" option. Your first lesson makes a brand-new project folder, and a project- or local-scoped install writes into the folder you're standing in right now, so it would stay behind exactly when the skills are needed. If the install summary asks you to run `/reload-plugins`, run it; newer versions activate the plugin in place and tell you "Plugin is now active" instead.
+**When the install asks where to put the plugin, choose the user scope** — the "for yourself, across all projects" option. Starting your journey makes a brand-new project folder, and a project- or local-scoped install writes into the folder you're standing in right now, so it would stay behind exactly when the skills are needed. If the install summary asks you to run `/reload-plugins`, run it; newer versions activate the plugin in place and tell you "Plugin is now active" instead.
 
 In Codex, run both lines in your terminal:
 
@@ -92,7 +92,7 @@ For the **free standalone method only**, copying the shared skills to `~/.cursor
 ## How to use it
 
 - **Starting from zero?** Make an empty folder, open Claude Code in it, run `/start-project`. When it's done, run `/plan-journey`. One sitting each.
-- **Starting a journey planned on Altitude?** Connect your account, run `/begin`, and follow the folder and binding steps. It takes you straight into the first server-planned task.
+- **Starting a journey planned on Altitude?** Connect your account, run `/begin`, and follow the folder and binding steps. It ends with a welcome from your tutor and tells you how to open your new journey folder in its own chat, where `/next-lesson` runs your first server-planned task.
 - **Already have a codebase?** Open Claude Code in that folder and run `/adopt-project` instead — it replaces both of the above.
 - **From then on, it's `/next-lesson`, over and over.** That's the whole loop in both free and paid modes, for months. One lesson is one small task — expect 30–60 minutes, 3–5 sittings a week.
 - **One lesson per sitting — really.** Don't binge five in a night. The gap between sessions is where memory consolidates, and it's exactly what the next lesson's review quiz tests. Hungry for more is the perfect place to stop.
