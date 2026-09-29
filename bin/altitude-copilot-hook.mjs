@@ -5,7 +5,7 @@ import { realpathSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { resolveCli } from './altitude-cursor-hook.mjs';
-import { identity, startReceipt, currentReceipt, clearReceipt, completedReply, object, nonempty } from './copilot-transcript.mjs';
+import { identity, startReceipt, currentReceipt, clearReceipt, completedReply, ReceiptOrderError, ReceiptConcurrencyError, object } from './copilot-transcript.mjs';
 const root = dirname(dirname(fileURLToPath(import.meta.url)));
 const actions = {
   'session-start':['session-start','--print-context','--nudge','Run /next-lesson to continue (or /begin for your first session).'],
@@ -48,7 +48,13 @@ export async function main(host=process.argv[2],action=process.argv[3]) {
       if(host==='cli')raw={...raw,sessionId:raw.session_id,transcriptPath:raw.transcript_path,stopReason:raw.stop_reason,toolName:raw.tool_name,toolArgs:raw.tool_input};
     }
     const who=identity(raw,host);
-    const input={session_id:who.session_id,cwd:who.cwd}; let receipt;
+    const input={session_id:who.session_id,cwd:who.cwd}; let receipt; let contextOnly=false; let uncertainOrder=false;
+    const evidenceFailure=error=>{
+      if(error instanceof ReceiptOrderError)throw error;
+      contextOnly=true;
+      uncertainOrder=error instanceof ReceiptConcurrencyError;
+      process.stderr.write('Altitude Copilot response evidence skipped: '+error.message+'\n');
+    };
     if (action==='diff') {
       const tool=host==='cli'?raw.toolName:raw.tool_name;
       if (!(compatibility ? compatibilityMutations.has(tool)||mutations.cli.has(tool)||mutations.vscode.has(tool) : mutations[host].has(tool))) { process.stdout.write('{}\n');return; }
@@ -62,27 +68,34 @@ export async function main(host=process.argv[2],action=process.argv[3]) {
       if (args) input.tool_input=args;
     }
     if (action==='user-prompt-submit') {
-      receipt=startReceipt(raw,who);input.generation_id=receipt.generation_id;
+      if(typeof raw.prompt!=='string')throw new Error('Missing original learner prompt.');
       input.prompt=raw.prompt;input.prompt_origin='unknown';
+      try { receipt=startReceipt(raw,who);input.generation_id=receipt.generation_id; }
+      catch(error) { evidenceFailure(error); }
     }
     if (action==='stop') {
-      receipt=currentReceipt(who);input.generation_id=receipt.generation_id;input.stop_status='aborted';
-      // CLI persists its final response concurrently with agentStop. Retry for
-      // at most 800ms; no incomplete result enters legacy question capture.
-      let diagnostic;
-      for (let attempt=0;attempt<9;attempt++) {
-        try { input.last_assistant_message=completedReply(raw,who,receipt);input.stop_status='completed';diagnostic=undefined;break; }
-        catch(error) {diagnostic=error;}
-        if(attempt<8)await new Promise(resolve=>setTimeout(resolve,100));
+      try { receipt=currentReceipt(who); } catch(error) { evidenceFailure(error); }
+      if(receipt) {
+        input.generation_id=receipt.generation_id;input.stop_status='aborted';
+        // CLI persists its final response concurrently with agentStop. Retry for
+        // at most 800ms; no incomplete result enters legacy question capture.
+        let diagnostic;
+        for (let attempt=0;attempt<9;attempt++) {
+          try { input.last_assistant_message=completedReply(raw,who,receipt);input.stop_status='completed';diagnostic=undefined;break; }
+          catch(error) {diagnostic=error;}
+          if(attempt<8)await new Promise(resolve=>setTimeout(resolve,100));
+        }
+        if(diagnostic)process.stderr.write('Altitude Copilot response evidence skipped: '+diagnostic.message+'\n');
       }
-      if(diagnostic)process.stderr.write('Altitude Copilot response evidence skipped: '+diagnostic.message+'\n');
     }
     if(action==='session-end' && typeof raw.reason==='string')input.reason=raw.reason;
     const command=resolveCli();const [lifecycle,...extra]=actions[action];
-    const child=spawnSync(command.file,[...command.args,'hook',lifecycle,'--agent','copilot','--mapping',join(root,'hooks/copilot-field-map.json'),'--output','json','--delivery','prompt-context','--stop-policy','defer-to-prompt',...extra],{shell:false,input:JSON.stringify(input),encoding:'utf8',timeout:25000,maxBuffer:1024*1024,windowsHide:true});
+    const child=spawnSync(command.file,[...command.args,contextOnly?'hook-context':'hook',lifecycle,...(uncertainOrder?['--uncertain-order']:[]),'--agent','copilot','--mapping',join(root,'hooks/copilot-field-map.json'),'--output','json','--delivery','prompt-context','--stop-policy','defer-to-prompt',...extra],{shell:false,input:JSON.stringify(input),encoding:'utf8',timeout:25000,maxBuffer:1024*1024,windowsHide:true});
     const result=resultFrom(child,who.session_id);
     if(child.stderr)process.stderr.write(child.stderr);
-    if(action==='stop')clearReceipt(who,receipt);
+    if(action==='stop' && receipt) {
+      try { clearReceipt(who,receipt); } catch(error) { process.stderr.write('Altitude Copilot receipt cleanup skipped: '+error.message+'\n'); }
+    }
     if(result.action==='block' && action==='diff') {
       const reason=result.reason||'Altitude requested a workshop check before continuing.';
       response=compatibility?{permissionDecision:'deny',permissionDecisionReason:reason,hookSpecificOutput:{hookEventName:'PreToolUse',permissionDecision:'deny',permissionDecisionReason:reason}}:host==='cli'?{permissionDecision:'deny',permissionDecisionReason:reason}:{hookSpecificOutput:{hookEventName:'PreToolUse',permissionDecision:'deny',permissionDecisionReason:reason}};
