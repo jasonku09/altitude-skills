@@ -120,11 +120,14 @@ export function locked(path, fn) {
       if(!match)throw new ReceiptConcurrencyError('Unknown Copilot callback claim; evidence skipped.');
       // The filename also pins the PID if a stored claim is damaged.
       // Unreadable/malformed live claims remain exclusive.
-      const stored=read(other);const competing=stored?.pid===Number(match[1])?stored:{pid:Number(match[1])};
+      let stored;
+      try { stored=JSON.parse(readFileSync(other,'utf8')); }
+      catch(error) { if(error.code==='ENOENT')continue; }
+      const competing=stored?.pid===Number(match[1])?stored:{pid:Number(match[1])};
       if(liveOwner(competing))throw new ReceiptConcurrencyError('Concurrent Copilot callback; evidence skipped.');
       rmSync(other,{force:true}); // unique dead-owner path can never be reused
     }
-    const held=()=>{if(read(claim)?.token!==token)throw new Error('Copilot callback ownership lost; evidence skipped.');};
+    const held=()=>{if(read(claim)?.token!==token)throw new ReceiptConcurrencyError('Copilot callback ownership lost; evidence skipped.');};
     return fn(held);
   } finally { rmSync(claim,{force:true}); }
 }

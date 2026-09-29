@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { spawn, spawnSync } from 'node:child_process';
-import { mkdtemp, readFile, readdir, writeFile, mkdir, rm, utimes } from 'node:fs/promises';
+import { mkdtemp, readFile, readdir, writeFile, mkdir, rm, symlink, utimes } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -348,6 +348,27 @@ for(const variant of ['dead owner','reused PID','live owner','unknown process id
   const live=['live owner','unknown process identity'].includes(variant);
   assert.equal(result.stdout,live?'excluded':'entered');
   assert.deepEqual(await readdir(directory),live?[`${pid}-${token}.json`]:[]);
+});
+
+test('receipt claim released between listing and reading does not count as contention',async t=>{
+  const f=await fixture(t);const target=join(f.dir,'receipt.json');const directory=target+'.claims';await mkdir(directory);
+  const name=`${process.pid}-11111111-1111-4111-8111-111111111111.json`;await symlink(join(f.dir,'released-claim'),join(directory,name));
+  const result=spawnSync(process.execPath,['--input-type=module','-e',`
+    import {locked} from ${JSON.stringify(new URL('../bin/copilot-transcript.mjs',import.meta.url).href)};
+    try { locked(${JSON.stringify(target)},()=>process.stdout.write('entered')); } catch { process.stdout.write('excluded'); }
+  `],{encoding:'utf8'});
+  assert.equal(result.stdout,'entered');
+});
+
+test('lost receipt claim ownership reports uncertain order',async t=>{
+  const f=await fixture(t);const target=join(f.dir,'receipt.json');
+  const result=spawnSync(process.execPath,['--input-type=module','-e',`
+    import {rmSync} from 'node:fs';
+    import {locked,ReceiptConcurrencyError} from ${JSON.stringify(new URL('../bin/copilot-transcript.mjs',import.meta.url).href)};
+    try { locked(${JSON.stringify(target)},held=>{rmSync(${JSON.stringify(target+'.claims')},{recursive:true});held();}); }
+    catch(error) { process.stdout.write(error instanceof ReceiptConcurrencyError?'concurrent':'other'); }
+  `],{encoding:'utf8'});
+  assert.equal(result.stdout,'concurrent');
 });
 
 for(const host of ['cli','vscode'])test(`native ${host} live receipt writer preserves fresh prompt context without advancing its turn`,async t=>{
