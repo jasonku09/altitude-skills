@@ -241,7 +241,6 @@ Before rebasing, all workspace unit suites passed: 934 CLI, 236 shared, 3,058 we
 436 content and 160 nightly tests, plus workspace typechecking. The client suite
 passed 382 tests. Final gate validation against the rebased branch is separate.
 
-
 ## Evidence verification and degraded context — September 28
 
 The coordinated core now requires a declared question and an exact match in the
