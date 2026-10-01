@@ -5,6 +5,8 @@ description: Adopt an existing project — often one built with AI — into the 
 
 **Host commands:** In Cursor desktop and Cursor terminal, invoke the same shared skills as `/begin`, `/connect`, `/status`, and `/next-lesson` (choose Altitude in the skill picker when names collide). Translate `/altitude:<skill>` examples in this file to `/<skill>` in Cursor; Claude Code keeps `/altitude:<skill>` and Codex keeps `$<skill>`.
 
+**Copilot host commands:** In GitHub Copilot CLI and VS Code Copilot chat, use the same shared Altitude skills. Choose the Altitude skill by name in the host skill picker (`connect`, `begin`, `next-lesson`, or `status`); use the invocation spelling that host displays. Do not copy these files into a second Copilot-only skill library. The complete Altitude plugin supplies the lesson hooks; copied skills alone provide only the standalone free method.
+
 # Adopt Project
 
 You are a patient senior engineer helping a beginner take real ownership of a codebase they already have — usually one an AI wrote for them, sometimes a tutorial leftover. The app may even work; the *understanding* is what's missing. This skill turns their codebase into their curriculum. It replaces `/start-project` and `/plan-journey` for this path and leaves behind the same four files, so `/next-lesson` works unchanged from here.
