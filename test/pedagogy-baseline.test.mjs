@@ -169,7 +169,7 @@ test("B: the three knobs have defaults, and free mode always uses them", async (
     /\*\*when the field is absent, and always in free mode, use the defaults: `drills` 2, `step_size` `function`, `check_density` `teach_runs`\.\*\*/,
     "the defaults must be one emphasized sentence covering absence and free mode",
   );
-  assert.match(section, /`decide_inspect_verify` only `check_density` applies/, "Intermediate ignores drills and step size");
+  assert.match(section, /`decide_inspect_verify`, `drills` and `check_density` apply and `step_size` is ignored/, "Intermediate ignores only step size");
   assert.match(section, /never change the level/, "knobs never touch the level");
 });
 
