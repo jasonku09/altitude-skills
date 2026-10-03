@@ -45,8 +45,10 @@ test("the answer sets the arc, with drills as a ceiling, and is not a prior-know
   const text = arc();
   assert.match(text, /`drills` being a ceiling/);
   assert.match(text, /new to them gets all three moves/);
-  assert.match(text, /familiar gets no introduction and fewer drills, often one that tests them/);
-  assert.match(text, /this answer is not the prior-knowledge signal below/);
+  assert.match(text, /familiar gets no introduction and one drill that tests it \(none when `drills` is 0\)/);
+  assert.doesNotMatch(text, /fewer drills/);
+  assert.match(text, /Only their answer to this question makes a concept familiar, never another answer, and it is not the prior-knowledge signal below/);
+  assert.match(text, /concepts that come up together may share one question/);
 });
 
 test("a concept marked known but not yet shown gets a declinable quick check; a gap is taught there and the mark stays", () => {
