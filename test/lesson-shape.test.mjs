@@ -16,10 +16,12 @@ const PAID = "skills/next-lesson/references/paid-mode.md";
  * shouldn't be jarring, and it should make sense why we're drilling this in the
  * context of the implementation."
  *
- * Git moves to section 3 or later, so the tutor saves the learner's work with a
- * quiet checkpoint commit until the plan has taught version control; after that
- * the commit is the learner's, as before. Each rule is one intent sentence, so
- * these tests pin the intent, not a procedure.
+ * Git moves to section 3 or later. Before the plan teaches version control the
+ * tutor makes no commit at all (Jason, 2026-10-03: the quiet checkpoints did the
+ * first Git lesson's job, "and if they do make a mistake in any of the lessons,
+ * the tutor has the ability to help them fix it"); after that the commit is the
+ * learner's, as before. Each rule is one intent sentence, so these tests pin the
+ * intent, not a procedure.
  */
 
 function sliceBetween(contents, startHeading, endHeading) {
@@ -62,15 +64,23 @@ test("no_learner_lines is a hands_on signal only; drills_skipped stays a valid s
   assert.match(close, /`drills_skipped`/);
 });
 
-test("quiet checkpoint commits until the plan has taught version control; after that the commit is the learner's", () => {
-  const close = sliceBetween(read(SKILL), "## Step 4 — Close the loop", "## When they broke something");
+test("no commit before the plan has taught version control; after that the commit is the learner's", () => {
+  const skill = read(SKILL);
+  assert.doesNotMatch(skill, /checkpoint commit/);
+  assert.doesNotMatch(skill, /I saved a checkpoint of your work/);
+  const close = sliceBetween(skill, "## Step 4 — Close the loop", "## When they broke something");
   const item3 = close.split("\n").find((l) => l.startsWith("3. "));
-  assert.match(item3, /quiet checkpoint commit/);
-  assert.match(item3, /version control/);
-  assert.match(item3, /I saved a checkpoint of your work/);
-  assert.match(item3, /no Git questions or teaching/);
-  assert.match(item3, /initiali[sz]/, "an un-versioned project gets its repo quietly the first time");
-  assert.match(item3, /a message they write themselves/, "after Git is taught the commit is still theirs");
+  assert.match(item3, /once their plan has taught version control, suggest a git commit with a message they write themselves/);
+  assert.match(item3, /before that, make no commit and create no repository, because the first Git lesson teaches it from scratch/);
+  assert.match(item3, /a mistake until then is fixed by reading the code with them/);
+});
+
+test("before Git, a breakage is found by reading the code together, never with git", () => {
+  const skill = read(SKILL);
+  const broke = sliceBetween(skill, "## When they broke something", "## When they want something not in the plan");
+  assert.match(broke, /once their plan has taught version control, `git status` and `git diff` on their uncommitted changes; before that, the code they touched, read with them until the change is found/);
+  assert.match(broke, /once Git is taught, have them commit the repair under Step 4's rule/);
+  assert.match(skill, /a quick listing, plus `git status` once it has a repository/);
 });
 
 test("every other commit suggestion defers to the checkpoint rule instead of teaching Git early", () => {
@@ -85,6 +95,7 @@ test("every other commit suggestion defers to the checkpoint rule instead of tea
 
   assert.match(
     skill,
-    /Delegation ends at the working tree: the commit stays learner-owned once version control has been taught/,
+    /Delegation ends at the working tree: the commit stays learner-owned once version control has been taught \(before that, there is no commit\)/,
   );
+  assert.match(skill, /once Git is taught, dictate the `git commit` line and leave the message theirs/);
 });
