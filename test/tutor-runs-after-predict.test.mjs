@@ -25,17 +25,22 @@ function sliceBetween(startHeading, endHeading) {
   return SKILL.slice(start, end);
 }
 
-test("after the prediction, the tutor runs it and shows the real output; the learner reads the result", () => {
+test("after the prediction, the tutor runs it, shows the real output, and says whether it held; a miss is the learner's to explain first", () => {
   const predictions = sliceBetween("### Predictions", "### Vocabulary");
-  assert.match(predictions, /\*\*Once they have predicted, run it yourself and put the relevant real output in your message\*\*/);
+  assert.match(predictions, /\*\*Once they have predicted, run it yourself, put the relevant real output in your message\*\*/);
   assert.match(predictions, /the learner may not see your tool output/);
-  assert.match(predictions, /let them say whether it matched and why/);
-  assert.match(predictions, /they run it themselves only when running it is what the lesson teaches/);
+  assert.match(predictions, /\*\*and say in a line whether their prediction held\*\*/);
+  assert.match(predictions, /on a miss, ask what they think caused the difference before you explain/);
+  // Jason, 2026-10-03: having the learner confirm the match is annoying.
+  assert.doesNotMatch(SKILL, /let them say whether it matched/);
+  assert.doesNotMatch(SKILL, /they say whether it matched/);
+  assert.match(predictions, /The hands-on rule says what stays theirs to run or check/);
 });
 
-test("the learner types a command only when running it is what the lesson teaches", () => {
+test("the command or action a lesson teaches, even a new tool's first use, and every page or click stay the learner's", () => {
   const rules = sliceBetween("### General rules", "## Step 1");
-  assert.match(rules, /when running a command is itself what the lesson teaches, the learner types it in their own terminal/);
+  assert.match(rules, /the command or action a lesson teaches is theirs to type in their own terminal, even the first time they use a new tool/);
+  assert.match(rules, /anything whose result is a page or a click they check in their own browser/);
   assert.doesNotMatch(rules, /Only once a command has become routine for them may you run it yourself/);
   const files = SKILL.slice(SKILL.indexOf("**When a command creates files**"));
   assert.doesNotMatch(files.slice(0, 400), /dictate it and let the learner run it/);
@@ -47,7 +52,7 @@ test("a drill stays learner-written but the tutor runs it after the prediction",
   assert.match(drill, /the learner writes a small exercise/);
   assert.doesNotMatch(drill, /writes and runs/);
   assert.doesNotMatch(drill, /they run it in their own terminal/);
-  assert.match(drill, /predict the output in one line; then you run it, show them what it printed, and they say whether it matched/);
+  assert.match(drill, /predict the output in one line; then you run it and show them what it printed, under the prediction rule below/);
   assert.match(drill, /You never write into the scratch file/);
 });
 
