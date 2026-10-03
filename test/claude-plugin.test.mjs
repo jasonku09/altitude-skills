@@ -55,6 +55,10 @@ test("declares Claude's documented payload fields without leaking them into core
       tool_name: "tool_name",
       prompt: "prompt",
       last_assistant_message: "last_assistant_message",
+      // The model the learner is running, for the tutor's recommended-model
+      // line. Claude Code sends it only on a fresh interactive SessionStart;
+      // CLIs before the one that records it drop the field (see above).
+      model: "model",
     },
   });
 });

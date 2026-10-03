@@ -263,6 +263,27 @@ test("product version and session-end reason retain their actual meaning", async
   assert.equal(mapping.fields.reason, "reason");
 });
 
+test("the learner's selected model reaches core as its structured ID, else the legacy slug", async (t) => {
+  const fake = await fixture(t);
+  // Cursor's documented example: `model` is the legacy composer slug with the
+  // variant baked in; `model_id` is the structured ID of the model picked.
+  output(run("user-prompt-submit", { ...payload, prompt: "hi", model: "claude-opus-4-7-thinking-max", model_id: "claude-opus-4-7", model_params: [{ id: "effort", value: "max" }] }, fake.dir));
+  let captured = JSON.parse(await readFile(fake.capture, "utf8"));
+  assert.equal(captured.input.model, "claude-opus-4-7");
+  assert.equal(captured.input.model_id, undefined);
+  assert.equal(captured.input.model_params, undefined);
+  // model_id is optional ("when available"): fall back to the slug.
+  output(run("diff", { ...payload, model: "gpt-6-sol", model_id: "" }, fake.dir));
+  captured = JSON.parse(await readFile(fake.capture, "utf8"));
+  assert.equal(captured.input.model, "gpt-6-sol");
+  // No model reported: the field stays absent rather than invented.
+  output(run("stop", { ...payload, model: "  ", status: "completed" }, fake.dir));
+  captured = JSON.parse(await readFile(fake.capture, "utf8"));
+  assert.equal(Object.hasOwn(captured.input, "model"), false);
+  const mapping = JSON.parse(await readFile(join(root, "hooks/cursor-field-mapping.json"), "utf8"));
+  assert.equal(mapping.fields.model, "model");
+});
+
 test("Cursor's empty cwd falls back only to a unique workspace root", async (t) => {
   const fake = await fixture(t);
   output(run("diff", { ...payload, cwd: "", tool_name: "Write" }, fake.dir));

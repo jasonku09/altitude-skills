@@ -71,6 +71,12 @@ function normalize(input, action) {
   for (const key of ["generation_id", "tool_name"]) if (typeof input[key] === "string") normalized[key] = input[key];
   if (record(input.tool_input)) normalized.tool_input = input.tool_input;
   if (nonempty(input.cursor_version)) normalized.agent_version = input.cursor_version;
+  // The model the learner picked, for the tutor's recommended-model line.
+  // Prefer the structured `model_id` ("claude-opus-4-7"); `model` is Cursor's
+  // legacy composer slug with variant knobs baked in ("…-thinking-max") and is
+  // only the fallback when no structured ID is available. model_params stays out.
+  const model = [input.model_id, input.model].find(nonempty);
+  if (model) normalized.model = model.trim();
   if (action === "session-end" && typeof input.reason === "string") normalized.reason = input.reason;
   if (action === "user-prompt-submit") {
     normalized.prompt = typeof input.prompt === "string" ? input.prompt : "";

@@ -85,6 +85,10 @@ test("declares Codex's documented hook payload fields at the adapter edge", asyn
       // expires — the gate asks and nothing can ever answer.
       prompt: "prompt",
       last_assistant_message: "last_assistant_message",
+      // Codex sends the running model on every hook payload; the CLI stamps
+      // it on the session for the tutor's recommended-model line. CLIs that
+      // predate the field drop it rather than rejecting the mapping (≥0.4.0).
+      model: "model",
     },
   });
 });
