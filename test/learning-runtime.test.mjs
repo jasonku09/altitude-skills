@@ -192,7 +192,7 @@ test('a live read whose pointer has not moved is an unaccepted claim, never a sy
   assert.match(read('skills/next-lesson/SKILL.md'), /paid mode sends the completion claim/);
   // The same holds for quiz emits: a clean exit is not server-side credit.
   const step2 = sliceBetween(read(PAID), '## Step 2', '## Step 3');
-  assert.match(step2, /If you mention a quiz emit that exited cleanly, call it sent[^\n]*never recorded, credited, or landed/);
+  assert.match(step2, /If you mention an emit that exited cleanly, quiz moment or completion, call it sent[^\n]*never recorded, accepted, credited, or landed/);
 });
 
 test('the compatibility doc requires available downloads, not advance announcements', () => {
