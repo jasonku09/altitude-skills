@@ -138,8 +138,9 @@ test("B: a new teach concept is introduced, drilled in a scratch file, then appl
   assert.match(introText, /minimal example/, "introduce = a minimal example in chat");
   assert.match(introText, /in no project file/, "the example never lands in the project");
   assert.match(drillText, /learning\/scratch\/<concept>\.<ext>/, "the scratch path must be spelled out");
-  assert.match(drillText, /predict the output in one line before they run it/, "each drill predicts before running");
-  assert.match(drillText, /run it in their own terminal/, "the learner runs the drill");
+  assert.match(drillText, /predict the output in one line; then you run it/, "each drill predicts before running");
+  // Since 2026-10-02 the tutor runs the drill after the prediction; the learner still writes it.
+  assert.match(drillText, /the learner writes a small exercise/, "the learner writes the drill");
   assert.match(drillText, /You never write into the scratch file/, "the scratch file is the learner's");
   assert.match(drillText, /the count comes from `drills`/, "the drill count is the knob");
   assert.ok(drillText.includes(DRILL_ASK), "the ask after the drills must be spelled out");
