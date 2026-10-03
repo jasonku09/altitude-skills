@@ -23,7 +23,7 @@ Every few lessons, swap the concept question for a repo-tour question from `lear
 
 ## Step 3 — Teaching knobs, drills, and check-ins (free)
 
-Free mode has no envelope, so SKILL.md's defaults are the knobs for every free lesson: two drills per new concept, function-sized gaps, predictions on `teach` runs only. A new concept is one whose graph status is `seed` or missing; its drills go in `learning/scratch/<graph name>.<ext>`, and a correct drill counts as a correct fill-in in Step 4's evidence, with a `learning/scratch/` line added to `learning/file-map.md` the first time the folder is created. A direct knob change under SKILL.md's "Direct knob changes" has nothing to write to in free mode: apply it for the rest of the session and say that it holds for this session. There is no method check-in in free mode — nothing directs one, so never ask one.
+Free mode has no envelope, so SKILL.md's defaults are the knobs for every free lesson: two drills per new concept, function-sized gaps, predictions on `teach` runs only. A new concept is one whose graph status is `seed` or missing (free mode has no lesson record, so SKILL.md's familiarity question covers exactly these); its drills go in `learning/scratch/<graph name>.<ext>`, and a correct drill counts as a correct fill-in in Step 4's evidence, with a `learning/scratch/` line added to `learning/file-map.md` the first time the folder is created. A direct knob change under SKILL.md's "Direct knob changes" has nothing to write to in free mode: apply it for the rest of the session and say that it holds for this session. There is no method check-in in free mode — nothing directs one, so never ask one.
 
 ## Step 3 — When prior knowledge surfaces (free)
 

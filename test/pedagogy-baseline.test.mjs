@@ -149,7 +149,8 @@ test("B: a new teach concept is introduced, drilled in a scratch file, then appl
 test("B: exercise concepts and previously-taught concepts never get a drill; scratch writes are evidence", async () => {
   const section = teachingSection(await readNextLesson());
 
-  assert.match(section, /\*\*`exercise` concepts never get a drill\*\*/, "the exercise exclusion must be emphasized");
+  // Since the familiarity check (2026-10-02), only an exercise concept already shown in a lesson is exempt.
+  assert.match(section, /\*\*An `exercise` concept already shown in a lesson never gets a drill\*\*/, "the exercise exclusion must be emphasized");
   assert.match(section, /a completed task already carried gets no drill either/, "re-taught concepts skip the drill");
   assert.match(section, /Scratch files are real evidence/, "scratch writes must count");
   assert.match(section, /emit the drill's prediction as a quiz moment tagged with the concept/, "paid mode records the drill");
