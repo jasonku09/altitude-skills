@@ -63,3 +63,13 @@ test("updating the Altitude tools stays the learner's, without calling it like a
   assert.match(close, /let them run it in their own terminal; don't run it for them/);
   assert.match(close, /the learner runs it in their own terminal — never run it for them/);
 });
+
+/**
+ * Three Fronts evidence audit (Jason, 2026-10-04): tutors sent the prediction's
+ * quiz moment in the same command that ran the code, so the verdict was recorded
+ * before anyone saw the output. One sentence where predictions are covered.
+ */
+test("a prediction's quiz moment is sent only after the result is on screen and judged, never with the run", () => {
+  const predictions = sliceBetween("### Predictions", "### Vocabulary");
+  assert.match(predictions, /Send a prediction's quiz moment only after the result is on screen and you have said whether it held — never in the same command as the run\./);
+});
