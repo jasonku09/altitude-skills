@@ -57,15 +57,14 @@ example of the taught syntax. Publish CLI 0.10.0 before plugin 0.7.0 to make the
 command available immediately; older supported CLIs still teach via the fallback.
 No server or envelope requirement is added.
 
-The graded lesson-start review adds no floor either. When `due_review` carries a
-`capability` and an `ask`, the tutor asks that kind of question and sends the answer
-with `--review <concept-id>:<capability>` (key `review` under `emit --stdin`), and
-the server grades it against that card. Both fields reach the tutor only through a
-CLI built with them, and only a CLI that knows `--review` forwards the marker: an
-older CLI strips the fields, so no marker is sent, and ignores an unknown `--review`
-flag. Either way the answer is an ordinary, ungraded quiz moment, as before. Publish
-the CLI that forwards `--review` (and accepts the `review` stdin key) before or with
-the plugin that sends it.
+The graded lesson-start review adds no floor either. When `due_review` carries an
+`ask`, the tutor asks that kind of question and sends the answer with
+`--review <concept-id>` (key `review` under `emit --stdin`) and no verdict, and the
+server grades it towards that concept's mastery. It needs the server that sends
+`ask` and the next CLI release: CLI 0.10.0 and older strip `ask`, so the tutor sends
+no marker, and do not forward `--review`. Either way the answer is an ordinary,
+ungraded quiz moment, as before. Publish that CLI before or with the plugin that
+sends the marker.
 
 The following 0.6.1 notes describe the previous release; its shell mechanics now
 apply only in that fallback.
