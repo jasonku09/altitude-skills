@@ -47,10 +47,11 @@ test("compatibility notes: plugin 0.8.0 pairs with CLI 0.11.0 and publishes afte
   assert.match(compat, /CLI 0\.10\.0 and older answer `emit --stdin` that `--question` and `--answer` are required/);
 });
 
-test("README names the current plugin and CLI pairing", () => {
+// Jason, 2026-10-05: no "what's new" line in the README; the server's update reminders cover it.
+test("README keeps the minimum versions and drops the stale Cursor release note", () => {
   const readme = flat(read("README.md"));
-  assert.match(readme, /Plugin 0\.8\.0 works best with CLI 0\.11\.0/);
   assert.match(readme, /The minimum versions stay CLI 0\.8\.1 \/ plugin 0\.5\.8/);
+  assert.doesNotMatch(readme, /release candidate is not yet published/);
 });
 
 /**
