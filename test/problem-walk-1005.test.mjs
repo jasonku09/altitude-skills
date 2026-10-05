@@ -27,3 +27,13 @@ test("problem 6: the close records any explanation, decision reason or critique 
     "1. Record today's evidence through your mode file's Step 4 rules — the local knowledge graph in free mode, the server event path in paid mode — including any explanation, decision reason or critique the learner gave that is not yet recorded.",
   );
 });
+
+const generalRules = () => sliceBetween(read(SKILL), "### General rules", "## Step 1");
+
+test("problem 9: ask for one thing at a time, at every level, in the general rules", () => {
+  const rules = generalRules();
+  assert.match(rules, /Ask for one thing at a time — one action or one answer — and wait for it before the next\./);
+  // The new sentence covers the old "One command, one prediction at a time."
+  assert.doesNotMatch(rules, /One command, one prediction at a time\./);
+  assert.match(rules, /Never queue a second command or prediction while one is still pending/);
+});
