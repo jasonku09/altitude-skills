@@ -1,0 +1,4 @@
+{"role": "user", "message": {"content": [{"type": "text", "text": "learner message PASSWORD=FAKE_SECRET"}]}}
+{"role": "assistant", "message": {"content": [{"type": "tool_use", "name": "Read", "input": {"path": ".env.local"}}]}}
+{"role": "assistant", "message": {"content": [{"type": "text", "text": "assistant message"}]}}
+{"message": {"content": [{"type": "image", "source": {"data": "IMAGE_PRIVATE_CONTENT"}}]}}

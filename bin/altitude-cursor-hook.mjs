@@ -65,10 +65,11 @@ function normalize(input, action) {
     if (matches.length === 1) selected = resolve(input.cwd);
   } else if (roots.length === 1) selected = roots[0];
   if (!selected) throw new Error("Cursor workspace is ambiguous; open the bound lesson folder in its own workspace.");
-  // Copy only documented transport fields. Do not forward email, transcript
-  // paths, arbitrary prompt_origin, or an invented continuation association.
+  // Copy only documented transport fields. Do not forward email, arbitrary
+  // prompt_origin, or an invented continuation association.
   const normalized = { conversation_id: input.conversation_id, cwd: selected };
   for (const key of ["generation_id", "tool_name"]) if (typeof input[key] === "string") normalized[key] = input[key];
+  if (nonempty(input.transcript_path)) normalized.transcript_path = input.transcript_path;
   if (record(input.tool_input)) normalized.tool_input = input.tool_input;
   if (nonempty(input.cursor_version)) normalized.agent_version = input.cursor_version;
   // The model the learner picked, for the tutor's recommended-model line.
@@ -117,6 +118,7 @@ function openResponse(action) {
 }
 
 export async function main(action = process.argv[2]) {
+  /** @type {{ permission?: string, continue?: boolean, user_message?: string, agent_message?: string, additional_context?: string, env?: { ALTITUDE_SESSION_ID: string } }} */
   let response = openResponse(action);
   let exitCode = 0;
   try {
@@ -130,7 +132,7 @@ export async function main(action = process.argv[2]) {
     const input = normalize(JSON.parse(stdin), action);
     const command = resolveCli();
     const [lifecycle, ...extra] = actions[action];
-    const args = [...command.args, "hook", lifecycle, "--agent", "cursor", "--mapping", mapping, "--output", "json", "--delivery", "prompt-context", "--stop-policy", "defer-to-prompt", ...extra];
+    const args = [...command.args, "hook", lifecycle, "--agent", "cursor", "--mapping", mapping, "--transcript-mapping", join(pluginRoot, "hooks/cursor-transcript-mapping.json"), "--output", "json", "--delivery", "prompt-context", "--stop-policy", "defer-to-prompt", ...extra];
     const child = spawnSync(command.file, args, { shell: false, input: JSON.stringify(input), encoding: "utf8", timeout: 25000, maxBuffer: 1024 * 1024, windowsHide: true });
     if (child.error || child.signal) throw new Error("Altitude CLI could not finish this hook.");
     const result = parseResult(child.stdout, child.status, input.conversation_id);

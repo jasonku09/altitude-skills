@@ -12,6 +12,7 @@
     "continuation_id": "continuation_id",
     "continuation_count": "continuation_count",
     "agent_version": "agent_version",
-    "reason": "reason"
+    "reason": "reason",
+    "transcript_path": "transcript_path"
   }
 }

@@ -107,6 +107,7 @@ test("setup registers the exact source root, refreshes versions, and stale unins
   assert.deepEqual((await config(dir)).hooks, {});
 });
 
+/** @type {Array<[string, RegExp]>} */
 const protectedPaths = [
   ["hooks.json", /hooks.json is not a regular file/],
   ["altitude/plugin.json", /registration is not a regular file/],
