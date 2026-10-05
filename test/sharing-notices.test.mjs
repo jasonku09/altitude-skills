@@ -11,9 +11,8 @@ for (const skill of ["begin", "next-lesson"]) {
     const orient = text.slice(text.indexOf("## Step 1"), text.indexOf("## Step 2"));
     const paragraph = orient.split("\n\n").find(p => p.includes("`notices`"));
     assert.ok(paragraph, "notice handling belongs at the task-envelope read");
-    assert.match(paragraph, /each notice.*`message`.*exactly as written/);
-    assert.match(paragraph, /then run `altitude notice ack <id>` yourself/);
-    assert.match(paragraph, /without asking.*reply/);
-    assert.match(paragraph, /missing or empty.*nothing/i);
+    assert.match(paragraph, /show each `message`.*exactly as written/);
+    assert.match(paragraph, /then run `altitude notice ack <id>`/);
+    assert.match(paragraph, /learner doesn't need to reply/);
   });
 }
