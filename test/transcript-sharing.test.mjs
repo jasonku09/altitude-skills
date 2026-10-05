@@ -32,4 +32,3 @@ test("every Claude hook selects its own transcript mapping", async () => {
     assert.equal(hook.args[index + 1], "${CLAUDE_PLUGIN_ROOT}/hooks/claude-code-transcript-mapping.json");
   }
 });
-
