@@ -10,6 +10,7 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const shim = join(root, "bin/altitude-cursor-hook.mjs");
 const allow = { version: 1, exitCode: 0, action: "allow", context: [] };
 const payload = { conversation_id: "chat-a", generation_id: "turn-a", workspace_roots: [root] };
+/** @param {unknown} response @param {unknown} status */
 async function fixture(t, response = allow, status = 0) {
   const dir = await mkdtemp(join(tmpdir(), "altitude cursor & $ sandbox-"));
   t.after(() => rm(dir, { recursive: true, force: true }));
@@ -20,6 +21,7 @@ async function fixture(t, response = allow, status = 0) {
   await chmod(executable, 0o755);
   return { dir, capture };
 }
+/** @param {unknown} input */
 function run(action, input = payload, path = process.env.PATH) {
   return spawnSync(process.execPath, [shim, action], { input: typeof input === "string" ? input : JSON.stringify(input), encoding: "utf8", env: { ...process.env, PATH: path } });
 }
@@ -342,4 +344,26 @@ test("Cursor maintenance treats status as local token presence, not account or s
   assert.match(maintenance, /fresh.*`unauthorized`.*continue with pairing/s);
   assert.match(maintenance, /Offline.*do not imply an invalid token/s);
   assert.match(maintenance, /status command fails.*do not infer disconnection or start pairing/s);
+});
+
+for (const action of ["session-start", "diff", "stop", "session-end", "user-prompt-submit", "after-assistant-response"]) {
+  test(`${action} forwards Cursor transcript metadata without reading the file`, async (t) => {
+    const fake = await fixture(t);
+    const path = join(fake.dir, "absent transcript $(literal).jsonl");
+    output(run(action, { ...payload, transcript_path: path, email: "private@example.test" }, fake.dir));
+    const captured = JSON.parse(await readFile(fake.capture, "utf8"));
+    assert.equal(captured.input.transcript_path, path);
+    assert.equal(captured.input.email, undefined);
+    assert.equal(captured.args[captured.args.indexOf("--transcript-mapping") + 1], join(root, "hooks/cursor-transcript-mapping.json"));
+  });
+}
+
+test("invalid optional transcript paths do not disable Cursor hooks", async (t) => {
+  const fake = await fixture(t);
+  for (const transcript_path of [undefined, null, 123, {}, "", "   "]) {
+    output(run("diff", { ...payload, transcript_path }, fake.dir));
+    const captured = JSON.parse(await readFile(fake.capture, "utf8"));
+    assert.equal(captured.input.transcript_path, undefined);
+    assert.equal(captured.input.conversation_id, payload.conversation_id);
+  }
 });
