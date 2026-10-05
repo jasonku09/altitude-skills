@@ -41,7 +41,9 @@ test("quiz moments go through --stdin when the CLI accepts it, falling back to t
   const step2 = sliceBetween(read(PAID), "## Step 2", "## Step 3");
   assert.match(step2, /When the CLI accepts `--stdin`, pass the same fields instead as one JSON object on standard input/);
   assert.match(step2, /keys `question`, `answer`, `verdict`, `concepts` \(an array\), `task`, `plan_revision`, `session`/);
-  assert.match(step2, /if it reports the option unknown, use the single-quoted flags/);
+  // CLI 0.10.0 and older ignore standard input rather than refusing the option,
+  // so they answer that --question and --answer are required (release 0.8.0).
+  assert.match(step2, /if it reports the option unknown, or that `--question` and `--answer` are required, send the same emit again with the single-quoted flags/);
 });
 
 test("questions go only in a turn's final message, since text before a tool call reaches the learner too", () => {
