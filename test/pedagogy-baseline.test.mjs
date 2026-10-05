@@ -401,7 +401,7 @@ test("H: a plain-words request to change how they are taught maps to one knob an
 // stalled it opened the project step itself, skipping the ask. Each fix below
 // is one atomic, ordered rule with its exact phrase.
 
-test("B: the drill loop is numbered, a stalled drill keeps its number, and the ask is the whole next message", async () => {
+test("B: the drill loop is numbered, a stalled drill keeps its number, and the ask ends the message that shows the last drill's result", async () => {
   const section = teachingSection(await readNextLesson());
   const drill = section.indexOf("2. **Drill**");
   const apply = section.indexOf("3. **Apply**");
@@ -410,21 +410,32 @@ test("B: the drill loop is numbered, a stalled drill keeps its number, and the a
   assert.match(drillText, /Number each drill out loud/, "drills are numbered so both sides know where the loop stands");
   assert.match(drillText, /drill 1, then drill 2, then the ask/, "the default loop is spelled out in order");
   assert.match(drillText, /re-issue the exercise under the same drill number/, "a stalled drill is re-issued, not counted twice");
+  // Jason, 2026-10-05 (problem 1): the "whole of your next message" rule made
+  // tutors send the ask without the last drill's result or whether the
+  // prediction held. The ask now ends the message that shows both, and the
+  // tutor may move on itself when the drills plainly landed.
   assert.match(
     drillText,
-    /\*\*After the last drill has run, the ask is the whole of your next message\*\*/,
-    "the ask must be one emphasized instruction that owns the whole message",
+    /\*\*After the last drill's result and whether their prediction held are on screen, end that message with the ask\*\*/,
+    "the ask ends the message that shows the last drill's result",
   );
-  assert.match(drillText, /Never open the project step on your own initiative after a drill/, "the tutor never skips the ask into the project");
-  assert.match(drillText, /never fold the ask into a message that also starts the project/, "the ask and the project step never share a message");
+  assert.match(
+    drillText,
+    /\*\*If the drills plainly landed, you may instead say you're moving into the project and that they can ask for another drill first\.\*\*/,
+    "the tutor may move on when the drills plainly landed",
+  );
+  assert.doesNotMatch(drillText, /whole of your next message/, "the strict whole-message rule is gone");
+  assert.doesNotMatch(drillText, /on your own initiative/, "the never-on-your-own-initiative rule is gone");
+  assert.doesNotMatch(drillText, /never fold the ask/, "the never-fold rule is gone");
+  assert.doesNotMatch(drillText, /without arguing for either/, "the no-arguing clause is gone");
   assert.match(drillText, /`drills` of 0 means skip the drill entirely, ask nothing/, "zero drills means no ask either");
   // Review fix: what each answer to the ask does.
   assert.match(
     drillText,
-    /\*\*"Another" means one more drill on the same concept under the next number, then the ask again\*\*/,
+    /"Another" means one more drill on the same concept under the next number, then the ask again, as many times as they choose it/,
     "another = one more drill, then the ask again",
   );
-  assert.match(drillText, /\*\*"into the project" ends the loop\*\*/, "into the project ends the loop");
+  assert.match(drillText, /"into the project" ends the loop/, "into the project ends the loop");
   assert.match(drillText, /your next message opens the apply step/, "and the apply step follows");
 });
 
