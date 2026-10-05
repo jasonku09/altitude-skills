@@ -13,10 +13,10 @@ const core = resolve(process.argv[2]);
 const requireCore = createRequire(join(core, "package.json"));
 const { build } = requireCore("esbuild");
 const bundle = await build({
-  stdin: { contents: 'export * from "./src/transcripts/mapping"; export * from "./src/transcripts/redact";', resolveDir: core },
+  stdin: { contents: 'export * from "./src/transcripts/mapping"; export * from "./src/transcripts/redact"; export * from "./src/transcripts/notice-proof";', resolveDir: core },
   bundle: true, platform: "node", format: "esm", write: false,
 });
-const { loadTranscriptMapping, redactTranscript, locateRoot, locateTranscript } = await import(
+const { loadTranscriptMapping, redactTranscript, locateRoot, locateTranscript, noticeShownIn } = await import(
   `data:text/javascript;base64,${Buffer.from(bundle.outputFiles[0].text).toString("base64")}`
 );
 const mapping = (agent) => loadTranscriptMapping(join(root, `hooks/${agent}-transcript-mapping.json`));
@@ -92,5 +92,23 @@ for (const agent of ["codex", "cursor"]) {
     await mkdir(dirname(duplicate), { recursive: true });
     await writeFile(duplicate, "{}\n");
     assert.throws(() => locateTranscript(m, "chat-a", home), /Ambiguous/);
+  });
+}
+
+// `altitude notice ack` proof: the notice counts only in the tutor's own reply.
+const NOTICE = "One quick note before we start. Altitude keeps a copy of each lesson conversation.";
+const shapes = {
+  "claude-code": { said: { type: "assistant", message: { role: "assistant", content: [{ type: "text", text: NOTICE }] } },
+    not: [{ type: "user", message: { role: "user", content: NOTICE } }, { type: "user", message: { role: "user", content: [{ type: "tool_result", tool_use_id: "t", content: NOTICE }] }, toolUseResult: { stdout: NOTICE } }] },
+  codex: { said: { type: "event_msg", payload: { type: "agent_message", message: NOTICE } },
+    not: [{ type: "response_item", payload: { type: "function_call_output", call_id: "c", output: NOTICE } }, { type: "event_msg", payload: { type: "user_message", message: NOTICE } }] },
+  cursor: { said: { role: "assistant", message: { content: [{ type: "text", text: NOTICE }] } },
+    not: [{ role: "user", message: { content: [{ type: "text", text: NOTICE }] } }] },
+};
+for (const [agent, shape] of Object.entries(shapes)) {
+  test(`${agent}: notice proof reads the tutor's reply, never tool output or learner text`, () => {
+    const line = (r) => JSON.stringify(r) + "\n";
+    assert.equal(noticeShownIn(line(shape.said), mapping(agent), NOTICE), true);
+    for (const record of shape.not) assert.equal(noticeShownIn(line(record), mapping(agent), NOTICE), false);
   });
 }

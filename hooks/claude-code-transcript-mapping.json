@@ -30,6 +30,22 @@
       ]
     }
   ],
+  "assistant_text": [
+    {
+      "select": {
+        "path": "$",
+        "where": {
+          "message.role": [
+            "assistant"
+          ]
+        }
+      },
+      "paths": [
+        "message.content",
+        "message.content.*.text"
+      ]
+    }
+  ],
   "tool_calls": [
     {
       "select": {

@@ -12,7 +12,8 @@ for (const skill of ["begin", "next-lesson"]) {
     const paragraph = orient.split("\n\n").find(p => p.includes("`notices`"));
     assert.ok(paragraph, "notice handling belongs at the task-envelope read");
     assert.match(paragraph, /each notice.*`message`.*exactly as written/);
-    assert.match(paragraph, /then run `altitude notice ack <id>` yourself/);
+    // Scoped to this session: the CLI checks this session's transcript for the notice.
+    assert.match(paragraph, /then run `altitude notice ack <id> --session '<this session's ID>'` yourself/);
     assert.match(paragraph, /without asking.*reply/);
     assert.match(paragraph, /missing or empty.*nothing/i);
   });
