@@ -51,12 +51,13 @@ test("questions go only in a turn's final message, since text before a tool call
 
 test("the close names the host's own next-lesson command and nudges a fresh chat, per agent", () => {
   const close = sliceBetween(read(SKILL), "## Step 4 — Close the loop", "**The method check-in comes after the recap");
-  const item4 = close.split("\n").find((l) => l.startsWith("4. "));
-  assert.doesNotMatch(item4, /run `\/next-lesson` when ready/);
-  assert.match(item4, /one line inviting the next lesson in a fresh chat, in their host's own words/);
-  assert.match(item4, /Claude Code, `\/clear` then `\/altitude:next-lesson`/);
-  assert.match(item4, /Codex, `\/new` then `\$next-lesson`/);
-  assert.match(item4, /Cursor, a new Agent chat \(`\/clear` in the Cursor terminal agent\) then `\/next-lesson`/);
+  // Since 2026-10-05 (problem 10) the invitation is the close's last step.
+  const invite = close.split("\n").find((l) => l.startsWith("7. "));
+  assert.doesNotMatch(invite, /run `\/next-lesson` when ready/);
+  assert.match(invite, /One line inviting the next lesson in a fresh chat, in their host's own words/);
+  assert.match(invite, /Claude Code, `\/clear` then `\/altitude:next-lesson`/);
+  assert.match(invite, /Codex, `\/new` then `\$next-lesson`/);
+  assert.match(invite, /Cursor, a new Agent chat \(`\/clear` in the Cursor terminal agent\) then `\/next-lesson`/);
   assert.doesNotMatch(read(SKILL), /\$altitude:next-lesson/);
 });
 

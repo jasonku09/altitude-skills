@@ -37,3 +37,15 @@ test("problem 9: ask for one thing at a time, at every level, in the general rul
   assert.doesNotMatch(rules, /One command, one prediction at a time\./);
   assert.match(rules, /Never queue a second command or prediction while one is still pending/);
 });
+
+test("problem 10: the fresh-chat invitation is the close's last step, after the check-in and the update lines", () => {
+  const lines = close().split("\n");
+  const step = (n) => lines.find((l) => l.startsWith(`${n}. `));
+  // Step 4 keeps only the recap and the motto; a learner who clears the chat
+  // on the invitation never answers a check-in asked after it.
+  assert.equal(step(4), "4. A one-line recap of the new leaves added to their tree. **Never ship a line of code you can't explain.**");
+  assert.match(step(5), /^5\. The method check-in/);
+  assert.match(step(6), /^6\. The update lines/);
+  assert.match(step(7), /^7\. One line inviting the next lesson in a fresh chat, in their host's own words:/);
+  assert.equal(lines.filter((l) => /fresh chat/.test(l)).length, 1, "the invitation is said once, last");
+});
