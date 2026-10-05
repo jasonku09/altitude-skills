@@ -66,3 +66,10 @@ test("problem 13: what only the learner can get is asked for at the start, when 
     /Tell the learner in one or two sentences where they are and what this task will accomplish\. When the task needs something only the learner can get — an account, a key, a device — ask for it at the start, before the work that depends on it\./,
   );
 });
+
+test("problem 14: stop only your own processes, by ID, and stop your dev servers when the lesson ends", () => {
+  assert.ok(
+    generalRules().includes("\n- Stop only processes you started, by their ID, never by name; stop your dev servers when the lesson ends.\n"),
+    "the rule is its own general-rule bullet",
+  );
+});
