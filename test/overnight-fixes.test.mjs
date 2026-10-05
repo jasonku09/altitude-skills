@@ -25,10 +25,15 @@ test("Intermediate's optional command entry never takes the command a lesson tea
   assert.match(read(PAID), /without mandatory TODO fill-ins or learner command entry, except the command or action the lesson teaches, which stays the learner's/);
 });
 
-test("evidence: explanations, decision reasons and critiques are sent too; a post-run result is never a prediction; the question is copied exactly", () => {
+test("evidence: predictions, teach checks, explanations, decision reasons and critiques are sent; the question is copied exactly", () => {
   const paid = read(PAID);
-  assert.match(paid, /and every explanation, decision reason, or critique the learner gives, with `--concepts`/);
-  assert.match(paid, /A result the learner reports after running something themselves is not a prediction: never record it as one/);
+  assert.match(paid, /The same `quiz-moment` template records every prediction and `teach` check, and every explanation, decision reason, or critique the learner gives, with `--concepts`/);
+  // Jason, 2026-10-04: remove the contradiction instead of adding a rule. The
+  // catch-all "every other check in the lesson" made tutors record what the
+  // learner reported after a run as a graded check; narrowing it makes the
+  // separate prohibition redundant, so it is gone.
+  assert.doesNotMatch(paid, /every other check in the lesson/);
+  assert.doesNotMatch(paid, /is not a prediction: never record it as one/);
   assert.match(paid, /must be the exact question you actually asked, copied word for word, not reworded or reconstructed from the answer/);
 });
 
