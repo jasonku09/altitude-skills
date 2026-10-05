@@ -60,6 +60,9 @@ test("the close names the host's own next-lesson command and nudges a fresh chat
   assert.doesNotMatch(read(SKILL), /\$altitude:next-lesson/);
 });
 
-test("the tutor reads its model from the CLI when reported, else from what it knows of itself", () => {
-  assert.match(read(PAID), /When the instructions name a recommended model, tell which model you are on from `model` in `altitude session --current --json` when the CLI reports one, and otherwise from what you know of yourself/);
+test("the tutor reads its model from the CLI when reported, with no self-knowledge fallback", () => {
+  assert.match(read(PAID), /When the instructions name a recommended model, tell which model you are on from `model` in `altitude session --current --json` when the CLI reports one\./);
+  // Jason, 2026-10-04: Codex fell back to self-knowledge and wrongly told
+  // learners they were on the wrong model, so the fallback is deleted.
+  assert.doesNotMatch(read(PAID), /what you know of yourself/);
 });
