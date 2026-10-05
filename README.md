@@ -72,7 +72,7 @@ The plugin also bundles Altitude's session hooks (`hooks/`). They stay fully dor
 
 Once it's installed: for the free standalone method, open a new Claude Code session in an empty folder and run `/start-project`. If you planned a subscribed journey on Altitude, install its CLI, connect with `/altitude:connect`, and run `/altitude:begin` instead.
 
-Plugin 0.7.0 uses `altitude watch` from CLI 0.10.0 to notice finished saves. Older supported CLIs use the shell fallback; lessons keep working. The minimum versions stay CLI 0.8.1 / plugin 0.5.8. See [workshop compatibility](WORKSHOP-COMPATIBILITY.md).
+Plugin 0.8.0 works best with CLI 0.11.0, which lets your tutor send drill answers and the review question that opens a lesson as what they are: drills show on your learning map, and the review is graded. Run `altitude update` to get it. On an older CLI, lessons keep working and those answers still arrive, as ordinary answers. Plugin 0.7.0 uses `altitude watch` from CLI 0.10.0 to notice finished saves. Older supported CLIs use the shell fallback; lessons keep working. The minimum versions stay CLI 0.8.1 / plugin 0.5.8. See [workshop compatibility](WORKSHOP-COMPATIBILITY.md).
 
 **Or copy the skills directly** — for the free standalone method only (Claude Code):
 

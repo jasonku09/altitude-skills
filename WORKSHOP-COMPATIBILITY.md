@@ -57,6 +57,16 @@ example of the taught syntax. Publish CLI 0.10.0 before plugin 0.7.0 to make the
 command available immediately; older supported CLIs still teach via the fallback.
 No server or envelope requirement is added.
 
+Plugin 0.8.0 carries the lesson-shape, drill-evidence, and tutor-fix changes
+and adds no floor: the enforced minimum stays CLI 0.8.1 / plugin 0.5.8.
+Three of its emit forms need CLI 0.11.0: `emit --stdin`, `--review`, and
+`--drill`. CLI 0.10.0 and older answer `emit --stdin` that `--question` and
+`--answer` are required, because they ignore standard input rather than
+refusing the option; the tutor then sends the same emit again with the
+single-quoted flags. They ignore `--review` and `--drill`, so those answers
+arrive as ordinary quiz moments. Publish CLI 0.11.0 before plugin 0.8.0, and
+deploy the server that sends `due_review.ask` and records drills before either.
+
 The graded lesson-start review adds no floor either. When `due_review` carries an
 `ask`, the tutor asks that kind of question and sends the answer with
 `--review <concept-id>` (key `review` under `emit --stdin`) and no verdict, and the

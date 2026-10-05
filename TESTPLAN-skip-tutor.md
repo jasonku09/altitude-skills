@@ -62,7 +62,8 @@ Expected:
 
 - The tutor privately treats Git staging as `exercise` and Shell functions as `teach` from the first response onward.
 - It does not announce either role, guess that Git was skipped rather than mastered, or expose the raw envelope.
-- When Shell functions first becomes relevant, it uses the normal small-step teaching method.
+- Just before Shell functions first comes up, it may ask one plain question about how comfortable you already are with it (`SKILL.md`'s familiarity question). This fixture carries no lesson instructions, and in paid mode the familiarity question covers the concepts those instructions name as not yet shown in a lesson, so going straight to the introduction is also a pass. If it asks, answer exactly `New to me.`
+- Shell functions then gets the full new-concept arc from `SKILL.md`'s "Introduce, drill, apply": a short introduction with a runnable example on different material than the project, drills you write in `learning/scratch/`, then the project.
 
 Failure examples: an explanation of what Git is before using it; “because you marked Git known”; treating both concepts as already known.
 
@@ -78,7 +79,7 @@ When it reaches the script function, send:
 
 > `Ready for the function and then staging the file.`
 
-Expected for this mixed step: it explains and scaffolds the Shell function, while using Git staging without explaining or checking Git. One `teach` concept keeps the chunk in the normal method; the tutor must not write the entire mixed chunk itself.
+Expected for this mixed step: it hands the Shell function over as a `TODO(you)` gap in `setup.sh`, saying in words what the function must do and never the code, while using Git staging without explaining or checking Git. One `teach` concept keeps the chunk in the normal method; the tutor must not write the entire mixed chunk itself.
 
 ## 3. Quiz guard
 
@@ -88,7 +89,7 @@ After the script works, send:
 
 Expected: any opportunistic question targets Shell functions only. The tutor never asks a recall, prediction, breakage, or “quick check” question about Git staging and never emits a `quiz-moment` tagged with `<GIT_ID>` merely because Git is convenient to ask about.
 
-Also run a fresh copy of the fixture with every task concept marked known. On `/altitude:next-lesson`, expected: Step 2's opening review is omitted entirely because there is no `teach` target, and the opening message ends on the fast-forward offer defined in `SKILL.md`'s “Bounded code delegation” — one question asking whether the tutor should do the step while the learner reviews the diff and writes the commit, or whether they would rather type it — with no code, dictated command, or scaffold before it. It then waits for the answer instead of starting the task.
+Also run a fresh copy of the fixture with every task concept marked known. On `/altitude:next-lesson`, expected: Step 2's opening review is asked only when the task carries a `due_review`, and never about this task's own concepts; then the opening message ends on the fast-forward offer defined in `SKILL.md`'s “Bounded code delegation” — one question asking whether the tutor should do the step while the learner reviews the diff and writes the commit, or whether they would rather type it — with no code, dictated command, or scaffold before it. It then waits for the answer instead of starting the task.
 
 Decline it:
 
@@ -104,40 +105,39 @@ Send exactly:
 
 Expected: a direct, complete explanation. It must not refuse, shorten the answer because of the role, quiz the learner in return, or use status framing such as “since you skipped this,” “you marked this known,” or “you said you know this.” After answering, it returns to the task without changing durable state.
 
-## 5. Prior-knowledge prompt move and session-only grace period
+## 5. Familiar answers and the session-only grace period
 
 Reset the fixture so Shell functions is still `teach`, start a new agent session, and send:
 
 > `/altitude:next-lesson`
 
-When Shell functions first comes up, send exactly:
+When the tutor asks how comfortable you already are with shell functions (the familiarity question), or, if it does not ask, when Shell functions first comes up, send exactly:
 
 > `I already know shell functions. I've written Bash scripts at work.`
 
 Expected immediately:
 
-- The tutor suggests marking Shell functions known at `app.learnaltitude.com/map`.
-- It mentions the optional short verification quiz there and asks the learner to say when the map action is done.
-- It treats Shell functions as `exercise` for the rest of this session without waiting for confirmation.
-- It does not run an Altitude mutation, emit a skip/mastery claim, say the account changed, or keep advertising the feature.
+- The tutor accommodates it out loud, on your word alone, and treats Shell functions as familiar: no introduction, and one drill that tests it (none when the journey's drills setting is 0), then into the project.
+- It never suggests marking Shell functions known on the map, and never mentions the map route at all.
+- It does not run an Altitude mutation, emit a skip or mastery claim, or say the account changed.
 
-Do not change the map. Continue with:
+Continue with:
 
-> `I haven't opened the map. Let's keep building.`
+> `Let's keep building.`
 
-Expected: the tutor still uses Shell functions without teaching or quizzing for the rest of this session.
+Expected: Shell functions stays familiar for the rest of this session, with no second introduction and no extra drill unless you ask for one.
 
 End the agent session without completing the task, start `claude --plugin-dir "$SKIP_TUTOR_WORKTREE"` again in the same directory, and send:
 
 > `/altitude:next-lesson`
 
-Expected: the fresh envelope still says `teach`, so normal Shell-function teaching resumes. The previous conversation did not persist a skip.
+Expected: the fresh envelope still says `teach`, so Shell functions is handled as a new concept again. The previous conversation did not persist a skip.
 
-Repeat once from a reset session using only this unprompted-fluency signal:
+Repeat once from a reset session. Answer the familiarity question, if asked, with `New to me.`, and once the introduction has started, send a description with no explicit claim:
 
 > `The function should start with local input="$1", quote every expansion, and return nonzero when the input is empty.`
 
-Expected: the tutor recognizes the fluency signal and makes the same one-time map suggestion and immediate session accommodation. It must not require the exact phrase “I already know this.”
+Expected: this is not a prior-knowledge signal. Only the answer to the familiarity question, or an explicit "I already know this", makes a concept familiar, so the tutor keeps the new-concept arc and responds to what you said.
 
 ## 6. Struggle fallback, once
 
@@ -195,7 +195,7 @@ Then send:
 
 > `I already know shell functions. I've used them for years.`
 
-Expected: the tutor immediately uses the concept without teaching or quizzing for the rest of the session. It does not route a standalone free-mode learner to an account mutation. At close, the graph entry is `understood` and its evidence line contains exactly `self-reported prior knowledge` (dates and the surrounding graph format remain consistent with the file).
+Expected: the tutor immediately treats the concept as familiar: no introduction, and one drill that tests it. It never suggests marking it known on a map and does not route a standalone free-mode learner to an account mutation. At close, the graph entry is `understood` and its evidence line contains exactly `self-reported prior knowledge` (dates and the surrounding graph format remain consistent with the file).
 
 ## Cleanup
 
