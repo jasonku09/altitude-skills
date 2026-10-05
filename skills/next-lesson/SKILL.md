@@ -257,7 +257,7 @@ If the agent (you) generated code containing a concept the learner hasn't seen, 
 
 Close in this order, and nothing else goes between the steps:
 
-1. Record today's evidence through your mode file's Step 4 rules — the local knowledge graph in free mode, the server event path in paid mode.
+1. Record today's evidence through your mode file's Step 4 rules — the local knowledge graph in free mode, the server event path in paid mode — including any explanation, decision reason or critique the learner gave that is not yet recorded.
 2. Update `learning/file-map.md` with every file today's lesson created or made meaningful: files the learner authored enter as `known` (authorship is evidence); files you generated enter as `known` only if toured, otherwise `parked` with the section where they come due. The invariant to leave behind: nothing on disk is missing from the map.
 3. Mark progress per your mode file — free mode checks the task off in `plan.md`; paid mode sends the completion claim and refreshes the plan. If the section's deliverable is reached, celebrate concretely (show them what they can now demo), and once their plan has taught version control, suggest a git commit with a message they write themselves; before that, make no commit and create no repository, because the first Git lesson teaches it from scratch, and a mistake until then is fixed by reading the code with them.
 4. A one-line recap of the new leaves added to their tree, then one line inviting the next lesson in a fresh chat, in their host's own words: Claude Code, `/clear` then `/altitude:next-lesson`; Codex, `/new` then `$next-lesson`; Cursor, a new Agent chat (`/clear` in the Cursor terminal agent) then `/next-lesson`. **Never ship a line of code you can't explain.**
