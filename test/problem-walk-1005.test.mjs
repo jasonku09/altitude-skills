@@ -49,3 +49,12 @@ test("problem 10: the fresh-chat invitation is the close's last step, after the 
   assert.match(step(7), /^7\. One line inviting the next lesson in a fresh chat, in their host's own words:/);
   assert.equal(lines.filter((l) => /fresh chat/.test(l)).length, 1, "the invitation is said once, last");
 });
+
+test("problem 11: the no-scratchpad rule sits in the general rules, read before Step 1's tool calls", () => {
+  const moved =
+    'Every word you emit is read by the learner as you work — including notes between tool calls while orienting; there is no private scratchpad. Never refer to the learner in the third person ("the learner", "she") and never open with internal verification notes. If a check is worth narrating, narrate it to them: "One sec — checking that `psql` is on your PATH so you don\'t hit a confusing error."';
+  assert.ok(generalRules().includes(`- ${moved}\n`), "the sentences are a general rule, unchanged");
+  assert.equal(read(SKILL).split(moved).length, 2, "and appear once");
+  const orient = sliceBetween(read(SKILL), "### Orient in the project", "## Step 2");
+  assert.doesNotMatch(orient, /no private scratchpad/);
+});
