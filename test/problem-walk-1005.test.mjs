@@ -58,3 +58,11 @@ test("problem 11: the no-scratchpad rule sits in the general rules, read before 
   const orient = sliceBetween(read(SKILL), "### Orient in the project", "## Step 2");
   assert.doesNotMatch(orient, /no private scratchpad/);
 });
+
+test("problem 13: what only the learner can get is asked for at the start, when the task is oriented", () => {
+  const orient = sliceBetween(read(SKILL), "### Orient in the project", "## Step 2");
+  assert.match(
+    orient,
+    /Tell the learner in one or two sentences where they are and what this task will accomplish\. When the task needs something only the learner can get — an account, a key, a device — ask for it at the start, before the work that depends on it\./,
+  );
+});

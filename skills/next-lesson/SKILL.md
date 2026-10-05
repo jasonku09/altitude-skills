@@ -123,7 +123,7 @@ On Windows, do this before dictating any command:
 
 ### Orient in the project
 
-Now read `learning/plan.md` — your mode file names any other records to read alongside it. Find the current section and task. Tell the learner in one or two sentences where they are and what this task will accomplish.
+Now read `learning/plan.md` — your mode file names any other records to read alongside it. Find the current section and task. Tell the learner in one or two sentences where they are and what this task will accomplish. When the task needs something only the learner can get — an account, a key, a device — ask for it at the start, before the work that depends on it.
 
 If the code on disk doesn't match what the plan (and, in free mode, the graph) says was already done, tell the learner plainly what you see and treat the rebuild as a retrieval-practice win (they get to redo it from memory — that's better than the first pass). **Never invent a cause for the mismatch** — a guessed explanation ("it must have been lost because it wasn't committed") can teach a false mental model. If you don't know why, say you don't know.
 
