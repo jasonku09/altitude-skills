@@ -524,19 +524,17 @@ test("G: the lesson closes in one fixed order: recap, then check-in, then the em
   assert.match(paid, /the first action of the turn that reads their answer/, "paid mode must place the emit first in the answering turn");
 });
 
-test("prior knowledge: a correct answer to a check the tutor asked is not a prior-knowledge signal", async () => {
+test("prior knowledge: only the explicit claim is a signal; an answered check never makes a concept familiar", async () => {
   const skill = await readNextLesson();
   const section = sliceBetween(skill, "### When prior knowledge surfaces", "### Bounded code delegation");
 
-  assert.match(
-    section,
-    /\*\*A correct answer to a check you asked is not a prior-knowledge signal\.\*\*/,
-    "the rule must be one emphasized instruction",
-  );
-  assert.match(section, /answered from the explanation you just gave/, "an answered check is the check working");
-  assert.match(section, /however much it volunteers beyond the question/, "a fluent, over-full answer to a check is still an answered check");
-  assert.match(section, /Never move a `teach` concept into the `exercise` set on the strength of an answered check/, "no exercise promotion from a check");
-  assert.match(section, /never skip its drill or its scaffold for it/, "the drill and scaffold survive a good answer");
+  // Jason, 2026-10-05 (problem 4): with the demonstrated-fluency route gone,
+  // the separate answered-check guard and its replay miss have nothing left to
+  // guard. The familiarity question's "never another answer" still rules an
+  // answered check out.
+  assert.doesNotMatch(section, /A correct answer to a check you asked is not a prior-knowledge signal/);
+  assert.doesNotMatch(section, /you've shown familiarity with `glob`/);
+  assert.match(skill, /Only their answer to this question makes a concept familiar, never another answer/);
 });
 
 test("C: the handover is spoken in chat before it is watched, never a silent skeleton", async () => {

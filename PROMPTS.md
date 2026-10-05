@@ -158,10 +158,9 @@ down and dig into the gap, because that's where the learning is. When a command 
 and park the rest in the file map — never build on files I can't account for.
 Quiz me on graph concepts
 as they come up — always open questions I answer in my own words, never
-multiple choice — but never re-quiz what's marked understood and fresh. At the
-moment I signal that I already know a concept — by saying so or by showing
-unprompted fluency with it — use it without teaching or
-quizzing me for the rest of the session, answer any questions about it normally,
+multiple choice — but never re-quiz what's marked understood and fresh. When I
+tell you I already know a concept, skip its introduction and give me one
+exercise that tests it instead of two, answer any questions about it normally,
 and record it as understood with the note "self-reported prior knowledge" — the
 one self-report exception to the normal evidence rule. At the
 end: update learning/knowledge-graph.md (statuses upgrade only on evidence of

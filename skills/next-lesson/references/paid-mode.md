@@ -54,7 +54,7 @@ Do this privately at the start of every paid-mode lesson. Find the current task 
 - **`exercise` concepts are load-bearing, but not lesson content.** Use them to complete the task without introducing, scaffolding, predicting, or quizzing them, except that one the lesson instructions name as not yet shown in a lesson first gets SKILL.md's familiarity question and counts as `teach` for delegation and the all-known case until this lesson has shown it. The role deliberately does not say whether it came from demonstrated mastery or a self-report; never infer or announce which one it was, beyond the marks the instructions name for a quick check.
 - **All-`exercise` is a third case.** If the partition leaves `teach` empty and `exercise` non-empty, the task is all-known: the fast-forward offer in SKILL.md's "Bounded code delegation" is the first thing you say once oriented — after Step 2's review question when the task carries a `due_review`, and straight away when it does not — before any code, and it is said only there. A task whose `concepts` array is empty or missing is not all-known: it partitions to `teach` under the fallback above and gets no offer.
 
-Keep this partition for the whole session, including the concept IDs attached to events. A prior-knowledge signal can move a `teach` concept into the session's `exercise` set under the rule in Step 3; only a fresh task envelope can make that accommodation durable in paid mode. Free mode has no envelope roles; Step 3 gives a prior-knowledge signal the same immediate behavior and records the local graph analog.
+Keep this partition for the whole session, including the concept IDs attached to events.
 
 ### Paid plan materialization
 
@@ -83,7 +83,7 @@ The same `quiz-moment` template records every prediction and `teach` check, and 
 
 ## Step 3 — When prior knowledge surfaces (paid)
 
-In paid mode the signal earns one reply that accommodates it out loud: immediately put the concept in this session's `exercise` set on their word alone — do not call a mutation endpoint, emit a skip, or claim that their account changed — and never suggest marking it known on the map. The insidious miss is absorbing the signal as a mere style preference: if you catch yourself implementing conventions the learner dictated for material you were about to teach — or closing the session with "you told me you already knew this" — the signal fired, and the reply that honors their conventions had to say so. At the next lesson, `altitude task --json` is the authority again, whatever role it gives the concept. The conversation is a grace period, not stored state.
+In paid mode the signal earns one reply that accommodates it out loud: immediately, on their word alone, treat the concept as familiar under SKILL.md's familiarity question: no introduction, and one drill that tests it — do not call a mutation endpoint, emit a skip, or claim that their account changed — and never suggest marking it known on the map. At the next lesson, `altitude task --json` is the authority again, whatever role it gives the concept. The conversation is a grace period, not stored state.
 
 ### After a rung-3 reveal (paid)
 

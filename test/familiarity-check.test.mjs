@@ -41,13 +41,15 @@ test("just before a new concept comes up, the tutor asks how comfortable the lea
   assert.match(text, /in free mode, your mode file says which/);
 });
 
-test("the answer sets the arc, with drills as a ceiling, and is not a prior-knowledge signal", () => {
+test("the answer sets the arc, with drills as a ceiling, and an explicit claim counts as that answer", () => {
   const text = arc();
   assert.match(text, /`drills` being a ceiling/);
   assert.match(text, /new to them gets all three moves/);
   assert.match(text, /familiar gets no introduction and one drill that tests it \(none when `drills` is 0\)/);
   assert.doesNotMatch(text, /fewer drills/);
-  assert.match(text, /Only their answer to this question makes a concept familiar, never another answer, and it is not the prior-knowledge signal below/);
+  // Jason, 2026-10-05 (problem 4): the explicit claim is the same answer.
+  assert.match(text, /Only their answer to this question makes a concept familiar, never another answer, and an explicit "I already know this" \(below\) counts as that answer/);
+  assert.doesNotMatch(text, /it is not the prior-knowledge signal below/);
   assert.match(text, /concepts that come up together may share one question/);
 });
 
