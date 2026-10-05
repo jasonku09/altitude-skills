@@ -66,6 +66,12 @@ no marker, and do not forward `--review`. Either way the answer is an ordinary,
 ungraded quiz moment, as before. Publish that CLI before or with the plugin that
 sends the marker.
 
+Drills add no floor. The tutor sends a drill's prediction with `--drill` (key
+`drill` under `emit --stdin`), and the server shows the concept as practised; it
+grades and schedules nothing from it. CLI 0.10.0 and older ignore `--drill`, so the
+answer is an ordinary quiz moment, as before. Publish the CLI that forwards it
+before or with the plugin that sends it.
+
 The following 0.6.1 notes describe the previous release; its shell mechanics now
 apply only in that fallback.
 
