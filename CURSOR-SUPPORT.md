@@ -7,10 +7,10 @@ share one transport shim and the existing skills. Server-owned learning policy,
 entitlement, review selection, grading, and mastery remain outside this repository.
 
 This is an unreleased implementation, not a supported-platform announcement.
-The combined release candidate aligns all three plugin manifests at 0.7.0 and
-includes the shared CLI save-watcher integration. The corresponding Cursor-capable
-server and CLI 0.10.0 implementation must ship first;
-older CLIs reject the new flags and this shim fails open with a diagnostic.
+The release includes the shared CLI save-watcher and transcript-sharing
+integrations. [Workshop compatibility](WORKSHOP-COMPATIBILITY.md) owns the
+required companion versions and publication order. Older CLIs that reject the
+hook flags cause this shim to fail open with a diagnostic.
 
 ## Managed installation and local plugin loading
 
@@ -236,10 +236,10 @@ The scripted operator wrote the learner code and answers. The tutor requested
 chat messages after saves instead of arming a background watch, so this trial
 does not qualify teaching-model compliance or replace the separate watcher trial.
 
-### Combined 0.7.0 release candidate
+### September 24 release-candidate evidence
 
 [Plugin PR #26](https://github.com/jasonku09/altitude-skills/pull/26), integrated
-into this release candidate, replaces
+into the September 24 candidate, replaces
 model-written polling loops with `altitude watch start|wait|stop` (CLI 0.10.0),
 while keeping teaching instructions in the shared skill. The same implementation
 serves all three hosts; Cursor's exact-session and question-ownership rules remain.
@@ -261,9 +261,9 @@ mechanics and component discovery; it does not repeat a native lesson or prove
 hook dispatch on this candidate. No real user hook registration changed. See
 [`docs/evidence/cursor-plugin-upgrade-2026-09-24.json`](docs/evidence/cursor-plugin-upgrade-2026-09-24.json).
 
-All three manifests now target 0.7.0. The existing parity regression failed before
-the Cursor manifest was aligned with the two watcher manifests. These versions
-are release candidates, not a claim of publication. The watch command is
+The existing parity regression failed before
+the Cursor manifest was aligned with the two watcher manifests for that trial.
+This evidence is not a claim of publication. The watch command is
 file-scoped; it is not a replacement for the conversation ID used by task reads
 and evidence emits.
 
