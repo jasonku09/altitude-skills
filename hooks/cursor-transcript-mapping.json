@@ -1,0 +1,140 @@
+{
+  "version": 1,
+  "format": "cursor-jsonl-v1",
+  "message_text": [
+    {
+      "select": {
+        "path": "$",
+        "where": {
+          "role": [
+            "user",
+            "assistant"
+          ]
+        }
+      },
+      "paths": [
+        "message.content"
+      ]
+    },
+    {
+      "select": {
+        "path": "message.content.*",
+        "where": {
+          "type": [
+            "text"
+          ]
+        }
+      },
+      "paths": [
+        "text"
+      ]
+    }
+  ],
+  "assistant_text": [
+    {
+      "select": {
+        "path": "$",
+        "where": {
+          "role": [
+            "assistant"
+          ]
+        }
+      },
+      "paths": [
+        "message.content",
+        "message.content.*.text"
+      ]
+    }
+  ],
+  "tool_calls": [
+    {
+      "select": {
+        "path": "message.content.*",
+        "where": {
+          "type": [
+            "tool_use"
+          ]
+        }
+      },
+      "id": "id",
+      "file_paths": [
+        "input.file_path",
+        "input.path",
+        "input.command",
+        "input.cmd"
+      ]
+    }
+  ],
+  "tool_outputs": [
+    {
+      "select": {
+        "path": "message.content.*",
+        "where": {
+          "type": [
+            "tool_result"
+          ]
+        }
+      },
+      "id": "tool_use_id",
+      "paths": [
+        "$"
+      ]
+    },
+    {
+      "select": {
+        "path": "$"
+      },
+      "id": "message.content.*.tool_use_id",
+      "paths": [
+        "toolUseResult"
+      ],
+      "file_paths": [
+        "toolUseResult.file.filePath",
+        "toolUseResult.file.path",
+        "toolUseResult.file_path"
+      ]
+    }
+  ],
+  "images": [
+    {
+      "path": "message.content.*",
+      "where": {
+        "type": [
+          "image"
+        ]
+      }
+    },
+    {
+      "path": "message.content.*.content.*",
+      "where": {
+        "type": [
+          "image"
+        ]
+      }
+    }
+  ],
+  "drop": [
+    {
+      "path": "message.content",
+      "contains": [
+        "Base directory for this skill:",
+        "<skill>",
+        "<skills_instructions>"
+      ]
+    },
+    {
+      "path": "message.content.*.text",
+      "contains": [
+        "Base directory for this skill:",
+        "<skill>",
+        "<skills_instructions>"
+      ]
+    }
+  ],
+  "locate": {
+    "root": {
+      "fallback": "~/.cursor"
+    },
+    "pattern": "projects/*/agent-transcripts/{session_id}/{session_id}.jsonl"
+  }
+}

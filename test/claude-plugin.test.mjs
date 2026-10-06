@@ -55,6 +55,11 @@ test("declares Claude's documented payload fields without leaking them into core
       tool_name: "tool_name",
       prompt: "prompt",
       last_assistant_message: "last_assistant_message",
+      // The model the learner is running, for the tutor's recommended-model
+      // line. Claude Code sends it only on a fresh interactive SessionStart;
+      // CLIs before the one that records it drop the field (see above).
+      model: "model",
+      transcript_path: "transcript_path",
     },
   });
 });
@@ -62,6 +67,7 @@ test("declares Claude's documented payload fields without leaking them into core
 test("wires lifecycle and gate hooks to stable exec-form core CLI invocations", async () => {
   const config = await readJson("hooks/hooks.json");
   const mappingPath = "${CLAUDE_PLUGIN_ROOT}/hooks/field-mapping.json";
+  const transcriptArgs = ["--transcript-mapping", "${CLAUDE_PLUGIN_ROOT}/hooks/claude-code-transcript-mapping.json"];
   const expectedBase = ["--agent", "claude-code", "--mapping", mappingPath];
 
   assert.deepEqual(config, {
@@ -79,6 +85,7 @@ test("wires lifecycle and gate hooks to stable exec-form core CLI invocations", 
                 "--print-context",
                 "--nudge",
                 "Run /altitude:next-lesson to continue (or /altitude:begin if this is your first session).",
+                ...transcriptArgs,
               ],
               timeout: 30,
             },
@@ -92,7 +99,7 @@ test("wires lifecycle and gate hooks to stable exec-form core CLI invocations", 
             {
               type: "command",
               command: "altitude",
-              args: ["hook", "pre-tool-use", ...expectedBase, "--gate", "plan"],
+              args: ["hook", "pre-tool-use", ...expectedBase, "--gate", "plan", ...transcriptArgs],
               timeout: 30,
             },
           ],
@@ -103,7 +110,7 @@ test("wires lifecycle and gate hooks to stable exec-form core CLI invocations", 
             {
               type: "command",
               command: "altitude",
-              args: ["hook", "pre-tool-use", ...expectedBase, "--gate", "diff"],
+              args: ["hook", "pre-tool-use", ...expectedBase, "--gate", "diff", ...transcriptArgs],
               timeout: 30,
             },
           ],
@@ -115,7 +122,7 @@ test("wires lifecycle and gate hooks to stable exec-form core CLI invocations", 
             {
               type: "command",
               command: "altitude",
-              args: ["hook", "stop", ...expectedBase, "--gate", "retro"],
+              args: ["hook", "stop", ...expectedBase, "--gate", "retro", ...transcriptArgs],
               timeout: 30,
             },
           ],
@@ -127,7 +134,7 @@ test("wires lifecycle and gate hooks to stable exec-form core CLI invocations", 
             {
               type: "command",
               command: "altitude",
-              args: ["hook", "session-end", ...expectedBase],
+              args: ["hook", "session-end", ...expectedBase, ...transcriptArgs],
               timeout: 30,
             },
           ],
@@ -139,7 +146,7 @@ test("wires lifecycle and gate hooks to stable exec-form core CLI invocations", 
             {
               type: "command",
               command: "altitude",
-              args: ["hook", "user-prompt-submit", ...expectedBase],
+              args: ["hook", "user-prompt-submit", ...expectedBase, ...transcriptArgs],
               timeout: 30,
             },
           ],

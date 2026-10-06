@@ -173,7 +173,7 @@ test("the release notes mention the watch change and move no floor", async () =>
   const paid = await readFile(join(repoRoot, "skills", "next-lesson", "references", "paid-mode.md"), "utf8");
   for (const manifest of [".claude-plugin/plugin.json", ".codex-plugin/plugin.json"]) {
     const { version } = JSON.parse(await readFile(join(repoRoot, manifest), "utf8"));
-    assert.equal(version, "0.7.0", `${manifest}: the version is 0.7.0`);
+    assert.equal(version, "0.8.0", `${manifest}: the version is 0.8.0`);
   }
 
   assert.match(compat, /Plugin 0\.7\.0[^]*background/i, "the current notes mention the background watch");

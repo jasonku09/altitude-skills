@@ -21,15 +21,16 @@ commands, `altitude teaching set` and `altitude emit teaching-checkin`, need CLI
 be recorded rather than claiming it landed. Publication order for it: deploy the
 server that serves those fields, publish CLI 0.9.0, then publish plugin 0.6.0.
 
-The combined 0.7.0 release candidate also adds the native Cursor plugin. For
+Plugin 0.7.0 introduced the native Cursor plugin. For
 Cursor, deploy the matching server/schema support and publish CLI 0.10.0 before
 publishing the plugin: older CLIs cannot identify Cursor or execute its structured
 hooks. `/connect` updates the CLI and registers the exact active plugin root;
 run it again after a plugin update and reopen Cursor when setup changes. Existing
-pairing is preserved during ordinary updates. All three host manifests target
-0.7.0; this is preparation, not a publication announcement. The older-CLI watcher
+pairing is preserved during ordinary updates. The older-CLI watcher
 fallback below applies to already-supported hosts and does not make an older CLI
-Cursor-compatible. See [Cursor acceptance](CURSOR-SUPPORT.md) for tested scope.
+Cursor-compatible. The [transcript-sharing integration](#transcript-sharing-integration)
+adds the hook requirements for this release. See [Cursor acceptance](CURSOR-SUPPORT.md)
+for tested scope.
 
 Plugin 0.7.0 uses `altitude watch` from CLI 0.10.0 when present and falls back
 below it, without raising the enforced floor: CLI 0.8.1 / plugin 0.5.8. The CLI
@@ -56,6 +57,30 @@ example still uses different material from the gap and always shows a runnable
 example of the taught syntax. Publish CLI 0.10.0 before plugin 0.7.0 to make the
 command available immediately; older supported CLIs still teach via the fallback.
 No server or envelope requirement is added.
+
+Plugin 0.8.0 carries the lesson-shape, drill-evidence, and tutor-fix changes
+and adds no floor: the enforced minimum stays CLI 0.8.1 / plugin 0.5.8.
+Three of its emit forms need CLI 0.11.0: `emit --stdin`, `--review`, and
+`--drill`. CLI 0.10.0 and older answer `emit --stdin` that `--question` and
+`--answer` are required, because they ignore standard input rather than
+refusing the option; the tutor then sends the same emit again with the
+single-quoted flags. They ignore `--review` and `--drill`, so those answers
+arrive as ordinary quiz moments. Publish CLI 0.11.0 before plugin 0.8.0, and
+deploy the server that sends `due_review.ask` and records drills before either.
+
+The graded lesson-start review adds no floor either. When `due_review` carries an
+`ask`, the tutor asks that kind of question and sends the answer with
+`--review <concept-id>` (key `review` under `emit --stdin`) and no verdict, and the
+server grades it towards that concept's mastery. It needs the server that sends
+`ask` and CLI 0.11.0: CLI 0.10.0 and older strip `ask`, so the tutor sends
+no marker, and do not forward `--review`. Either way the answer is an ordinary,
+ungraded quiz moment, as before. The publication order is specified above.
+
+Drills add no floor. The tutor sends a drill's prediction with `--drill` (key
+`drill` under `emit --stdin`), and the server shows the concept as practised; it
+grades and schedules nothing from it. CLI 0.10.0 and older ignore `--drill`, so the
+answer is an ordinary quiz moment, as before. The publication order is specified
+above.
 
 The following 0.6.1 notes describe the previous release; its shell mechanics now
 apply only in that fallback.
@@ -146,6 +171,33 @@ refreshes a cold copy — must not create, replace, or clear that session's plug
 identity, and must never stand a missing marker in for a present one. The agent must
 re-read under the same session afterwards, so a refresh that registered the session
 as marker-less would turn that next read into false version evidence.
+
+## Transcript-sharing integration
+
+The transcript-sharing hooks require CLI 0.11.0, which accepts
+`altitude hook --transcript-mapping`. All three hosts pass this flag on every
+hook invocation, so an older CLI that rejects it cannot execute those hooks.
+The lesson-version floor and save-watcher fallback described above do not
+establish compatibility with this new hook argument. Follow the publication
+order above; naming the required CLI version does not claim it is published.
+
+When a task envelope includes `notices`, the CLI must also support
+`altitude notice ack <id> --session <actual ID>` (CLI 0.11.0), which acknowledges
+only once the notice's full text appears in the tutor's own replies in that
+session's transcript (each mapping's `assistant_text`). An absent `notices` field
+requires no acknowledgement.
+These notices are separate from the existing `update_notices` handled at lesson
+close. The relay instructions live in [begin](skills/begin/SKILL.md) and
+[next-lesson](skills/next-lesson/SKILL.md#step-1--orient).
+
+The host-specific rules are owned by the transcript mapping files in `hooks/`:
+[Claude Code](hooks/claude-code-transcript-mapping.json),
+[Codex](hooks/codex-transcript-mapping.json), and
+[Cursor](hooks/cursor-transcript-mapping.json). The companion workshop core owns
+their schema, redaction, and transcript lookup implementation.
+[`scripts/check-transcript-mappings.mjs`](scripts/check-transcript-mappings.mjs)
+checks the mappings and fixtures against that implementation; plugin-only tests
+do not establish end-to-end sharing or upload behavior.
 
 ## Session recovery change (not published)
 

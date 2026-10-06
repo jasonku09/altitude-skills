@@ -96,51 +96,40 @@ test("questions about known concepts get full answers without status framing", a
   );
 });
 
-test("a prior-knowledge signal routes to the map once, with a session-only grace period", async () => {
+test("a prior-knowledge signal is accommodated out loud, never routed to the map, with a session-only grace period", async () => {
   const skill = await readNextLesson();
   const paid = await readPaidMode();
 
-  // The signal definition and the once-per-concept bound are mode-neutral and
-  // stay in SKILL.md; the paid response itself lives in the paid reference.
-  assert.match(skill, /Do not advertise this route before a signal/);
-  assert.match(paid, /mark the concept known on `app\.learnaltitude\.com\/map`/);
-  assert.match(paid, /an optional short quiz there can verify it/);
+  // Jason, 2026-10-03: "The tutor never suggests marking a concept known on the
+  // map." Overnight runs sent 12 map nudges; the learner deferred every one.
+  assert.match(skill, /Do not advertise this route before a signal, and never suggest marking a concept known on the map, here or anywhere in a lesson/);
+  assert.doesNotMatch(skill, /map suggestion/);
+  assert.match(paid, /never suggest marking it known on the map/);
+  assert.doesNotMatch(paid, /mark the concept known on `app\.learnaltitude\.com\/map`/);
   // The accommodation is conversational only — the public client never
   // mutates skip/mastery state, and the next envelope is the authority.
   assert.match(
     paid,
-    /do not wait for the map action, call a mutation endpoint, emit a skip, or claim that their account changed/,
+    /do not call a mutation endpoint, emit a skip, or claim that their account changed/,
   );
   assert.match(paid, /The conversation is a grace period, not stored state/);
-  // Demonstrated fluency is a signal equal to the explicit claim, and it earns
-  // the full response. The 2026-08-27 headless verification's one hard FAIL was
-  // exactly this: fluent dictated conventions got the accommodation but never
-  // the map suggestion, so the durable handoff was lost every session.
+  // Jason, 2026-10-05 (problem 4): only the explicit claim is a signal. The
+  // demonstrated-fluency route skipped drills in the runs, so it is gone, and
+  // the claim is answered as "familiar": no introduction, one drill that tests it.
   assert.match(
     skill,
-    /Demonstrated fluency counts the same as the explicit claim/,
-    "fluent instructions about the code must be named as a prior-knowledge signal",
+    /Respond when the learner explicitly says they already know a concept: it earns the response in your mode file, said out loud, never a silent accommodation\./,
   );
-  assert.match(skill, /dictates conventions the lesson hasn't taught/);
-  assert.match(
-    skill,
-    /the full response in your mode file, map suggestion included/,
-    "accommodation without the map suggestion drops the durable half of the move",
-  );
-  // Naming the signal was not enough: two post-fix reruns still accommodated
-  // without routing. The halves must be one atomic reply, and the absorption
-  // anti-pattern (treating dictated conventions as a style preference and
-  // quietly building to spec) must be named as the miss it is.
+  assert.doesNotMatch(skill, /unprompted fluency/);
+  assert.doesNotMatch(skill, /Demonstrated fluency/);
+  assert.doesNotMatch(skill, /dictates conventions/);
   assert.match(
     paid,
-    /one reply carrying both halves, accommodation and routing, together/,
+    /treat the concept as familiar under SKILL\.md's familiarity question: no introduction, and one drill that tests it/,
   );
-  assert.match(paid, /The halves never travel separately/);
-  assert.match(
-    paid,
-    /absorbing the signal as a mere style preference/,
-    "the absorption failure mode must be named, or the model keeps making it",
-  );
+  assert.doesNotMatch(paid, /put the concept in this session's `exercise` set/);
+  assert.doesNotMatch(paid, /absorbing the signal as a mere style preference/);
+  assert.doesNotMatch(paid, /A prior-knowledge signal can move a `teach` concept into the session's `exercise` set/);
   // Struggle fallback: both doors, offered once, then normal help. The map
   // door self-conditions on "if they marked it known", so the paragraph stays
   // shared in SKILL.md rather than splitting a pinned sentence across files.
@@ -225,15 +214,20 @@ test("free mode records self-reported prior knowledge with the exact evidence no
     /There is no account mutation or map handoff in standalone free mode/,
   );
 
-  // The copy-paste prompt for non-plugin users carries the same analog,
-  // including the demonstrated-fluency half of the signal.
+  // Free mode answers the claim as "familiar" too, and records it.
+  assert.match(
+    free,
+    /on their word alone, treat the concept as familiar under SKILL\.md's familiarity question: no introduction, and one drill that tests it/,
+  );
+  assert.doesNotMatch(free, /joins this session's `exercise` set/);
+  assert.doesNotMatch(free, /joined this session's `exercise` set/);
+
+  // The copy-paste prompt for non-plugin users carries the same analog: the
+  // explicit claim only, answered with one exercise instead of an introduction.
   const prompts = await readFile(join(repoRoot, "PROMPTS.md"), "utf8");
   assert.match(prompts, /record it as understood with the note "self-reported prior knowledge"/);
-  assert.match(
-    prompts,
-    /by saying so or by showing\s+unprompted fluency/,
-    "the free-mode prompt must count demonstrated fluency as the signal too",
-  );
+  assert.match(prompts, /When I\s+tell you I already know a concept, skip its introduction and give me one\s+exercise that tests it instead of two/);
+  assert.doesNotMatch(prompts, /unprompted\s+fluency/);
 });
 
 test("chat arriving mid-file-watch outranks the watch and is the learner's own words", async () => {

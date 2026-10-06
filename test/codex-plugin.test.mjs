@@ -85,6 +85,11 @@ test("declares Codex's documented hook payload fields at the adapter edge", asyn
       // expires — the gate asks and nothing can ever answer.
       prompt: "prompt",
       last_assistant_message: "last_assistant_message",
+      // Codex sends the running model on every hook payload; the CLI stamps
+      // it on the session for the tutor's recommended-model line. CLIs that
+      // predate the field drop it rather than rejecting the mapping (≥0.4.0).
+      model: "model",
+      transcript_path: "transcript_path",
     },
   });
 });
@@ -215,6 +220,7 @@ test("the shim forwards exact lifecycle arguments and stdin to workshop-core", a
   );
   const payload = JSON.stringify({
     session_id: "codex-session-123",
+    transcript_path: "/missing/rollout.jsonl",
     cwd: "/tmp/project",
     hook_event_name: "PreToolUse",
     tool_name: "apply_patch",
@@ -237,6 +243,8 @@ test("the shim forwards exact lifecycle arguments and stdin to workshop-core", a
     join(repoRoot, "hooks/codex-field-mapping.json"),
     "--gate",
     "diff",
+    "--transcript-mapping",
+    join(repoRoot, "hooks/codex-transcript-mapping.json"),
   ]);
   assert.equal(await readFile(stdinPath, "utf8"), payload);
 });
@@ -261,7 +269,7 @@ test("the shim forwards the session-end and user-prompt-submit lifecycles", asyn
     // No `--gate`: neither lifecycle runs a gate, so neither can ever block.
     assert.deepEqual(
       (await readFile(argvPath, "utf8")).trim().split("\n"),
-      ["hook", lifecycle, ...base],
+      ["hook", lifecycle, ...base, "--transcript-mapping", join(repoRoot, "hooks/codex-transcript-mapping.json")],
       action,
     );
   }
@@ -319,7 +327,7 @@ test("SessionStart supplies a Codex-form ($skill) lesson nudge", async (t) => {
 
   assert.equal(result.status, 0);
   const argv = (await readFile(argvPath, "utf8")).trim().split("\n");
-  assert.deepEqual(argv.slice(-2), [
+  assert.deepEqual(argv.slice(argv.indexOf("--nudge"), argv.indexOf("--nudge") + 2), [
     "--nudge",
     "Run $next-lesson to continue (or $begin for your first session).",
   ]);

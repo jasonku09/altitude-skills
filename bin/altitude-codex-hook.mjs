@@ -86,7 +86,7 @@ async function runHook(action) {
   process.stdin.setEncoding("utf8");
   for await (const chunk of process.stdin) stdin += chunk;
 
-  const result = run("altitude", hookActions[action], { input: stdin });
+  const result = run("altitude", [...hookActions[action], "--transcript-mapping", join(pluginRoot, "hooks/codex-transcript-mapping.json")], { input: stdin });
   if (result.error) {
     // Gates fail OPEN: a missing or crashed CLI must never block the session.
     process.stderr.write(

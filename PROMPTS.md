@@ -131,8 +131,8 @@ task is about to teach; if nothing is due, skip it. Then teach as you go. When
 a concept is new to me, teach it outside the project first: explain it with a
 minimal example that isn't my project's code (different names and values from
 the blank I'm about to fill, so the example is never the answer with a name
-changed), then have me write and run two small exercises in a scratch
-file under learning/scratch/ (I predict the output before each run), then ask
+changed), then have me write two small exercises in a scratch file
+under learning/scratch/ (I predict the output, then you run it), then ask
 whether I want another or want to move into the project. In the project, I
 type every line that uses a concept you're teaching me: you may write the
 structure you're not teaching (imports, a function's signature, config) and
@@ -158,10 +158,9 @@ down and dig into the gap, because that's where the learning is. When a command 
 and park the rest in the file map — never build on files I can't account for.
 Quiz me on graph concepts
 as they come up — always open questions I answer in my own words, never
-multiple choice — but never re-quiz what's marked understood and fresh. At the
-moment I signal that I already know a concept — by saying so or by showing
-unprompted fluency with it — use it without teaching or
-quizzing me for the rest of the session, answer any questions about it normally,
+multiple choice — but never re-quiz what's marked understood and fresh. When I
+tell you I already know a concept, skip its introduction and give me one
+exercise that tests it instead of two, answer any questions about it normally,
 and record it as understood with the note "self-reported prior knowledge" — the
 one self-report exception to the normal evidence rule. At the
 end: update learning/knowledge-graph.md (statuses upgrade only on evidence of

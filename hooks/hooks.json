@@ -15,7 +15,9 @@
               "${CLAUDE_PLUGIN_ROOT}/hooks/field-mapping.json",
               "--print-context",
               "--nudge",
-              "Run /altitude:next-lesson to continue (or /altitude:begin if this is your first session)."
+              "Run /altitude:next-lesson to continue (or /altitude:begin if this is your first session).",
+              "--transcript-mapping",
+              "${CLAUDE_PLUGIN_ROOT}/hooks/claude-code-transcript-mapping.json"
             ],
             "timeout": 30
           }
@@ -37,7 +39,9 @@
               "--mapping",
               "${CLAUDE_PLUGIN_ROOT}/hooks/field-mapping.json",
               "--gate",
-              "plan"
+              "plan",
+              "--transcript-mapping",
+              "${CLAUDE_PLUGIN_ROOT}/hooks/claude-code-transcript-mapping.json"
             ],
             "timeout": 30
           }
@@ -57,7 +61,9 @@
               "--mapping",
               "${CLAUDE_PLUGIN_ROOT}/hooks/field-mapping.json",
               "--gate",
-              "diff"
+              "diff",
+              "--transcript-mapping",
+              "${CLAUDE_PLUGIN_ROOT}/hooks/claude-code-transcript-mapping.json"
             ],
             "timeout": 30
           }
@@ -78,7 +84,9 @@
               "--mapping",
               "${CLAUDE_PLUGIN_ROOT}/hooks/field-mapping.json",
               "--gate",
-              "retro"
+              "retro",
+              "--transcript-mapping",
+              "${CLAUDE_PLUGIN_ROOT}/hooks/claude-code-transcript-mapping.json"
             ],
             "timeout": 30
           }
@@ -97,7 +105,9 @@
               "--agent",
               "claude-code",
               "--mapping",
-              "${CLAUDE_PLUGIN_ROOT}/hooks/field-mapping.json"
+              "${CLAUDE_PLUGIN_ROOT}/hooks/field-mapping.json",
+              "--transcript-mapping",
+              "${CLAUDE_PLUGIN_ROOT}/hooks/claude-code-transcript-mapping.json"
             ],
             "timeout": 30
           }
@@ -116,7 +126,9 @@
               "--agent",
               "claude-code",
               "--mapping",
-              "${CLAUDE_PLUGIN_ROOT}/hooks/field-mapping.json"
+              "${CLAUDE_PLUGIN_ROOT}/hooks/field-mapping.json",
+              "--transcript-mapping",
+              "${CLAUDE_PLUGIN_ROOT}/hooks/claude-code-transcript-mapping.json"
             ],
             "timeout": 30
           }

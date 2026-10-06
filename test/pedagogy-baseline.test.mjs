@@ -138,8 +138,9 @@ test("B: a new teach concept is introduced, drilled in a scratch file, then appl
   assert.match(introText, /minimal example/, "introduce = a minimal example in chat");
   assert.match(introText, /in no project file/, "the example never lands in the project");
   assert.match(drillText, /learning\/scratch\/<concept>\.<ext>/, "the scratch path must be spelled out");
-  assert.match(drillText, /predict the output in one line before they run it/, "each drill predicts before running");
-  assert.match(drillText, /run it in their own terminal/, "the learner runs the drill");
+  assert.match(drillText, /predict the output in one line; then you run it/, "each drill predicts before running");
+  // Since 2026-10-02 the tutor runs the drill after the prediction; the learner still writes it.
+  assert.match(drillText, /the learner writes a small exercise/, "the learner writes the drill");
   assert.match(drillText, /You never write into the scratch file/, "the scratch file is the learner's");
   assert.match(drillText, /the count comes from `drills`/, "the drill count is the knob");
   assert.ok(drillText.includes(DRILL_ASK), "the ask after the drills must be spelled out");
@@ -149,7 +150,8 @@ test("B: a new teach concept is introduced, drilled in a scratch file, then appl
 test("B: exercise concepts and previously-taught concepts never get a drill; scratch writes are evidence", async () => {
   const section = teachingSection(await readNextLesson());
 
-  assert.match(section, /\*\*`exercise` concepts never get a drill\*\*/, "the exercise exclusion must be emphasized");
+  // Since the familiarity check (2026-10-02), only an exercise concept already shown in a lesson is exempt.
+  assert.match(section, /\*\*An `exercise` concept already shown in a lesson never gets a drill\*\*/, "the exercise exclusion must be emphasized");
   assert.match(section, /a completed task already carried gets no drill either/, "re-taught concepts skip the drill");
   assert.match(section, /Scratch files are real evidence/, "scratch writes must count");
   assert.match(section, /emit the drill's prediction as a quiz moment tagged with the concept/, "paid mode records the drill");
@@ -169,7 +171,7 @@ test("B: the three knobs have defaults, and free mode always uses them", async (
     /\*\*when the field is absent, and always in free mode, use the defaults: `drills` 2, `step_size` `function`, `check_density` `teach_runs`\.\*\*/,
     "the defaults must be one emphasized sentence covering absence and free mode",
   );
-  assert.match(section, /`decide_inspect_verify` only `check_density` applies/, "Intermediate ignores drills and step size");
+  assert.match(section, /`decide_inspect_verify`, `drills` and `check_density` apply and `step_size` is ignored/, "Intermediate ignores only step size");
   assert.match(section, /never change the level/, "knobs never touch the level");
 });
 
@@ -399,7 +401,7 @@ test("H: a plain-words request to change how they are taught maps to one knob an
 // stalled it opened the project step itself, skipping the ask. Each fix below
 // is one atomic, ordered rule with its exact phrase.
 
-test("B: the drill loop is numbered, a stalled drill keeps its number, and the ask is the whole next message", async () => {
+test("B: the drill loop is numbered, a stalled drill keeps its number, and the ask ends the message that shows the last drill's result", async () => {
   const section = teachingSection(await readNextLesson());
   const drill = section.indexOf("2. **Drill**");
   const apply = section.indexOf("3. **Apply**");
@@ -408,21 +410,32 @@ test("B: the drill loop is numbered, a stalled drill keeps its number, and the a
   assert.match(drillText, /Number each drill out loud/, "drills are numbered so both sides know where the loop stands");
   assert.match(drillText, /drill 1, then drill 2, then the ask/, "the default loop is spelled out in order");
   assert.match(drillText, /re-issue the exercise under the same drill number/, "a stalled drill is re-issued, not counted twice");
+  // Jason, 2026-10-05 (problem 1): the "whole of your next message" rule made
+  // tutors send the ask without the last drill's result or whether the
+  // prediction held. The ask now ends the message that shows both, and the
+  // tutor may move on itself when the drills plainly landed.
   assert.match(
     drillText,
-    /\*\*After the last drill has run, the ask is the whole of your next message\*\*/,
-    "the ask must be one emphasized instruction that owns the whole message",
+    /\*\*After the last drill's result and whether their prediction held are on screen, end that message with the ask\*\*/,
+    "the ask ends the message that shows the last drill's result",
   );
-  assert.match(drillText, /Never open the project step on your own initiative after a drill/, "the tutor never skips the ask into the project");
-  assert.match(drillText, /never fold the ask into a message that also starts the project/, "the ask and the project step never share a message");
+  assert.match(
+    drillText,
+    /\*\*If the drills plainly landed, you may instead say you're moving into the project and that they can ask for another drill first\.\*\*/,
+    "the tutor may move on when the drills plainly landed",
+  );
+  assert.doesNotMatch(drillText, /whole of your next message/, "the strict whole-message rule is gone");
+  assert.doesNotMatch(drillText, /on your own initiative/, "the never-on-your-own-initiative rule is gone");
+  assert.doesNotMatch(drillText, /never fold the ask/, "the never-fold rule is gone");
+  assert.doesNotMatch(drillText, /without arguing for either/, "the no-arguing clause is gone");
   assert.match(drillText, /`drills` of 0 means skip the drill entirely, ask nothing/, "zero drills means no ask either");
   // Review fix: what each answer to the ask does.
   assert.match(
     drillText,
-    /\*\*"Another" means one more drill on the same concept under the next number, then the ask again\*\*/,
+    /"Another" means one more drill on the same concept under the next number, then the ask again, as many times as they choose it/,
     "another = one more drill, then the ask again",
   );
-  assert.match(drillText, /\*\*"into the project" ends the loop\*\*/, "into the project ends the loop");
+  assert.match(drillText, /"into the project" ends the loop/, "into the project ends the loop");
   assert.match(drillText, /your next message opens the apply step/, "and the apply step follows");
 });
 
@@ -511,19 +524,17 @@ test("G: the lesson closes in one fixed order: recap, then check-in, then the em
   assert.match(paid, /the first action of the turn that reads their answer/, "paid mode must place the emit first in the answering turn");
 });
 
-test("prior knowledge: a correct answer to a check the tutor asked is not a prior-knowledge signal", async () => {
+test("prior knowledge: only the explicit claim is a signal; an answered check never makes a concept familiar", async () => {
   const skill = await readNextLesson();
   const section = sliceBetween(skill, "### When prior knowledge surfaces", "### Bounded code delegation");
 
-  assert.match(
-    section,
-    /\*\*A correct answer to a check you asked is not a prior-knowledge signal\.\*\*/,
-    "the rule must be one emphasized instruction",
-  );
-  assert.match(section, /answered from the explanation you just gave/, "an answered check is the check working");
-  assert.match(section, /however much it volunteers beyond the question/, "a fluent, over-full answer to a check is still an answered check");
-  assert.match(section, /Never move a `teach` concept into the `exercise` set on the strength of an answered check/, "no exercise promotion from a check");
-  assert.match(section, /never skip its drill or its scaffold for it/, "the drill and scaffold survive a good answer");
+  // Jason, 2026-10-05 (problem 4): with the demonstrated-fluency route gone,
+  // the separate answered-check guard and its replay miss have nothing left to
+  // guard. The familiarity question's "never another answer" still rules an
+  // answered check out.
+  assert.doesNotMatch(section, /A correct answer to a check you asked is not a prior-knowledge signal/);
+  assert.doesNotMatch(section, /you've shown familiarity with `glob`/);
+  assert.match(skill, /Only their answer to this question makes a concept familiar, never another answer/);
 });
 
 test("C: the handover is spoken in chat before it is watched, never a silent skeleton", async () => {
@@ -614,7 +625,7 @@ test("README: the check-in cadence is stated in plain words and the settings hav
 test("paid mode opens with a four-line release note naming the server fields this version expects", async () => {
   const paid = await readPaidMode();
   const lines = paid.split("\n");
-  assert.match(lines[0], /^<!-- Release note \(plugin 0\.7\.0\):/, "the note is the first line and names the version");
+  assert.match(lines[0], /^<!-- Release note \(plugin 0\.8\.0\):/, "the note is the first line and names the version");
   const end = lines.findIndex((line) => line.includes("-->"));
   assert.equal(end, 3, "the note is exactly four lines");
   const note = lines.slice(0, 4).join("\n");
@@ -622,6 +633,7 @@ test("paid mode opens with a four-line release note naming the server fields thi
   assert.match(note, /uses the default knobs, asks no review question, and never asks a check-in/, "the behavior without them");
   assert.match(note, /Do not publish 0\.6\.0 or later before the server that serves these fields is deployed/, "the publish order");
   assert.match(note, /0\.7\.0 adds no new enforced CLI or server requirement/, "the patch adds no requirement");
+  assert.match(note, /0\.8\.0 adds no new enforced CLI or server requirement either/, "0.8.0 adds no requirement either");
   assert.match(note, /The enforced runtime floor stays CLI 0\.8\.1 \/ plugin 0\.5\.8/, "the floor did not move");
   assert.match(lines[4], /^# next-lesson — paid mode/, "the heading follows the note");
 });

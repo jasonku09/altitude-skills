@@ -1,0 +1,180 @@
+{
+  "version": 1,
+  "format": "codex-jsonl-v1",
+  "message_text": [
+    {
+      "select": {
+        "path": "payload",
+        "where": {
+          "type": [
+            "message"
+          ],
+          "role": [
+            "user",
+            "assistant"
+          ]
+        }
+      },
+      "paths": [
+        "content.*.text"
+      ]
+    },
+    {
+      "select": {
+        "path": "payload",
+        "where": {
+          "type": [
+            "user_message",
+            "agent_message"
+          ]
+        }
+      },
+      "paths": [
+        "message"
+      ]
+    }
+  ],
+  "assistant_text": [
+    {
+      "select": {
+        "path": "payload",
+        "where": {
+          "type": [
+            "message"
+          ],
+          "role": [
+            "assistant"
+          ]
+        }
+      },
+      "paths": [
+        "content.*.text"
+      ]
+    },
+    {
+      "select": {
+        "path": "payload",
+        "where": {
+          "type": [
+            "agent_message"
+          ]
+        }
+      },
+      "paths": [
+        "message"
+      ]
+    }
+  ],
+  "tool_calls": [
+    {
+      "select": {
+        "path": "payload",
+        "where": {
+          "type": [
+            "function_call",
+            "custom_tool_call"
+          ]
+        }
+      },
+      "id": "call_id",
+      "file_paths": [
+        "arguments.cmd",
+        "arguments.command",
+        "arguments.path",
+        "arguments.file_path",
+        "input"
+      ]
+    }
+  ],
+  "tool_outputs": [
+    {
+      "select": {
+        "path": "payload",
+        "where": {
+          "type": [
+            "function_call_output",
+            "custom_tool_call_output"
+          ]
+        }
+      },
+      "id": "call_id",
+      "paths": [
+        "output"
+      ]
+    }
+  ],
+  "images": [
+    {
+      "path": "payload.content.*",
+      "where": {
+        "type": [
+          "input_image",
+          "output_image",
+          "image"
+        ]
+      }
+    },
+    {
+      "path": "payload.images"
+    },
+    {
+      "path": "payload.local_images"
+    },
+    {
+      "path": "payload.output.content.*",
+      "where": {
+        "type": [
+          "image",
+          "input_image",
+          "output_image"
+        ]
+      }
+    }
+  ],
+  "drop": [
+    {
+      "path": "payload",
+      "where": {
+        "type": [
+          "message"
+        ],
+        "role": [
+          "system",
+          "developer"
+        ]
+      }
+    },
+    {
+      "path": "payload.base_instructions"
+    },
+    {
+      "path": "payload.developer_instructions"
+    },
+    {
+      "path": "payload.user_instructions"
+    },
+    {
+      "path": "payload.content.*.text",
+      "contains": [
+        "<skill>",
+        "<skills_instructions>",
+        "# AGENTS.md instructions"
+      ]
+    },
+    {
+      "path": "payload.message",
+      "contains": [
+        "<skill>",
+        "<skills_instructions>",
+        "# AGENTS.md instructions"
+      ]
+    }
+  ],
+  "locate": {
+    "root": {
+      "env": "CODEX_HOME",
+      "fallback": "~/.codex"
+    },
+    "pattern": "sessions/*/*/*/rollout-*-{session_id}.jsonl"
+  }
+}

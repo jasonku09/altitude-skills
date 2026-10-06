@@ -4,6 +4,8 @@
     "cwd": "cwd",
     "tool_name": "tool_name",
     "prompt": "prompt",
-    "last_assistant_message": "last_assistant_message"
+    "last_assistant_message": "last_assistant_message",
+    "model": "model",
+    "transcript_path": "transcript_path"
   }
 }
