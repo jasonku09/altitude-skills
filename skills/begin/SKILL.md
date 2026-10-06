@@ -85,7 +85,7 @@ Whatever the exit, the rule above stands: never print the raw JSON, stderr, or a
 
 ### Account routes
 
-- If `source` is `"network"` and `journey` is null, say that this account does not have a journey ready yet. Ask them to plan or select one on the Altitude web app and run `/altitude:begin` again, or offer the standalone free route now. This is the only reading that may say so.
+- If `source` is `"network"` and `journey` is null, say that this account does not have a journey ready yet. Send them to the Journey tab on the Altitude web app, where their journey gets built (once their prototype is ready, that's the "Build my journey" button), then run `/altitude:begin` again, or offer the standalone free route now. This is the only reading that may say so.
 - If a journey is present but `entitled` is not true and this directory is not already bound, explain that binding a new workshop needs an active subscription. The journey remains on their account; offer the standalone free route now instead of attempting `altitude bind`.
 
 Treat this directory as bound only when `binding` is non-null and its `project_root` resolves to the current project root. A binding for a different folder does not bind this one.
