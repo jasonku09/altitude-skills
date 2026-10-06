@@ -5,9 +5,9 @@ Copilot agent. It uses the existing seven shared skills and the same Altitude
 CLI/server lesson policy. It does not add a standalone VS Code extension, duplicate
 pedagogy, or ship server lesson logic in the public plugin.
 
-The manifest still says 0.7.0 to match the existing host manifests. That does not
-mean the published 0.7.0 plugin includes Copilot. Release versions and acceptance
-must be coordinated with the Copilot-capable CLI/server before publication.
+The manifest version is 0.9.0, the first plugin release that includes Copilot, in
+step with the other host manifests. It requires Altitude CLI 0.12.0 or later and the
+Copilot-capable server; publish and deploy both before the plugin.
 
 ## Installation and identity
 

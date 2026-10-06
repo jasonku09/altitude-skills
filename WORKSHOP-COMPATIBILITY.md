@@ -74,6 +74,15 @@ the "Build my journey" button builds it, instead of asking them to plan or selec
 one there. It adds no CLI, server, or envelope requirement and moves no floor, so
 it inherits 0.8.0's publication order unchanged.
 
+Plugin 0.9.0 adds the native GitHub Copilot plugin (`.plugin/plugin.json` and
+`.github/plugin/marketplace.json`; see the Copilot section below) and moves every
+host manifest to 0.9.0 together. For Claude Code, Codex, and Cursor it adds no CLI,
+server, or envelope requirement and moves no floor. Copilot needs CLI 0.12.0, the
+first CLI that accepts `--agent copilot` and carries `altitude hook-context` and
+`altitude question declare`. Publish CLI 0.12.0 and deploy the Copilot-capable server
+before plugin 0.9.0, because publishing the plugin makes the Copilot marketplace
+entry installable.
+
 The graded lesson-start review adds no floor either. When `due_review` carries an
 `ask`, the tutor asks that kind of question and sends the answer with
 `--review <concept-id>` (key `review` under `emit --stdin`) and no verdict, and the
@@ -260,7 +269,7 @@ accept. A bound project whose client is too old keeps its binding, its generated
 plan, and its queued events while it waits for the update.
 
 Rollback is per artifact and needs no data migration. Reverting the plugin one
-release — 0.8.1 back to 0.8.0, 0.8.0 back to 0.7.0, 0.7.0 back to 0.6.1, 0.6.1 back to 0.6.0, 0.6.0 back to 0.5.8, or 0.5.8 back to 0.5.7 — restores the previous
+release — 0.9.0 back to 0.8.1, 0.8.1 back to 0.8.0, 0.8.0 back to 0.7.0, 0.7.0 back to 0.6.1, 0.6.1 back to 0.6.0, 0.6.0 back to 0.5.8, or 0.5.8 back to 0.5.7 — restores the previous
 instructions with the binding and plan intact; reverting the CLI to the last
 published build restores the previous envelope, and the server keeps accepting
 version-less claims until enforcement is enabled. Roll enforcement back
@@ -364,4 +373,4 @@ capture. Native prompt context was observed on Cursor desktop 3.21.16 and termin
 
 ## Copilot implementation (unreleased)
 
-The `.plugin/plugin.json` manifest and `.github/plugin/marketplace.json` select the shared skills and isolated Copilot hook adapter. The unchanged 0.7.0 version is not a Copilot publication claim. A matching CLI/server with `--agent copilot` is required; the older floor for existing hosts does not establish Copilot compatibility. See [Copilot support](COPILOT-SUPPORT.md) for transport checks, exact-generation completion evidence, and outstanding native acceptance.
+The `.plugin/plugin.json` manifest and `.github/plugin/marketplace.json` select the shared skills and isolated Copilot hook adapter. Plugin 0.9.0 is the first release that includes Copilot. A matching CLI (0.12.0 or later) and server with `--agent copilot` are required; the older floor for existing hosts does not establish Copilot compatibility. See [Copilot support](COPILOT-SUPPORT.md) for transport checks, exact-generation completion evidence, and outstanding native acceptance.

@@ -13,15 +13,12 @@ const flat = (text) => text.replace(/\s+/g, " ");
  * added and no floor moves.
  */
 
-test("0.8.1: every host manifest carries the release version", () => {
-  for (const path of [".claude-plugin/plugin.json", ".codex-plugin/plugin.json", ".cursor-plugin/plugin.json"]) {
-    assert.equal(JSON.parse(read(path)).version, "0.8.1", path);
-  }
-});
+// The host-manifest version pin moved to test/release-0-9-0.test.mjs: 0.9.0 adds
+// Copilot and carries 0.8.1 unchanged for the existing hosts.
 
 test("0.8.1: the paid-mode release note names the patch and moves no floor", () => {
   const paid = read("skills/next-lesson/references/paid-mode.md");
-  assert.ok(paid.startsWith("<!-- Release note (plugin 0.8.1)"), "the release note leads the file under the new version");
+  assert.ok(paid.startsWith("<!-- Release note (plugin 0.9.0)"), "the release note leads the file under the current version");
   const note = flat(paid.slice(0, paid.indexOf("-->")));
   assert.match(note, /0\.8\.1 is a prose-only patch on 0\.8\.0 with no new CLI or server requirement/);
   assert.match(note, /CLI 0\.8\.1 \/ plugin 0\.5\.8/, "the floor is unchanged");
