@@ -625,7 +625,7 @@ test("README: the check-in cadence is stated in plain words and the settings hav
 test("paid mode opens with a four-line release note naming the server fields this version expects", async () => {
   const paid = await readPaidMode();
   const lines = paid.split("\n");
-  assert.match(lines[0], /^<!-- Release note \(plugin 0\.8\.0\):/, "the note is the first line and names the version");
+  assert.match(lines[0], /^<!-- Release note \(plugin 0\.8\.1\):/, "the note is the first line and names the version");
   const end = lines.findIndex((line) => line.includes("-->"));
   assert.equal(end, 3, "the note is exactly four lines");
   const note = lines.slice(0, 4).join("\n");
@@ -634,6 +634,7 @@ test("paid mode opens with a four-line release note naming the server fields thi
   assert.match(note, /Do not publish 0\.6\.0 or later before the server that serves these fields is deployed/, "the publish order");
   assert.match(note, /0\.7\.0 adds no new enforced CLI or server requirement/, "the patch adds no requirement");
   assert.match(note, /0\.8\.0 adds no new enforced CLI or server requirement either/, "0.8.0 adds no requirement either");
+  assert.match(note, /0\.8\.1 is a prose-only patch on 0\.8\.0 with no new CLI or server requirement/, "0.8.1 adds no requirement");
   assert.match(note, /The enforced runtime floor stays CLI 0\.8\.1 \/ plugin 0\.5\.8/, "the floor did not move");
   assert.match(lines[4], /^# next-lesson — paid mode/, "the heading follows the note");
 });

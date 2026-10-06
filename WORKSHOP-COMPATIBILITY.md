@@ -68,6 +68,12 @@ single-quoted flags. They ignore `--review` and `--drill`, so those answers
 arrive as ordinary quiz moments. Publish CLI 0.11.0 before plugin 0.8.0, and
 deploy the server that sends `due_review.ask` and records drills before either.
 
+Plugin 0.8.1 is a prose-only patch on 0.8.0: when Begin reads no journey on the
+account, it sends the learner to the Journey tab on the Altitude web app, where
+the "Build my journey" button builds it, instead of asking them to plan or select
+one there. It adds no CLI, server, or envelope requirement and moves no floor, so
+it inherits 0.8.0's publication order unchanged.
+
 The graded lesson-start review adds no floor either. When `due_review` carries an
 `ask`, the tutor asks that kind of question and sends the answer with
 `--review <concept-id>` (key `review` under `emit --stdin`) and no verdict, and the
@@ -254,7 +260,7 @@ accept. A bound project whose client is too old keeps its binding, its generated
 plan, and its queued events while it waits for the update.
 
 Rollback is per artifact and needs no data migration. Reverting the plugin one
-release — 0.7.0 back to 0.6.1, 0.6.1 back to 0.6.0, 0.6.0 back to 0.5.8, or 0.5.8 back to 0.5.7 — restores the previous
+release — 0.8.1 back to 0.8.0, 0.8.0 back to 0.7.0, 0.7.0 back to 0.6.1, 0.6.1 back to 0.6.0, 0.6.0 back to 0.5.8, or 0.5.8 back to 0.5.7 — restores the previous
 instructions with the binding and plan intact; reverting the CLI to the last
 published build restores the previous envelope, and the server keeps accepting
 version-less claims until enforcement is enabled. Roll enforcement back
