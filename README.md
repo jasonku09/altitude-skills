@@ -1,6 +1,6 @@
 # Altitude — learn to code by building
 
-Five Agent skills that turn an AI coding agent into a tutor instead of a ghostwriter: begin a journey planned with Altitude, or use the standalone free method to pick (or adopt) a real project and plan it locally — then build it one small, fully-understood step at a time.
+Agent skills that turn an AI coding agent into a tutor instead of a ghostwriter: begin a journey planned with Altitude, or use the standalone free method to pick (or adopt) a real project and plan it locally — then build it one small, fully-understood step at a time.
 
 ## Where it takes you
 
@@ -12,7 +12,7 @@ Wherever you're starting from, the destination is the same — a real product yo
 
 The metaphor: concepts learned in isolation are loose leaves — hard to sort, easy to lose. A real project is a tree. The **trunk** is the project's core components, the **branches** are the build plan, and the **leaves** are every concept you learn along the way, attached where they belong.
 
-## The five skills
+## Learning skills
 
 | Skill | What it does |
 |---|---|

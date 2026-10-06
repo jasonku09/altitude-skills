@@ -1,7 +1,7 @@
 # Copilot support
 
-This branch adds a transport adapter for GitHub Copilot CLI and VS Code's Local
-Copilot agent. It uses the existing seven shared skills and the same Altitude
+The native plugin includes a transport adapter for GitHub Copilot CLI and
+VS Code's Local Copilot agent. It uses the existing seven shared skills and the same Altitude
 CLI/server lesson policy. It does not add a standalone VS Code extension, duplicate
 pedagogy, or ship server lesson logic in the public plugin.
 
@@ -200,8 +200,7 @@ checks. No production account was paired for this acceptance.
 `npm test` covers isolated core calls, exact session association, repeated turn
 IDs, delayed transcript writes, malformed results, missing CLI/Node, completion
 failures, native mutation aliases and raw patch input, plus regression checks for
-existing agents. Source tests alone do not establish native acceptance. No release
-version is bumped here.
+existing agents. Source tests alone do not establish native acceptance.
 
 ## Pinned Pro follow-up — September 26
 
@@ -221,7 +220,8 @@ candidate tarball. The update replaced the published 0.10.0 bundle with the
 Copilot candidate, with all eight files in a copy of the completed learner's
 state preserved byte for byte. The installed bundle matched the built artifact;
 the tarball contained only the CLI, shim, metadata, README and license. No
-registry publication occurred and release version numbers remain pending.
+registry publication occurred during these checks; release requirements are
+recorded in the version note above.
 
 The real Copilot CLI plugin manager also installed all seven skills from a
 cloned HTTP Git marketplace, then fetched and installed a second fixture commit.
@@ -243,8 +243,8 @@ passed 382 tests. Final gate validation against the rebased branch is separate.
 
 ## Evidence verification and degraded context — September 28
 
-The coordinated core now requires a declared question and an exact match in the
-completed native reply before the next learner answer becomes automatic quiz
+For Copilot only, the coordinated core requires a declared question and an exact
+match in the completed native reply before the next learner answer becomes automatic quiz
 evidence. Real isolated Sonnet 5 chats passed both cases in CLI and VS Code Local:
 a writing handoff followed by “Saved” produced zero quizzes; a declared, displayed
 question and the next exact answer produced one correctly attributed quiz. These

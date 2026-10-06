@@ -174,7 +174,7 @@ End the welcome with the next step, decided by a folder check. This chat is in t
 - the folder this chat was opened in (the workspace or starting folder your host reports for this conversation, not wherever your shell has `cd`'d since) is the folder `binding.project_root` names (when `binding` is null, the folder `recovery_message` names), and
 - the latest scoped read did not report `learning_runtime.status` as `"outside_project"`.
 
-After Step 3 creates a new folder, this is almost never true except after Cursor's workspace handoff, because the chat was opened in the folder above it. When you cannot tell which folder this chat was opened in, treat it as not the journey folder: an unneeded reopen costs a minute, and a lesson in the wrong folder loses what it records.
+After Step 3 creates a new folder, this is almost never true except after the workspace handoff in Step 3, because the chat was opened in the folder above it. When you cannot tell which folder this chat was opened in, treat it as not the journey folder: an unneeded reopen costs a minute, and a lesson in the wrong folder loses what it records.
 
 - **Not the journey folder:** relay the CLI's `recovery_message` when the read carried one, then give the reopen steps below.
 - **The journey folder:** tell them to type next lesson in this same chat whenever they are ready (`/altitude:next-lesson` in Claude Code, `$next-lesson` in Codex, `/next-lesson` in Cursor and GitHub Copilot).

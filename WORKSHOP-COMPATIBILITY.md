@@ -151,9 +151,9 @@ compatibility answer borrowed from another concurrent session.
 
 Session affinity is what makes the "no borrowed answer" half of that hold, and it
 rests on the host exposing a real session ID, either in the current hook context
-or in its environment. Both supported hosts do: Claude Code
-through `CLAUDE_CODE_SESSION_ID`, and Codex through `CODEX_THREAD_ID`. The
-constraint therefore does not drop Codex from the supported set.
+or in its environment. Claude Code exposes `CLAUDE_CODE_SESSION_ID`, and Codex
+exposes `CODEX_THREAD_ID`. For the other hosts, see the identity guidance in
+[Cursor support](CURSOR-SUPPORT.md) and [Copilot support](COPILOT-SUPPORT.md).
 
 The Codex half of that was observed directly, on installed codex-cli 0.153.4 under
 a ChatGPT subscription. A fresh `codex exec --ephemeral --ignore-user-config
@@ -190,8 +190,8 @@ as marker-less would turn that next read into false version evidence.
 ## Transcript-sharing integration
 
 The transcript-sharing hooks require CLI 0.11.0, which accepts
-`altitude hook --transcript-mapping`. All three hosts pass this flag on every
-hook invocation, so an older CLI that rejects it cannot execute those hooks.
+`altitude hook --transcript-mapping`. Claude Code, Codex, and Cursor pass this flag
+on every hook invocation, so an older CLI that rejects it cannot execute those hooks.
 The lesson-version floor and save-watcher fallback described above do not
 establish compatibility with this new hook argument. Follow the publication
 order above; naming the required CLI version does not claim it is published.
@@ -200,7 +200,8 @@ When a task envelope includes `notices`, the CLI must also support
 `altitude notice ack <id> --session <actual ID>` (CLI 0.11.0), which acknowledges
 only once the notice's full text appears in the tutor's own replies in that
 session's transcript (each mapping's `assistant_text`). An absent `notices` field
-requires no acknowledgement.
+requires no acknowledgement. The server does not send transcript-sharing notices
+to Copilot devices; Copilot's transport receipts are separate from this integration.
 These notices are separate from the existing `update_notices` handled at lesson
 close. The relay instructions live in [begin](skills/begin/SKILL.md) and
 [next-lesson](skills/next-lesson/SKILL.md#step-1--orient).
