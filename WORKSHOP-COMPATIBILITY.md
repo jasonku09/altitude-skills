@@ -371,6 +371,6 @@ capture. Native prompt context was observed on Cursor desktop 3.21.16 and termin
 2026.09.18-9a7762b; the full lesson and operating-system matrix still needs acceptance. See
 [CURSOR-SUPPORT.md](CURSOR-SUPPORT.md) for the protocol and verification matrix.
 
-## Copilot implementation (unreleased)
+## Copilot implementation
 
 The `.plugin/plugin.json` manifest and `.github/plugin/marketplace.json` select the shared skills and isolated Copilot hook adapter. Plugin 0.9.0 is the first release that includes Copilot. A matching CLI (0.12.0 or later) and server with `--agent copilot` are required; the older floor for existing hosts does not establish Copilot compatibility. See [Copilot support](COPILOT-SUPPORT.md) for transport checks, exact-generation completion evidence, and outstanding native acceptance.

@@ -1,4 +1,4 @@
-# Copilot support (unreleased)
+# Copilot support
 
 This branch adds a transport adapter for GitHub Copilot CLI and VS Code's Local
 Copilot agent. It uses the existing seven shared skills and the same Altitude
