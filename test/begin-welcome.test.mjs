@@ -58,6 +58,11 @@ test("begin's welcome introduces the tutor and walks through this learner's jour
   assert.match(step5, /no understanding check/i);
 });
 
+test('begin names the same-chat next-lesson invocation for every host, Copilot included', () => {
+  const begin = read(BEGIN);
+  assert.match(begin, /type next lesson in this same chat[^\n]*`\/next-lesson` in Cursor and GitHub Copilot/);
+});
+
 test('the folder check reads the chat root and the CLI status, never the shell directory', () => {
   const step5 = section(read(BEGIN), '## Step 5', '## Already bound');
   assert.match(step5, /`binding\.project_root`/);
@@ -86,6 +91,8 @@ test('begin and next-lesson carry the same host-specific reopen steps', () => {
     /File > Open Folder/,
     /VS Code/,
     /Cursor/,
+    /GitHub Copilot/,
+    /`cd <journey folder>`[^\n]*`copilot`/,
     /`\/altitude:next-lesson`/,
     /`\$next-lesson`/,
     /`\/next-lesson`/,
