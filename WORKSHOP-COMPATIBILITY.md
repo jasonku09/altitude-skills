@@ -74,6 +74,15 @@ the "Build my journey" button builds it, instead of asking them to plan or selec
 one there. It adds no CLI, server, or envelope requirement and moves no floor, so
 it inherits 0.8.0's publication order unchanged.
 
+Plugin 0.9.0 adds the native GitHub Copilot plugin (`.plugin/plugin.json` and
+`.github/plugin/marketplace.json`; see the Copilot section below) and moves every
+host manifest to 0.9.0 together. For Claude Code, Codex, and Cursor it adds no CLI,
+server, or envelope requirement and moves no floor. Copilot needs CLI 0.12.0, the
+first CLI that accepts `--agent copilot` and carries `altitude hook-context` and
+`altitude question declare`. Publish CLI 0.12.0 and deploy the Copilot-capable server
+before plugin 0.9.0, because publishing the plugin makes the Copilot marketplace
+entry installable.
+
 The graded lesson-start review adds no floor either. When `due_review` carries an
 `ask`, the tutor asks that kind of question and sends the answer with
 `--review <concept-id>` (key `review` under `emit --stdin`) and no verdict, and the
@@ -142,9 +151,9 @@ compatibility answer borrowed from another concurrent session.
 
 Session affinity is what makes the "no borrowed answer" half of that hold, and it
 rests on the host exposing a real session ID, either in the current hook context
-or in its environment. Both supported hosts do: Claude Code
-through `CLAUDE_CODE_SESSION_ID`, and Codex through `CODEX_THREAD_ID`. The
-constraint therefore does not drop Codex from the supported set.
+or in its environment. Claude Code exposes `CLAUDE_CODE_SESSION_ID`, and Codex
+exposes `CODEX_THREAD_ID`. For the other hosts, see the identity guidance in
+[Cursor support](CURSOR-SUPPORT.md) and [Copilot support](COPILOT-SUPPORT.md).
 
 The Codex half of that was observed directly, on installed codex-cli 0.153.4 under
 a ChatGPT subscription. A fresh `codex exec --ephemeral --ignore-user-config
@@ -181,8 +190,8 @@ as marker-less would turn that next read into false version evidence.
 ## Transcript-sharing integration
 
 The transcript-sharing hooks require CLI 0.11.0, which accepts
-`altitude hook --transcript-mapping`. All three hosts pass this flag on every
-hook invocation, so an older CLI that rejects it cannot execute those hooks.
+`altitude hook --transcript-mapping`. Claude Code, Codex, and Cursor pass this flag
+on every hook invocation, so an older CLI that rejects it cannot execute those hooks.
 The lesson-version floor and save-watcher fallback described above do not
 establish compatibility with this new hook argument. Follow the publication
 order above; naming the required CLI version does not claim it is published.
@@ -191,7 +200,8 @@ When a task envelope includes `notices`, the CLI must also support
 `altitude notice ack <id> --session <actual ID>` (CLI 0.11.0), which acknowledges
 only once the notice's full text appears in the tutor's own replies in that
 session's transcript (each mapping's `assistant_text`). An absent `notices` field
-requires no acknowledgement.
+requires no acknowledgement. The server does not send transcript-sharing notices
+to Copilot devices; Copilot's transport receipts are separate from this integration.
 These notices are separate from the existing `update_notices` handled at lesson
 close. The relay instructions live in [begin](skills/begin/SKILL.md) and
 [next-lesson](skills/next-lesson/SKILL.md#step-1--orient).
@@ -260,7 +270,7 @@ accept. A bound project whose client is too old keeps its binding, its generated
 plan, and its queued events while it waits for the update.
 
 Rollback is per artifact and needs no data migration. Reverting the plugin one
-release — 0.8.1 back to 0.8.0, 0.8.0 back to 0.7.0, 0.7.0 back to 0.6.1, 0.6.1 back to 0.6.0, 0.6.0 back to 0.5.8, or 0.5.8 back to 0.5.7 — restores the previous
+release — 0.9.0 back to 0.8.1, 0.8.1 back to 0.8.0, 0.8.0 back to 0.7.0, 0.7.0 back to 0.6.1, 0.6.1 back to 0.6.0, 0.6.0 back to 0.5.8, or 0.5.8 back to 0.5.7 — restores the previous
 instructions with the binding and plan intact; reverting the CLI to the last
 published build restores the previous envelope, and the server keeps accepting
 version-less claims until enforcement is enabled. Roll enforcement back
@@ -361,3 +371,7 @@ Old CLI failures leave editor tools usable and do not claim session or question
 capture. Native prompt context was observed on Cursor desktop 3.21.16 and terminal
 2026.09.18-9a7762b; the full lesson and operating-system matrix still needs acceptance. See
 [CURSOR-SUPPORT.md](CURSOR-SUPPORT.md) for the protocol and verification matrix.
+
+## Copilot implementation
+
+The `.plugin/plugin.json` manifest and `.github/plugin/marketplace.json` select the shared skills and isolated Copilot hook adapter. Plugin 0.9.0 is the first release that includes Copilot. A matching CLI (0.12.0 or later) and server with `--agent copilot` are required; the older floor for existing hosts does not establish Copilot compatibility. See [Copilot support](COPILOT-SUPPORT.md) for transport checks, exact-generation completion evidence, and outstanding native acceptance.

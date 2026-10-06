@@ -1,10 +1,12 @@
 ---
 name: connect
 description: Connect this coding agent installation to the user's Altitude account via the device pairing flow.
-allowed-tools: Bash(claude --version) Bash(codex --version) Bash(cursor --version) Bash(cursor-agent --version) Bash(agent --version) Bash(altitude connect *) Bash(altitude status) Bash(altitude --version) Bash(altitude update) Bash(node *)
+allowed-tools: Bash(claude --version) Bash(codex --version) Bash(copilot --version) Bash(code --version) Bash(cursor --version) Bash(cursor-agent --version) Bash(agent --version) Bash(altitude connect *) Bash(altitude status) Bash(altitude --version) Bash(altitude update) Bash(node *)
 ---
 
 **Host commands:** In Cursor desktop and Cursor terminal, invoke the same shared skills as `/begin`, `/connect`, `/status`, and `/next-lesson` (choose Altitude in the skill picker when names collide). Translate `/altitude:<skill>` examples in this file to `/<skill>` in Cursor; Claude Code keeps `/altitude:<skill>` and Codex keeps `$<skill>`.
+
+**Copilot host commands:** In GitHub Copilot CLI and VS Code Copilot chat, use the same shared Altitude skills. Choose the Altitude skill by name in the host skill picker (`connect`, `begin`, `next-lesson`, or `status`); use the invocation spelling that host displays. Do not copy these files into a second Copilot-only skill library. The complete Altitude plugin supplies the lesson hooks; copied skills alone provide only the standalone free method.
 
 Connect the current coding agent installation to Altitude:
 
@@ -16,6 +18,8 @@ Connect the current coding agent installation to Altitude:
      If it is older than 0.131.0, warn the user that Altitude's session hooks need Codex
      CLI >= 0.131.0 and suggest updating first — the server makes the final call during
      pairing.
+   - **GitHub Copilot CLI:** run `copilot --version` and use the observed CLI version.
+   - **VS Code Copilot chat:** read the installed GitHub Copilot Chat extension version from VS Code Extensions. Keep the editor version from `code --version` separate; do not substitute it for the Copilot version.
    - **Cursor desktop:** read the desktop version from `cursor --version` (first line) or Cursor About. Do not substitute the terminal agent version.
    - **Cursor terminal:** run `cursor-agent --version` (or `agent --version` if that is its installed command). Preserve its full date-and-build version string; do not invent a semantic version.
    - **Cursor compatibility setup:** resolve `../../bin/altitude-cursor-setup.mjs` relative to this installed `skills/connect/SKILL.md` using the source path attached to this invocation or the file you actually read. Do not assume plugin hook environment variables exist in your shell. If the source path is unavailable, recover the active installation location from Cursor's plugin manager; never choose the newest cache directory or another checkout. Then run `node '<that actual absolute file path>' install` (quote for the current shell). This also records this exact installed plugin root as JSON data in `~/.cursor/altitude/plugin.json`; native hooks read that registration because Cursor can supply another plugin's root environment. Run `/connect` again after every plugin update to refresh the registration from the newly active skill source. Missing or stale registrations fail open with a `/connect` diagnostic. The setup idempotently adds three owned, inert user-hook entries that let the terminal agent dispatch the native plugin's turn hooks; existing hooks are preserved. Run the shipped script, never recreate its config by hand. If setup fails, relay its short error and leave the config intact. A copied skill without that script is not the full plugin: use Cursor's plugin manager to install the complete plugin. Start a new Cursor session after a changed setup before beginning a lesson. Removal uses the same installed script with `uninstall`; it removes only Altitude's compatibility entries and its matching registration; an older plugin cannot erase a newer registration.
@@ -29,6 +33,7 @@ Connect the current coding agent installation to Altitude:
 2. Start the pairing command for your agent in the background:
    - **Claude Code:** `altitude connect --agent claude-code --agent-version <version> --next-hint "Open your coding agent in your project folder and run /altitude:begin to start your journey."`
    - **Codex:** `altitude connect --agent codex --agent-version <version> --next-hint "Open your coding agent in your project folder and run $begin to start your journey."`
+   - **GitHub Copilot CLI or VS Code Copilot chat:** `altitude connect --agent copilot --agent-version <observed Copilot version> --next-hint "Open your project in Copilot and choose Altitude begin to start your journey."`
    - **Cursor desktop or terminal:** `altitude connect --agent cursor --agent-version <observed version> --next-hint "Open your coding agent in your project folder and run /begin to start your journey."`
 
    **Codex aside — the sandbox:** in Codex's default modes the shell has no internet access, so a plain background `altitude connect` fails before it can print a code. Request escalated permissions for that one command with a one-line justification ("Altitude needs network access to pair this computer with your account"). If that is declined, or the host has no such mechanism, do not retry blindly and do not call the install broken: give the learner the exact `altitude connect` line above to run in their own terminal, ask them to paste back the URL and code it prints, and continue from step 3 with those.
@@ -38,5 +43,7 @@ Connect the current coding agent installation to Altitude:
 6. **Codex aside — the one-time trust prompt:** Codex asks "Hooks need review" the first time it launches with Altitude installed, and again after a plugin update changes a hook. Tell the learner to choose **Trust all and continue** whenever it appears; if they dismissed it earlier, ask them to open `/hooks` now and trust Altitude's hooks. Those hooks run outside the sandbox and keep a local copy of the journey fresh, which is what lets `$begin` and `$next-lesson` read it from inside the sandbox; untrusted, every lesson starts by asking them to run a command in their own terminal.
 
 7. **Cursor installation check:** the full native Altitude plugin must be loaded, including hooks; a copied `skills/` folder serves only the standalone free method. Use Cursor Customize and its Hooks output to confirm loading, then start a new conversation. Preserve existing user and project hooks. This integration is awaiting full desktop/terminal lesson acceptance; do not claim a successful pairing proves the lesson works, or bypass a server compatibility pause.
+
+**Copilot installation check:** install the complete native Altitude plugin, trust this project for hooks, and reopen the Copilot conversation in the intended project folder. The plugin must expose both the shared skills and its lifecycle hooks. In VS Code use the Local agent for the tested integration; other editor agent hosts require separate verification. Run `altitude --version` before pairing and check the CLI/server requirements in [Copilot support](../../COPILOT-SUPPORT.md). If `--agent copilot` is rejected, preserve existing pairing and progress and report the missing CLI support. Never omit `--agent` or pair as another agent to bypass compatibility. A fresh installation does not need an unconditional update; use the documented release-compatible version.
 
 Do not alter the device flow or send credentials anywhere except through the `altitude` CLI.

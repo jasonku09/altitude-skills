@@ -13,12 +13,12 @@ const flat = (text) => text.replace(/\s+/g, " ");
  * CLI 0.10.0 and older (ordinary quiz moments; flags instead of stdin).
  */
 
-// The host-manifest version pin moved to test/release-0-8-1.test.mjs: 0.8.1 is a
-// prose-only patch on 0.8.0 and carries 0.8.0 unchanged.
+// The host-manifest version pin moved to test/release-0-9-0.test.mjs: 0.8.1 is a
+// prose-only patch on 0.8.0, and 0.9.0 adds Copilot, carrying 0.8.0 unchanged.
 
 test("0.8.0: the paid-mode release note names what needs CLI 0.11.0 and moves no floor", () => {
   const paid = read("skills/next-lesson/references/paid-mode.md");
-  assert.ok(paid.startsWith("<!-- Release note (plugin 0.8.1)"), "the release note leads the file under the current version");
+  assert.ok(paid.startsWith("<!-- Release note (plugin 0.9.0)"), "the release note leads the file under the current version");
   const note = flat(paid.slice(0, paid.indexOf("-->")));
   assert.match(note, /0\.8\.0 adds no new enforced CLI or server requirement/);
   assert.match(note, /`emit --stdin`, `--review`, and `--drill` need CLI 0\.11\.0/);

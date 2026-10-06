@@ -1,0 +1,12 @@
+{
+  "name": "altitude",
+  "owner": { "name": "Jason Ku" },
+  "plugins": [
+    {
+      "name": "altitude",
+      "source": ".",
+      "version": "0.9.0",
+      "description": "Learn to code by building with shared Altitude skills and Copilot workshop hooks."
+    }
+  ]
+}

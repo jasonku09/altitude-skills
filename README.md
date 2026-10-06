@@ -1,6 +1,6 @@
 # Altitude — learn to code by building
 
-Five Agent skills that turn an AI coding agent into a tutor instead of a ghostwriter: begin a journey planned with Altitude, or use the standalone free method to pick (or adopt) a real project and plan it locally — then build it one small, fully-understood step at a time.
+Agent skills that turn an AI coding agent into a tutor instead of a ghostwriter: begin a journey planned with Altitude, or use the standalone free method to pick (or adopt) a real project and plan it locally — then build it one small, fully-understood step at a time.
 
 ## Where it takes you
 
@@ -12,7 +12,7 @@ Wherever you're starting from, the destination is the same — a real product yo
 
 The metaphor: concepts learned in isolation are loose leaves — hard to sort, easy to lose. A real project is a tree. The **trunk** is the project's core components, the **branches** are the build plan, and the **leaves** are every concept you learn along the way, attached where they belong.
 
-## The five skills
+## Learning skills
 
 | Skill | What it does |
 |---|---|
@@ -88,6 +88,8 @@ That copies the skills and nothing else: **no session hooks**, and no auto-updat
 Recorded source trials include macOS desktop/terminal and an Ubuntu terminal lesson with live browser grading; they do not establish every platform or model. Automatic recall uses native prompt context on the versions verified in the acceptance notes; the plugin emits no generated learner turns. After installing or updating the full plugin, run `/connect` to update the CLI and refresh its exact plugin registration while preserving ordinary existing pairing. See [Cursor development and acceptance](CURSOR-SUPPORT.md) for installation, exact session handling, and remaining release checks. [PROMPTS.md](PROMPTS.md) remains available for any agent without installation.
 
 For the **free standalone method only**, copying the shared skills to `~/.cursor/skills/` remains available. A skills-only copy has no session hooks and cannot establish subscribed journey support. Use the complete native plugin for development acceptance of that route.
+
+**Using GitHub Copilot instead?** This repository includes a native Copilot plugin for the Copilot CLI and Copilot in VS Code, sharing the same seven skills. It needs Altitude CLI 0.12.0 or later. Use `/connect`, `/begin`, and `/next-lesson` in Copilot. See [Copilot setup](COPILOT-SUPPORT.md) for setup details and what has been verified.
 
 ## How to use it
 
