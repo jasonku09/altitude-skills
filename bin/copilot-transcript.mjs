@@ -93,7 +93,7 @@ function liveOwner(owner) {
   const started=Date.parse(birth);
   return !(Number.isFinite(started) && Number.isFinite(owner.acquired) && started>owner.acquired+1000);
 }
-export function locked(path, fn) {
+function claim(path) {
   // Each claimant owns one immutable, never-reused path. Everyone publishes
   // before scanning; simultaneous contenders either see an existing writer or
   // both withdraw. No observer ever renames/restores another writer's lock.
@@ -128,18 +128,46 @@ export function locked(path, fn) {
       rmSync(other,{force:true}); // unique dead-owner path can never be reused
     }
     const held=()=>{if(read(claim)?.token!==token)throw new ReceiptConcurrencyError('Copilot callback ownership lost; evidence skipped.');};
-    return fn(held);
-  } finally { rmSync(claim,{force:true}); }
+    return {held,release:()=>rmSync(claim,{force:true})};
+  } catch(error) { rmSync(claim,{force:true});throw error; }
+}
+export function locked(path, fn) {
+  const ownership=claim(path);
+  try { return fn(ownership.held); }
+  finally { ownership.release(); }
+}
+export function claimReceipt(who) {
+  const path=storage(who);
+  const ownership=claim(path);
+  return {
+    ...ownership,
+    start:raw=>{ownership.held();return startReceipt(raw,who,path,ownership.held);},
+    current:()=>{ownership.held();return currentReceipt(who,path);},
+    clear:receipt=>{ownership.held();clearReceipt(path,receipt,ownership.held);},
+  };
 }
 export class ReceiptOrderError extends Error {}
 export class ReceiptConcurrencyError extends Error {}
 function assertPromptOrder(previous, who) {
   if(previous && previous.timestamp >= who.timestamp)throw new ReceiptOrderError('Duplicate or out-of-order prompt callback.');
 }
-export function startReceipt(raw, who) {
+function readOrder(path) {
+  let previous;
+  try { previous=JSON.parse(readFileSync(`${path}.order`,'utf8')); }
+  catch(error) { if(error.code!=='ENOENT')throw error; }
+  if(previous!==undefined && (!object(previous) || !Number.isSafeInteger(previous.timestamp) || previous.timestamp<=0))throw new Error('Invalid Copilot prompt-order watermark.');
+  return previous;
+}
+function writeState(path, value, held) {
+  const temporary = `${path}.${randomUUID()}.tmp`;
+  try { writeFileSync(temporary,JSON.stringify(value),{mode:0o600,flag:'wx'});held();renameSync(temporary,path); }
+  finally { rmSync(temporary,{force:true}); }
+}
+function startReceipt(raw, who, path, held) {
   if (typeof raw.prompt !== 'string') throw new Error('Missing original learner prompt.');
-  const path = storage(who);
   assertPromptOrder(read(path),who);
+  const previous=readOrder(path);
+  assertPromptOrder(previous,who);
   const receipt = {version:1,...who,generation_id:`copilot-${randomUUID()}`,prompt_hash:hash(raw.prompt)};
   if (who.host === 'vscode') {
     // Local writes user.message before firing this hook. Pin its unique native
@@ -152,23 +180,21 @@ export function startReceipt(raw, who) {
     receipt.user_event_id = user.id;
     receipt.user_event_hash = hash(JSON.stringify(user));
   }
-  locked(path,held=>{
-    assertPromptOrder(read(path),who);
-    const temporary = `${path}.${randomUUID()}.tmp`;
-    try { writeFileSync(temporary,JSON.stringify(receipt),{mode:0o600,flag:'wx'});held();renameSync(temporary,path); }
-    finally { rmSync(temporary,{force:true}); }
-  });
+  writeState(`${path}.order`,{timestamp:who.timestamp},held);
+  writeState(path,receipt,held);
   return receipt;
 }
-export function currentReceipt(who) {
-  const receipt = read(storage(who));
+function currentReceipt(who, path) {
+  const receipt = read(path);
   if (receipt?.timestamp > who.timestamp)throw new ReceiptOrderError('Stop callback predates the current prompt receipt.');
   if (!receipt || receipt.version !== 1 || receipt.host !== who.host || receipt.session_id !== who.session_id || receipt.cwd !== who.cwd || !nonempty(receipt.generation_id) || !nonempty(receipt.prompt_hash) || !Number.isSafeInteger(receipt.timestamp) || receipt.timestamp > who.timestamp) throw new Error('No matching prompt receipt.');
   return receipt;
 }
-export function clearReceipt(who, receipt) {
-  const path = storage(who);
-  locked(path,held=>{ if (read(path)?.generation_id === receipt.generation_id) { held(); rmSync(path,{force:true}); } });
+function clearReceipt(path, receipt, held) {
+  if (read(path)?.generation_id !== receipt.generation_id) return;
+  const previous=readOrder(path);
+  if(!previous || previous.timestamp<receipt.timestamp)writeState(`${path}.order`,{timestamp:receipt.timestamp},held);
+  held();rmSync(path,{force:true});
 }
 export function completedReply(raw, who, receipt) {
   if (raw.stop_hook_active !== false || (who.host === 'cli' && raw.stopReason !== 'end_turn')) throw new Error('Host did not confirm an ordinary completed turn.');

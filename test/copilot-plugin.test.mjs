@@ -382,3 +382,90 @@ for(const host of ['cli','vscode'])test(`native ${host} live receipt writer pres
   const call=(await f.calls()).at(-1);assert.equal(call.args[0],'hook-context');assert.ok(call.args.includes('--uncertain-order'));assert.equal(call.input.generation_id,undefined);
   assert.equal(await readFile(join(state,receipt),'utf8'),before);assert.deepEqual(await readdir(directory),[name]);
 });
+
+for(const host of ['cli','vscode'])for(const legacy of [false,true])test(`${host} rejects stale prompts after Stop consumes ${legacy?'legacy':'current'} receipt`,async t=>{
+  const f=await fixture(t,host);const first=events(f.cwd,host);await f.put(first.slice(0,2));
+  f.output(await nativeHook(f,host,'UserPromptSubmit',{prompt:'Explain this'}));
+  const state=join(f.dir,'state');const name=(await readdir(state)).find(x=>x.endsWith('.json'));
+  if(legacy)await rm(join(state,name+'.order'));
+  await f.put(first);f.output(await nativeHook(f,host,'Stop',{stop_reason:'end_turn',stop_hook_active:false}));
+  assert.equal((await f.calls()).at(-1).input.stop_status,'completed');
+  await assert.rejects(readFile(join(state,name)),{code:'ENOENT'});
+  const timestamp=host==='cli'?10:21;
+  assert.equal(JSON.parse(await readFile(join(state,name+'.order'),'utf8')).timestamp,time+timestamp);
+  await f.put(first.slice(0,2));
+  for(const stamp of [timestamp,timestamp-1]) {
+    const result=await nativeHook(f,host,'UserPromptSubmit',{prompt:'Explain this',timestamp:iso(stamp)});
+    assert.deepEqual(f.output(result),{});assert.match(result.stderr,/Duplicate or out-of-order/);
+  }
+  assert.equal((await f.calls()).length,2);
+  const second=events(f.cwd,host,'b',200).slice(1);second[0].parentId=first.at(-1).id;
+  await f.put([...first,second[0]]);
+  f.output(await nativeHook(f,host,'UserPromptSubmit',{prompt:'Explain this',timestamp:iso(host==='cli'?210:221)}));
+  const calls=await f.calls();assert.equal(calls.length,3);assert.equal(calls[2].args[0],'hook');
+  assert.notEqual(calls[2].input.generation_id,calls[0].input.generation_id);
+});
+
+for(const host of ['cli','vscode'])test(`${host} releases callback ownership after a failed core dispatch`,async t=>{
+  const f=await fixture(t,host,'invalid JSON');await f.put(events(f.cwd,host).slice(0,2));
+  const result=f.run('user-prompt-submit',f.payload('user-prompt-submit',{prompt:'Explain this'}));
+  assert.deepEqual(f.output(result),{});assert.match(result.stderr,/hook skipped/);
+  const state=join(f.dir,'state');const name=(await readdir(state)).find(x=>x.endsWith('.json'));
+  assert.deepEqual(await readdir(join(state,name+'.claims')),[]);
+  const before=JSON.parse(await readFile(join(state,name),'utf8'));
+  f.output(f.run('user-prompt-submit',f.payload('user-prompt-submit',{prompt:'Explain this',timestamp:iso(31)})));
+  const calls=await f.calls();assert.equal(calls.length,2);assert.equal(calls[1].args[0],'hook');
+  assert.ok(!calls[1].args.includes('--uncertain-order'));assert.notEqual(calls[1].input.generation_id,before.generation_id);
+});
+
+for(const host of ['cli','vscode'])for(const action of ['user-prompt-submit','stop'])test(`${host} holds ${action} ownership through core dispatch`,async t=>{
+  const f=await fixture(t,host);const first=events(f.cwd,host);await f.put(first.slice(0,2));
+  if(action==='stop') {
+    f.output(f.run('user-prompt-submit',f.payload('user-prompt-submit',{prompt:'Explain this'})));
+    await f.put(first);
+  }
+  const preload=join(f.dir,'pause.mjs');const release=join(f.dir,'release');
+  await writeFile(preload,`
+    import childProcess from 'node:child_process';
+    import fs from 'node:fs';
+    import {syncBuiltinESMExports} from 'node:module';
+    const original=childProcess.spawnSync;
+    childProcess.spawnSync=(file,args,options)=>{
+      if(args.includes('hook') && args.includes(${JSON.stringify(action)})) {
+        process.stdout.write('paused\\n');
+        const deadline=Date.now()+10000;
+        while(!fs.existsSync(${JSON.stringify(release)})) {
+          if(Date.now()>deadline)throw new Error('Dispatch barrier timed out');
+          Atomics.wait(new Int32Array(new SharedArrayBuffer(4)),0,0,10);
+        }
+      }
+      return original(file,args,options);
+    };
+    syncBuiltinESMExports();
+  `);
+  const child=spawn(process.execPath,['--import',preload,shim,host,action],{env:{...process.env,ALTITUDE_CLI_PATH:f.cli,ALTITUDE_COPILOT_STATE_DIR:join(f.dir,'state')},stdio:['pipe','pipe','pipe']});
+  t.after(()=>child.kill());
+  let stdout='',stderr='';child.stdout.on('data',chunk=>stdout+=chunk);child.stderr.on('data',chunk=>stderr+=chunk);
+  const exit=new Promise((resolve,reject)=>{child.once('close',resolve);child.once('error',reject);});
+  const paused=new Promise((resolve,reject)=>{
+    child.stdout.once('data',resolve);
+    child.once('error',reject);
+    child.once('close',()=>reject(new Error('Callback exited before dispatch barrier: '+stderr)));
+  });
+  child.stdin.end(JSON.stringify(f.payload(action,action==='user-prompt-submit'?{prompt:'Explain this'}:{})));
+  await paused;assert.equal(stdout,'paused\n');
+  const state=join(f.dir,'state');const name=(await readdir(state)).find(x=>x.endsWith('.json'));
+  const before=await readFile(join(state,name),'utf8');
+  const second=events(f.cwd,host,'b',200).slice(1);second[0].parentId=first.at(-1).id;await f.put([...first,second[0]]);
+  for(const [name,extra] of [['UserPromptSubmit',{prompt:'Explain this',timestamp:iso(host==='cli'?210:221)}],['Stop',{timestamp:iso(300),stop_reason:'end_turn',stop_hook_active:false}]]) {
+    const result=await nativeHook(f,host,name,extra);f.output(result);assert.match(result.stderr,/Concurrent/);
+    const call=(await f.calls()).at(-1);assert.equal(call.args[0],'hook-context');assert.ok(call.args.includes('--uncertain-order'));
+    assert.equal(call.input.generation_id,undefined);assert.equal(call.input.last_assistant_message,undefined);
+  }
+  assert.equal(await readFile(join(state,name),'utf8'),before);
+  await writeFile(release,'release');assert.equal(await exit,0,stderr);
+  const call=(await f.calls()).at(-1);assert.equal(call.args[0],'hook');assert.equal(call.args[1],action);
+  assert.equal(call.input.generation_id,JSON.parse(before).generation_id);
+  assert.deepEqual(await readdir(join(state,name+'.claims')),[]);
+  if(action==='stop')await assert.rejects(readFile(join(state,name)),{code:'ENOENT'});
+});

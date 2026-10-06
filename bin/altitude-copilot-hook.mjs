@@ -5,7 +5,7 @@ import { realpathSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { resolveCli } from './altitude-cursor-hook.mjs';
-import { identity, startReceipt, currentReceipt, clearReceipt, completedReply, ReceiptOrderError, ReceiptConcurrencyError, object } from './copilot-transcript.mjs';
+import { identity, claimReceipt, completedReply, ReceiptOrderError, ReceiptConcurrencyError, object } from './copilot-transcript.mjs';
 const root = dirname(dirname(fileURLToPath(import.meta.url)));
 const actions = {
   'session-start':['session-start','--print-context','--nudge','Run /next-lesson to continue (or /begin for your first session).'],
@@ -33,7 +33,7 @@ function context(result) {
   return [...(result.session ? ['Altitude current Copilot session metadata (JSON):\n'+JSON.stringify({session_id:result.session.id})+'\nUse this exact session_id for every Altitude --session argument in this conversation; it identifies the chat, not whether a lesson is bound.'] : []),...result.context].join('\n\n');
 }
 export async function main(host=process.argv[2],action=process.argv[3]) {
-  let response={};
+  let response={};let ownership;
   try {
     if (!Object.hasOwn(actions,action)) throw new Error('Unknown Copilot hook action.');
     let text=''; process.stdin.setEncoding('utf8');
@@ -67,14 +67,18 @@ export async function main(host=process.argv[2],action=process.argv[3]) {
       if (args!==undefined && !object(args)) throw new Error('Malformed native tool arguments.');
       if (args) input.tool_input=args;
     }
+    if (action==='user-prompt-submit'||action==='stop') {
+      try { ownership=claimReceipt(who); }
+      catch(error) { evidenceFailure(error); }
+    }
     if (action==='user-prompt-submit') {
       if(typeof raw.prompt!=='string')throw new Error('Missing original learner prompt.');
       input.prompt=raw.prompt;input.prompt_origin='unknown';
-      try { receipt=startReceipt(raw,who);input.generation_id=receipt.generation_id; }
+      try { if(ownership) {receipt=ownership.start(raw);input.generation_id=receipt.generation_id;} }
       catch(error) { evidenceFailure(error); }
     }
     if (action==='stop') {
-      try { receipt=currentReceipt(who); } catch(error) { evidenceFailure(error); }
+      try { if(ownership)receipt=ownership.current(); } catch(error) { evidenceFailure(error); }
       if(receipt) {
         input.generation_id=receipt.generation_id;input.stop_status='aborted';
         // CLI persists its final response concurrently with agentStop. Retry for
@@ -90,11 +94,16 @@ export async function main(host=process.argv[2],action=process.argv[3]) {
     }
     if(action==='session-end' && typeof raw.reason==='string')input.reason=raw.reason;
     const command=resolveCli();const [lifecycle,...extra]=actions[action];
+    try { ownership?.held(); }
+    catch(error) {
+      evidenceFailure(error);receipt=undefined;
+      delete input.generation_id;delete input.stop_status;delete input.last_assistant_message;
+    }
     const child=spawnSync(command.file,[...command.args,contextOnly?'hook-context':'hook',lifecycle,...(uncertainOrder?['--uncertain-order']:[]),'--agent','copilot','--mapping',join(root,'hooks/copilot-field-map.json'),'--output','json','--delivery','prompt-context','--stop-policy','defer-to-prompt',...extra],{shell:false,input:JSON.stringify(input),encoding:'utf8',timeout:25000,maxBuffer:1024*1024,windowsHide:true});
     const result=resultFrom(child,who.session_id);
     if(child.stderr)process.stderr.write(child.stderr);
     if(action==='stop' && receipt) {
-      try { clearReceipt(who,receipt); } catch(error) { process.stderr.write('Altitude Copilot receipt cleanup skipped: '+error.message+'\n'); }
+      try { ownership.clear(receipt); } catch(error) { process.stderr.write('Altitude Copilot receipt cleanup skipped: '+error.message+'\n'); }
     }
     if(result.action==='block' && action==='diff') {
       const reason=result.reason||'Altitude requested a workshop check before continuing.';
@@ -105,6 +114,9 @@ export async function main(host=process.argv[2],action=process.argv[3]) {
     }
     // No synthetic continuation and no explicit permission allow on open paths.
   } catch(error) {process.stderr.write('Altitude Copilot hook skipped: '+(error instanceof Error?error.message:'unexpected failure')+'\n');}
+  finally {
+    try { ownership?.release(); } catch(error) { process.stderr.write('Altitude Copilot receipt cleanup skipped: '+error.message+'\n'); }
+  }
   process.stdout.write(JSON.stringify(response)+'\n');process.exitCode=0;
 }
 try {if(process.argv[1]&&realpathSync(process.argv[1])===realpathSync(fileURLToPath(import.meta.url)))await main();}catch(error){process.stderr.write('Altitude Copilot hook bootstrap unavailable.\n');process.stdout.write('{}\n');process.exitCode=0;}
