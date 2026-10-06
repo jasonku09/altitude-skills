@@ -109,6 +109,7 @@ is removed. No hook modifies user configuration as a side effect of a lesson.
 | `sessionEnd` | `session-end` | Session teardown, distinct from turn end |
 
 The adapter calls `altitude hook` with `--agent cursor`, `--mapping`,
+`--transcript-mapping` pointing to [Cursor's privacy mapping](hooks/cursor-transcript-mapping.json),
 `--output json`, `--delivery prompt-context`, and `--stop-policy defer-to-prompt`. Structured result version 1 is
 `{ version, exitCode, action, context, reason?, followup?, session? }`.
 Only a coherent process exit 2 plus `action: "block"` produces a permission denial.
@@ -125,6 +126,11 @@ working folder is retained so a nested lesson binding is not replaced by an
 ancestor workspace binding. The adapter never selects
 `workspace_roots[0]` or substitutes the plugin process's working directory. Open
 the bound lesson folder in a separate workspace when attribution is ambiguous.
+
+A nonempty string `transcript_path` is forwarded unchanged to the CLI; missing,
+blank, or non-string values are omitted without disabling the hook. The adapter
+does not read the transcript itself. See [transcript-sharing compatibility](WORKSHOP-COMPATIBILITY.md#transcript-sharing-integration)
+for the companion CLI requirement.
 
 Session-start and prompt-submit context carry JSON session metadata whenever the
 core confirms this callback's exact `session.id`, including in an unbound folder

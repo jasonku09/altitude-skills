@@ -1,7 +1,8 @@
 // Offline interoperability check against T4's actual schema/redactor/locator.
 // node scripts/check-transcript-mappings.mjs /path/to/altitude/packages/workshop-core
 import assert from "node:assert/strict";
-import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { spawnSync } from "node:child_process";
+import { chmod, mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { createRequire } from "node:module";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -10,6 +11,9 @@ import test from "node:test";
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 if (!process.argv[2]) throw new Error("Pass the workshop-core package directory.");
 const core = resolve(process.argv[2]);
+// Optional reviewer evidence: actual sanitized fixtures and adapter/core receipts.
+const evidenceDir = process.argv[3] ? resolve(process.argv[3]) : null;
+if (evidenceDir) await mkdir(evidenceDir, { recursive: true });
 const requireCore = createRequire(join(core, "package.json"));
 const { build } = requireCore("esbuild");
 const bundle = await build({
@@ -29,6 +33,55 @@ for (const agent of ["claude-code", "codex", "cursor"]) {
     for (const sentinel of ["FAKE_SECRET", "ENV_PRIVATE_CONTENT", "IMAGE_PRIVATE_CONTENT"]) assert.ok(!result.jsonl.includes(sentinel), sentinel);
     assert.match(result.jsonl, /learner message/);
     assert.match(result.jsonl, /assistant message/);
+    if (evidenceDir) await writeFile(join(evidenceDir, `${agent}-sanitized.jsonl`), result.jsonl);
+  });
+}
+
+for (const agent of ["claude-code", "codex", "cursor"]) {
+  test(`${agent}: native hook delivers its transcript to the real core redactor`, async (t) => {
+    const dir = await mkdtemp(join(root, ".transcript-adapter-"));
+    t.after(() => rm(dir, { recursive: true, force: true }));
+    const receipt = join(dir, "receipt.json");
+    const executable = join(dir, "altitude");
+    // Replace only the CLI transport: the shipped adapter runs as a subprocess,
+    // and its selected mapping is consumed by the actual companion core code.
+    await writeFile(executable, `#!${process.execPath}
+import { readFileSync, writeFileSync } from "node:fs";
+import { loadTranscriptMapping, redactTranscript } from ${JSON.stringify(`data:text/javascript;base64,${Buffer.from(bundle.outputFiles[0].text).toString("base64")}`)};
+const args = process.argv.slice(2);
+const flag = name => args[args.indexOf(name) + 1];
+const input = JSON.parse(readFileSync(0, "utf8"));
+const fields = JSON.parse(readFileSync(flag("--mapping"), "utf8")).fields;
+const result = redactTranscript(readFileSync(input[fields.transcript_path], "utf8"), loadTranscriptMapping(flag("--transcript-mapping")));
+writeFileSync(${JSON.stringify(receipt)}, JSON.stringify({ args, input, result }, null, 2));
+if (flag("--agent") === "cursor") process.stdout.write(JSON.stringify({version: 1, exitCode: 0, action: "allow", context: []}));
+`);
+    await chmod(executable, 0o755);
+    const path = join(root, `test/fixtures/transcripts/${agent}.jsonl`);
+    const input = agent === "cursor"
+      ? { conversation_id: "chat-a", workspace_roots: [root], transcript_path: path }
+      : { session_id: "chat-a", cwd: root, transcript_path: path };
+    let command = process.execPath;
+    let args = [join(root, `bin/altitude-${agent}-hook.mjs`), "session-end"];
+    if (agent === "claude-code") {
+      const config = JSON.parse(await readFile(join(root, "hooks/hooks.json"), "utf8"));
+      command = executable;
+      args = config.hooks.SessionEnd[0].hooks[0].args.map(arg => arg.replaceAll("${CLAUDE_PLUGIN_ROOT}", root));
+    }
+    const env = { ...process.env, PATH: dir };
+    delete env.ALTITUDE_CLI_PATH;
+    const run = spawnSync(command, args, { input: JSON.stringify(input), env, encoding: "utf8", timeout: 10000 });
+    assert.equal(run.status, 0, run.stderr);
+    const captured = JSON.parse(await readFile(receipt, "utf8"));
+    assert.equal(captured.args[captured.args.indexOf("--agent") + 1], agent);
+    assert.equal(captured.args[captured.args.indexOf("--transcript-mapping") + 1], join(root, `hooks/${agent}-transcript-mapping.json`));
+    assert.equal(captured.input.transcript_path, path);
+    assert.equal(captured.result.jsonl, redactTranscript(await readFile(path, "utf8"), mapping(agent)).jsonl);
+    if (agent === "cursor") assert.deepEqual(JSON.parse(run.stdout), {});
+    if (evidenceDir) await writeFile(join(evidenceDir, `${agent}-adapter-receipt.json`), JSON.stringify({
+      scope: "Synthetic host payload through shipped hook and real companion core redactor; no server upload or live agent trial.",
+      ...captured, host_response: run.stdout,
+    }, null, 2) + "\n");
   });
 }
 

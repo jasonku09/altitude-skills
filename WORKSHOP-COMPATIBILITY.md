@@ -147,6 +147,30 @@ identity, and must never stand a missing marker in for a present one. The agent 
 re-read under the same session afterwards, so a refresh that registered the session
 as marker-less would turn that next read into false version evidence.
 
+## Transcript-sharing integration
+
+The transcript-sharing hooks require a companion CLI that accepts
+`altitude hook --transcript-mapping`. All three hosts pass this flag on every
+hook invocation, so an older CLI that rejects it cannot execute those hooks.
+The lesson-version floor and save-watcher fallback described above do not
+establish compatibility with this new hook argument. Ship the matching CLI
+before distributing this plugin change; this repository does not establish a
+released CLI version for transcript support.
+
+When a task envelope includes `notices`, the CLI must also support
+`altitude notice ack <id>`. An absent `notices` field requires no acknowledgement.
+These notices are separate from the existing `update_notices` handled at lesson
+close. The learner-facing behavior is described in the [README](README.md#install).
+
+The host-specific rules are owned by the transcript mapping files in `hooks/`:
+[Claude Code](hooks/claude-code-transcript-mapping.json),
+[Codex](hooks/codex-transcript-mapping.json), and
+[Cursor](hooks/cursor-transcript-mapping.json). The companion workshop core owns
+their schema, redaction, and transcript lookup implementation.
+[`scripts/check-transcript-mappings.mjs`](scripts/check-transcript-mappings.mjs)
+checks the mappings and fixtures against that implementation; plugin-only tests
+do not establish end-to-end sharing or upload behavior.
+
 ## Session recovery change (not published)
 
 The companion monorepo branch `ws/runtime-session-recovery` extends the local CLI

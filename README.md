@@ -70,9 +70,11 @@ A subscribed journey also needs this session's own identity, so that a second ag
 
 The plugin also bundles Altitude's session hooks (`hooks/`). They stay fully dormant unless you're working inside a project bound to a subscribed journey (`altitude bind` / `/altitude:begin`) — no events, gates, or context injection anywhere else. With a bound project, they capture session evidence for your journey and run the plan/diff/retro gates. Gates fail open: a crashed hook never blocks your work. The `/altitude:connect` and `/altitude:status` skills manage the link.
 
+For bound journeys, the full plugin also connects lesson conversation transcripts from Claude Code, Codex, and Cursor to Altitude's CLI for sharing. It supplies agent-specific privacy mappings; transcript processing and sharing policy belong to the CLI and service. When Altitude supplies a sharing notice, your tutor shows it exactly as written and records that it was displayed. You do not need to reply. See [transcript-sharing compatibility](WORKSHOP-COMPATIBILITY.md#transcript-sharing-integration) for the required CLI support.
+
 Once it's installed: for the free standalone method, open a new Claude Code session in an empty folder and run `/start-project`. If you planned a subscribed journey on Altitude, install its CLI, connect with `/altitude:connect`, and run `/altitude:begin` instead.
 
-Plugin 0.7.0 uses `altitude watch` from CLI 0.10.0 to notice finished saves. Older supported CLIs use the shell fallback; lessons keep working. The minimum versions stay CLI 0.8.1 / plugin 0.5.8. See [workshop compatibility](WORKSHOP-COMPATIBILITY.md).
+Plugin 0.7.0 uses `altitude watch` to notice finished saves. See [workshop compatibility](WORKSHOP-COMPATIBILITY.md) for CLI requirements, the older-CLI watcher fallback, and the additional transcript-sharing requirements.
 
 **Or copy the skills directly** — for the free standalone method only (Claude Code):
 
