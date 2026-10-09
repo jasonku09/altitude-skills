@@ -24,10 +24,11 @@ test('both plugin manifests carry this branch\'s release, above the 0.5.8 floor'
   // 0.7.0 delegated the save watcher to the CLI with a legacy fallback; this
   // 0.8.0 shipped lesson shape, drill evidence, and tutor fixes; this branch is
   // 0.8.1 was a prose-only patch (begin's no-journey route names the Journey
-  // tab); this branch is 0.9.0, which adds the GitHub Copilot plugin.
+  // tab); 0.9.0 added the GitHub Copilot plugin; this branch is 0.10.0, which adds
+  // the lesson page bootstrap.
   // The enforced floor stays 0.5.8 — minima move only for compatibility needs.
   for (const path of ['.claude-plugin/plugin.json', '.codex-plugin/plugin.json']) {
-    assert.equal(JSON.parse(read(path)).version, '0.9.0', path);
+    assert.equal(JSON.parse(read(path)).version, '0.10.0', path);
   }
 });
 

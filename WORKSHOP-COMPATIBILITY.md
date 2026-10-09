@@ -83,6 +83,18 @@ first CLI that accepts `--agent copilot` and carries `altitude hook-context` and
 before plugin 0.9.0, because publishing the plugin makes the Copilot marketplace
 entry installable.
 
+Plugin 0.10.0 adds the lesson page bootstrap. When `altitude task --json` carries
+`lesson_page.available: true`, the tutor runs `altitude lesson open`, which serves
+the lesson on a local browser page and prints the page instructions the tutor then
+follows; in Codex the tutor asks for escalated permissions for `altitude lesson`
+up front, because the default sandbox blocks the local server. It needs CLI 0.13.0,
+the first CLI with `altitude lesson`, and the server that serves
+`/api/lesson-page/bundle`. It moves no floor: older CLIs strip `lesson_page` and
+older servers never send it, so on either the lesson runs in the terminal exactly
+as in 0.9.0, as it does when `lesson open` reports that it can't show a page.
+Deploy the server that serves `/api/lesson-page/bundle` and publish CLI 0.13.0
+before plugin 0.10.0. The server's lesson page switch decides who sees the page.
+
 The graded lesson-start review adds no floor either. When `due_review` carries an
 `ask`, the tutor asks that kind of question and sends the answer with
 `--review <concept-id>` (key `review` under `emit --stdin`) and no verdict, and the
@@ -270,7 +282,7 @@ accept. A bound project whose client is too old keeps its binding, its generated
 plan, and its queued events while it waits for the update.
 
 Rollback is per artifact and needs no data migration. Reverting the plugin one
-release — 0.9.0 back to 0.8.1, 0.8.1 back to 0.8.0, 0.8.0 back to 0.7.0, 0.7.0 back to 0.6.1, 0.6.1 back to 0.6.0, 0.6.0 back to 0.5.8, or 0.5.8 back to 0.5.7 — restores the previous
+release — 0.10.0 back to 0.9.0, 0.9.0 back to 0.8.1, 0.8.1 back to 0.8.0, 0.8.0 back to 0.7.0, 0.7.0 back to 0.6.1, 0.6.1 back to 0.6.0, 0.6.0 back to 0.5.8, or 0.5.8 back to 0.5.7 — restores the previous
 instructions with the binding and plan intact; reverting the CLI to the last
 published build restores the previous envelope, and the server keeps accepting
 version-less claims until enforcement is enabled. Roll enforcement back

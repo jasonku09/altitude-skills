@@ -74,6 +74,8 @@ Once it's installed: for the free standalone method, open a new Claude Code sess
 
 Plugin 0.7.0 uses `altitude watch` from CLI 0.10.0 to notice finished saves. Older supported CLIs use the shell fallback; lessons keep working. The minimum versions stay CLI 0.8.1 / plugin 0.5.8. See [workshop compatibility](WORKSHOP-COMPATIBILITY.md).
 
+Plugin 0.10.0 can open a subscribed journey's lessons on a lesson page in your browser; it needs CLI 0.13.0. With an older CLI, or where a page can't open (over SSH, for example), lessons stay in the terminal.
+
 **Or copy the skills directly** — for the free standalone method only (Claude Code):
 
 ```bash
