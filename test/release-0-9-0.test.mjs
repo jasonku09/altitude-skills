@@ -33,9 +33,9 @@ test("compatibility notes: plugin 0.9.0 names Copilot's publication order and th
   assert.doesNotMatch(compat, /unchanged 0\.7\.0 version is not a Copilot publication claim/, "the stale development note is gone");
 });
 
-test("Copilot support notes state the released manifest version and its CLI requirement", () => {
+test("Copilot support notes state its first release, synchronized manifest versions, and CLI requirement", () => {
   const support = flat(read("COPILOT-SUPPORT.md"));
   assert.doesNotMatch(support, /manifest still says 0\.7\.0/);
-  assert.match(support, /0\.9\.0[^.]*first plugin release that includes Copilot/);
+  assert.match(support, /Copilot first shipped in plugin 0\.9\.0; its manifest version moves in step with the other host manifests\./);
   assert.match(support, /Altitude CLI 0\.12\.0 or later/);
 });
