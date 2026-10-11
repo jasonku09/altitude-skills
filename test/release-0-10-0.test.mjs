@@ -42,7 +42,8 @@ test("compatibility notes: plugin 0.10.0 names the page's publication order and 
   assert.match(compat, /0\.10\.0 back to 0\.9\.0, 0\.9\.0 back to 0\.8\.1/, "the rollback chain");
 });
 
-test("README: one line says 0.10.0 opens lessons on the page for beta accounts and older setups keep the terminal", () => {
+test("README: one line says 0.10.0 opens paid lessons on the page and a page that can't open keeps the terminal", () => {
   const readme = flat(read("README.md"));
-  assert.match(readme, /Plugin 0\.10\.0 can open lessons on a web lesson page in your browser for accounts in the beta; it needs CLI 0\.13\.0\. With an older CLI, or where a page can't open \(over SSH, for example\), lessons stay in the terminal\./);
+  assert.match(readme, /Plugin 0\.10\.0 opens paid lessons on a web lesson page in your browser and needs CLI 0\.13\.0\. Where a page can't open \(over SSH, for example\), the lesson stays in the terminal\./);
+  assert.doesNotMatch(readme, /accounts in the beta/);
 });
