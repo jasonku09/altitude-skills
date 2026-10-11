@@ -91,7 +91,7 @@ Recorded source trials include macOS desktop/terminal and an Ubuntu terminal les
 
 For the **free standalone method only**, copying the shared skills to `~/.cursor/skills/` remains available. A skills-only copy has no session hooks and cannot establish subscribed journey support. Use the complete native plugin for development acceptance of that route.
 
-**Using GitHub Copilot instead?** This repository includes a native Copilot plugin for the Copilot CLI and Copilot in VS Code, sharing the same seven skills. Use `/connect`, `/begin`, and `/next-lesson` in Copilot. See [workshop compatibility](WORKSHOP-COMPATIBILITY.md) for required versions and [Copilot setup](COPILOT-SUPPORT.md) for setup details and what has been verified.
+**Using GitHub Copilot instead?** This repository includes a native Copilot plugin for the Copilot CLI and Copilot in VS Code, sharing the same seven skills. It needs Altitude CLI 0.12.0 or later. Use `/connect`, `/begin`, and `/next-lesson` in Copilot. See [Copilot setup](COPILOT-SUPPORT.md) for setup details and what has been verified.
 
 ## How to use it
 
