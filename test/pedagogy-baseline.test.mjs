@@ -637,6 +637,6 @@ test("paid mode opens with a four-line release note naming the server fields thi
   assert.match(note, /0\.8\.1 is a prose-only patch on 0\.8\.0 with no new CLI or server requirement/, "0.8.1 adds no requirement");
   assert.match(note, /0\.9\.0 adds the GitHub Copilot plugin, which needs CLI 0\.12\.0/, "0.9.0 names Copilot's CLI need");
   assert.match(note, /0\.10\.0 adds the lesson page bootstrap: `altitude lesson open` needs CLI 0\.13\.0/, "0.10.0 names the page CLI");
-  assert.match(note, /The enforced runtime floor stays CLI 0\.8\.1 \/ plugin 0\.5\.8/, "the floor did not move");
+  assert.match(note, /The server raises the enforced runtime floor to CLI 0\.13\.0 \/ plugin 0\.10\.0 after 0\.10\.0 is published \(it was CLI 0\.8\.1 \/ plugin 0\.5\.8\)/, "the server raises the floor after publication");
   assert.match(lines[4], /^# next-lesson — paid mode/, "the heading follows the note");
 });

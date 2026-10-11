@@ -11,7 +11,7 @@ until 0.5.8 is actually available.
 Plugin 0.6.0 is this branch's pedagogy baseline — learner-written teach lines,
 scratch drills, the server-picked due-review question, and the method check-in. It
 does not raise the enforced floor: a versioned lesson still requires CLI 0.8.1 or
-later and plugin 0.5.8 or later, because minima move only for real compatibility
+later and plugin 0.5.8 or later until the server raises it, because minima move only for real compatibility
 needs. 0.6.0 expects the server to send `teaching_knobs`, `due_review`, and
 `method_checkin` on the journey envelope, and degrades in place when they are
 absent — default knobs, no review question, no check-in — so it is safe against an
@@ -33,7 +33,7 @@ adds the hook requirements for this release. See [Cursor acceptance](CURSOR-SUPP
 for tested scope.
 
 Plugin 0.7.0 uses `altitude watch` from CLI 0.10.0 when present and falls back
-below it, without raising the enforced floor: CLI 0.8.1 / plugin 0.5.8. The CLI
+below it, without raising the enforced floor: CLI 0.8.1 / plugin 0.5.8 until the server raises it. The CLI
 owns the baseline, deadline, marker check at arming, work-in-progress saves, and
 watcher ownership. The tutor sends the same 180-second windows and four-window
 limit, reviews real saves, and keeps the same speech rules: background commands
@@ -59,7 +59,7 @@ command available immediately; older supported CLIs still teach via the fallback
 No server or envelope requirement is added.
 
 Plugin 0.8.0 carries the lesson-shape, drill-evidence, and tutor-fix changes
-and adds no floor: the enforced minimum stays CLI 0.8.1 / plugin 0.5.8.
+and adds no floor: the enforced minimum stays CLI 0.8.1 / plugin 0.5.8 until the server raises it.
 Three of its emit forms need CLI 0.11.0: `emit --stdin`, `--review`, and
 `--drill`. CLI 0.10.0 and older answer `emit --stdin` that `--question` and
 `--answer` are required, because they ignore standard input rather than
@@ -89,11 +89,15 @@ the lesson on a local browser page and prints the page instructions the tutor th
 follows; in Codex the tutor asks for escalated permissions for `altitude lesson`
 up front, because the default sandbox blocks the local server. It needs CLI 0.13.0,
 the first CLI with `altitude lesson`, and the server that serves
-`/api/lesson-page/bundle`. It moves no floor: older CLIs strip `lesson_page` and
+`/api/lesson-page/bundle`. Publishing 0.10.0 itself moves no floor: older CLIs strip `lesson_page` and
 older servers never send it, so on either the lesson runs in the terminal exactly
 as in 0.9.0, as it does when `lesson open` reports that it can't show a page.
+Once CLI 0.13.0 and plugin 0.10.0 are both published, the server raises its lesson
+runtime floor (`minimum_cli_version` / `minimum_plugin_version`) to CLI 0.13.0 /
+plugin 0.10.0, so older installs get the server's update message at their next
+lesson until they update.
 Deploy the server that serves `/api/lesson-page/bundle` and publish CLI 0.13.0
-before plugin 0.10.0. The server's lesson page switch decides who sees the page.
+before plugin 0.10.0, then raise the server's lesson runtime floor. The server's lesson page switch decides who sees the page.
 
 The graded lesson-start review adds no floor either. When `due_review` carries an
 `ask`, the tutor asks that kind of question and sends the answer with
@@ -151,7 +155,7 @@ read; it never silently becomes a free Beginner lesson. Hooks remain fail open.
 An old plugin with an old cached plan cannot learn these new rules retroactively;
 server completion/evidence validation and rollout sequencing remain required.
 
-Every server-planned lesson requires CLI 0.8.1 or later and plugin 0.5.8 or later,
+Every server-planned lesson requires CLI 0.8.1 or later and plugin 0.5.8 or later until the server raises it,
 including historical Beginner tasks whose requirements are null. Those lessons still
 execute their existing hands-on method once the client is supported, and their data
 and recorded progress are preserved untouched. A client with a known incompatible version
@@ -312,7 +316,7 @@ the released 0.5.7 main, so the merged tree — whose hint-ladder, fast-forward 
 and watch text now share next-lesson's SKILL.md and paid-mode.md with these rules —
 has never run as a whole; both emit templates now carrying `--task` and
 `--plan-revision`; learner text moved into single quotes; the supported-client
-floor, now plugin 0.5.8, and its update-required routing replacing the previous
+floor, now plugin 0.5.8 until the server raises it, and its update-required routing replacing the previous
 free-mode fallback; the version-evidence versus reach-failure split that decides
 which of those a learner is told; the per-shell session reference; and the later
 review fixes — the not-connected branch for a bound folder on an unpaired computer,
