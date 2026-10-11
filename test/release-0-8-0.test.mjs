@@ -13,12 +13,12 @@ const flat = (text) => text.replace(/\s+/g, " ");
  * CLI 0.10.0 and older (ordinary quiz moments; flags instead of stdin).
  */
 
-// The host-manifest version pin moved to test/release-0-9-0.test.mjs: 0.8.1 is a
-// prose-only patch on 0.8.0, and 0.9.0 adds Copilot, carrying 0.8.0 unchanged.
+// The host-manifest version pin moved to test/release-0-10-0.test.mjs: 0.8.1 is a
+// prose-only patch on 0.8.0, 0.9.0 adds Copilot, and 0.10.0 the lesson page, carrying 0.8.0 unchanged.
 
 test("0.8.0: the paid-mode release note names what needs CLI 0.11.0 and moves no floor", () => {
   const paid = read("skills/next-lesson/references/paid-mode.md");
-  assert.ok(paid.startsWith("<!-- Release note (plugin 0.9.0)"), "the release note leads the file under the current version");
+  assert.ok(paid.startsWith("<!-- Release note (plugin 0.10.0)"), "the release note leads the file under the current version");
   const note = flat(paid.slice(0, paid.indexOf("-->")));
   assert.match(note, /0\.8\.0 adds no new enforced CLI or server requirement/);
   assert.match(note, /`emit --stdin`, `--review`, and `--drill` need CLI 0\.11\.0/);
@@ -45,9 +45,9 @@ test("compatibility notes: plugin 0.8.0 pairs with CLI 0.11.0 and publishes afte
 });
 
 // Jason, 2026-10-05: no "what's new" line in the README; the server's update reminders cover it.
-test("README keeps the minimum versions and drops the stale Cursor release note", () => {
+test("README points to the compatibility doc for required versions and drops the stale Cursor release note", () => {
   const readme = flat(read("README.md"));
-  assert.match(readme, /The minimum versions stay CLI 0\.8\.1 \/ plugin 0\.5\.8/);
+  assert.match(readme, /See \[workshop compatibility\]\(WORKSHOP-COMPATIBILITY\.md\) for required versions and rollout order\./);
   assert.doesNotMatch(readme, /release candidate is not yet published/);
 });
 

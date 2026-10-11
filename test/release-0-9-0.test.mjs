@@ -14,17 +14,12 @@ const flat = (text) => text.replace(/\s+/g, " ");
  * existing hosts gain no requirement and no floor moves.
  */
 
-const MANIFESTS = [".claude-plugin/plugin.json", ".codex-plugin/plugin.json", ".cursor-plugin/plugin.json", ".plugin/plugin.json"];
-
-test("0.9.0: every host manifest, Copilot included, carries the release version", () => {
-  for (const path of MANIFESTS) assert.equal(JSON.parse(read(path)).version, "0.9.0", path);
-  const market = JSON.parse(read(".github/plugin/marketplace.json"));
-  assert.deepEqual(market.plugins.map((plugin) => plugin.version), ["0.9.0"], "the Copilot marketplace entry");
-});
+// The host-manifest version pin moved to test/release-0-10-0.test.mjs: 0.10.0 adds
+// the lesson page bootstrap and carries 0.9.0's Copilot plugin unchanged.
 
 test("0.9.0: the paid-mode release note names Copilot's CLI need and moves no floor", () => {
   const paid = read("skills/next-lesson/references/paid-mode.md");
-  assert.ok(paid.startsWith("<!-- Release note (plugin 0.9.0)"), "the release note leads the file under the new version");
+  assert.ok(paid.startsWith("<!-- Release note (plugin 0.10.0)"), "the release note leads the file under the current version");
   const note = flat(paid.slice(0, paid.indexOf("-->")));
   assert.match(note, /0\.9\.0 adds the GitHub Copilot plugin, which needs CLI 0\.12\.0; Claude Code, Codex, and Cursor gain no new CLI or server requirement/);
   assert.match(note, /CLI 0\.8\.1 \/ plugin 0\.5\.8/, "the floor is unchanged");
@@ -38,9 +33,9 @@ test("compatibility notes: plugin 0.9.0 names Copilot's publication order and th
   assert.doesNotMatch(compat, /unchanged 0\.7\.0 version is not a Copilot publication claim/, "the stale development note is gone");
 });
 
-test("Copilot support notes state the released manifest version and its CLI requirement", () => {
+test("Copilot support notes state its first release, synchronized manifest versions, and CLI requirement", () => {
   const support = flat(read("COPILOT-SUPPORT.md"));
   assert.doesNotMatch(support, /manifest still says 0\.7\.0/);
-  assert.match(support, /0\.9\.0[^.]*first plugin release that includes Copilot/);
+  assert.match(support, /Copilot first shipped in plugin 0\.9\.0; its manifest version moves in step with the other host manifests\./);
   assert.match(support, /Altitude CLI 0\.12\.0 or later/);
 });

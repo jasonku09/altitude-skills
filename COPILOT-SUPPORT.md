@@ -5,8 +5,8 @@ VS Code's Local Copilot agent. It uses the existing seven shared skills and the 
 CLI/server lesson policy. It does not add a standalone VS Code extension, duplicate
 pedagogy, or ship server lesson logic in the public plugin.
 
-The manifest version is 0.9.0, the first plugin release that includes Copilot, in
-step with the other host manifests. It requires Altitude CLI 0.12.0 or later and the
+Copilot first shipped in plugin 0.9.0; its manifest version moves in step with the
+other host manifests. It requires Altitude CLI 0.12.0 or later and the
 Copilot-capable server; publish and deploy both before the plugin.
 
 ## Installation and identity
