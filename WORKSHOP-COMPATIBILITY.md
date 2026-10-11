@@ -83,11 +83,9 @@ first CLI that accepts `--agent copilot` and carries `altitude hook-context` and
 before plugin 0.9.0, because publishing the plugin makes the Copilot marketplace
 entry installable.
 
-Plugin 0.10.0 adds the lesson page bootstrap. When `altitude task --json` carries
-`lesson_page.available: true`, the tutor runs `altitude lesson open`, which serves
-the lesson on a local browser page and prints the page instructions the tutor then
-follows; in Codex the tutor asks for escalated permissions for `altitude lesson`
-up front, because the default sandbox blocks the local server. It needs CLI 0.13.0,
+Plugin 0.10.0 adds the lesson page bootstrap. The tutor's startup and fallback rules
+live in [next-lesson's Step 1](skills/next-lesson/SKILL.md#step-1--orient).
+It needs CLI 0.13.0,
 the first CLI with `altitude lesson`, and the server that serves
 `/api/lesson-page/bundle`. Publishing 0.10.0 itself moves no floor: older CLIs strip `lesson_page` and
 older servers never send it, so on either the lesson runs in the terminal exactly
