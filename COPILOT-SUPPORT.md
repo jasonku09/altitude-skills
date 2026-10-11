@@ -6,8 +6,10 @@ CLI/server lesson policy. It does not add a standalone VS Code extension, duplic
 pedagogy, or ship server lesson logic in the public plugin.
 
 Copilot first shipped in plugin 0.9.0; its manifest version moves in step with the
-other host manifests. It requires Altitude CLI 0.12.0 or later and the
-Copilot-capable server; publish and deploy both before the plugin.
+other host manifests. Its hook transport requires Altitude CLI 0.12.0 or later and the
+Copilot-capable server. That transport minimum does not establish compatibility
+with newer paid lessons; [workshop compatibility](WORKSHOP-COMPATIBILITY.md)
+owns the lesson requirements and publication order.
 
 ## Installation and identity
 
