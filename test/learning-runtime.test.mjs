@@ -174,7 +174,10 @@ test('completion status comes from emit, with a non-refusal legacy fallback', ()
   assert.match(step4, /prints nothing/);
   assert.match(step4, /lagging pointer is not a refusal/);
   assert.doesNotMatch(step4, /sent but Altitude has not accepted it yet/);
-  assert.match(step4, /Your completion is saved and will send when the connection is back\./);
+  assert.match(step4, /For `queued`, say “Your progress is saved on this computer and will reach Altitude the next time you're online\.”/);
+  assert.match(step4, /If its reason is `flush_busy` or `spooled`, use “Your completion is saved and waiting to send\.”/);
+  assert.match(step4, /With `"cache"`, or `"none"` and `reason: "network_blocked"`, after an old CLI's clean emit, use the queued line above/);
+  assert.doesNotMatch(step4, /Your completion is saved and will send when the connection is back/);
   const step2 = sliceBetween(read(PAID), '## Step 2', '## Step 3');
   assert.doesNotMatch(step2, /quiz moment or completion, call it sent/);
 });
