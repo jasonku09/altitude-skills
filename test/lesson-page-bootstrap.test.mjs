@@ -21,20 +21,19 @@ const sha256 = (text) => createHash("sha256").update(text).digest("hex");
  *
  * `lesson_page` rides on `altitude task --json` only from a CLI that declares
  * `page_protocol` to a server that answers it. Older CLIs strip it, so absence
- * means the terminal. The terminal lesson is the frozen fallback (Q6): outside the
- * inserted rule, SKILL.md and paid-mode.md stay byte-identical to the 0.9.0 release
- * (altitude-skills 2250529). A later release that deliberately changes the terminal
- * path retires the two hash pins below, the way each release moves the version pins.
+ * means the terminal. Jason's 2026-10-12 completion-acknowledgement decision
+ * deliberately changes the terminal fallback too. Pin that reviewed candidate
+ * below; its new learner-facing wording still needs approval before merge.
  */
 
 const SKILL = "skills/next-lesson/SKILL.md";
 const PAID = "skills/next-lesson/references/paid-mode.md";
 const FREE = "skills/next-lesson/references/free-mode.md";
 
-// sha256 of SKILL.md at 2250529 (plugin 0.9.0).
-const SKILL_0_9_0_SHA256 = "2cc53fd44e1c43d1c364de07eb15e61074467ffe31826ac56c64975ffb2585d4";
-// sha256 of paid-mode.md at 2250529 after its leading release-note comment.
-const PAID_BODY_0_9_0_SHA256 = "58be15bf31c1efc4edb8401a647c8a0a3e5cbc221650e139ae4cad321e1b7cf5";
+// sha256 excluding the lesson-page bootstrap paragraph.
+const SKILL_COMPLETION_ACK_SHA256 = "aece73640799ee8240a5c02669f2ad2db3165a46b911ee66f3e936781ce029f7";
+// sha256 excluding the leading release note and lesson-page bootstrap paragraph.
+const PAID_BODY_COMPLETION_ACK_SHA256 = "c60893e25be485c7a8ecbf32981d67437a65c31db980283f9ab86b9f810be1b2";
 
 const SKILL_RULE_START = "**The lesson page (paid mode).**";
 const PAID_RULE_START = "**The lesson page:**";
@@ -118,9 +117,9 @@ test("bootstrap: paid-mode.md's Step 1 points to the rule; free mode never opens
   assert.doesNotMatch(read(FREE), /lesson open|lesson_page/, "free mode stays page-free");
 });
 
-test("bootstrap: the terminal lesson stays byte-identical to 0.9.0 outside the inserted rule (Q6)", () => {
-  assert.equal(sha256(without(read(SKILL), SKILL_RULE_START)), SKILL_0_9_0_SHA256, "SKILL.md changed outside the rule");
+test("bootstrap: the terminal fallback stays pinned outside the inserted rule (completion-ack candidate)", () => {
+  assert.equal(sha256(without(read(SKILL), SKILL_RULE_START)), SKILL_COMPLETION_ACK_SHA256, "SKILL.md changed outside the rule");
   const paid = read(PAID);
   const body = paid.slice(paid.indexOf("-->\n") + 4);
-  assert.equal(sha256(without(body, PAID_RULE_START)), PAID_BODY_0_9_0_SHA256, "paid-mode.md changed outside the rule");
+  assert.equal(sha256(without(body, PAID_RULE_START)), PAID_BODY_COMPLETION_ACK_SHA256, "paid-mode.md changed outside the rule");
 });

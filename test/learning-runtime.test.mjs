@@ -167,36 +167,16 @@ test('a rejected flag is an update prompt — never a bare retry, never a false 
   assert.match(read('skills/begin/SKILL.md'), /Do not re-run a rejected command with older flags/);
 });
 
-test('a live read whose pointer has not moved is an unaccepted claim, never a sync', () => {
-  // The emit exiting cleanly proves only that the claim was sent. Under
-  // server-judged versioned requirements, a "network" read still pointing at
-  // the task just completed can mean Altitude did not accept it — calling
-  // that "synced … normal lag" claims a completion the server never granted.
+test('completion status comes from emit, with a non-refusal legacy fallback', () => {
   const step4 = sliceBetween(read(PAID), '## Step 4', '## Plan changes');
-  assert.doesNotMatch(step4, /or the pointer has not advanced on a live read, mention that briefly/);
-  assert.match(step4, /has not advanced on a live[^\n]*sent but Altitude has not accepted it yet/);
-  assert.match(step4, /never call it synced, recorded, or done/);
-  assert.match(step4, /never explain it away as lag/);
-  // Agents did not read "it should catch up on its own" as a lag excuse, and
-  // called the task "closed out" once the learner asked to wrap up. Altitude
-  // may have refused the claim, so neither the prediction nor the closure is
-  // true — in that message or any later reply.
-  assert.match(step4, /never predict that it will catch up, sync later, or be accepted on its own/);
-  assert.match(step4, /the next `\/next-lesson` will show whether it was accepted/);
-  assert.match(step4, /never describe the task as done, finished, wrapped, or closed out[^\n]*any later reply this session/);
-  // Agents that opened with a recap led with "This task is done on my end" or
-  // "closes out the substance of this task" before the not-accepted status,
-  // and a later turn called the claim "queued … that'll resolve on its own the
-  // next time we talk to the server" although the live read already had.
-  assert.match(step4, /Open your closing message with that status, before any recap/);
-  assert.match(step4, /any recap that follows describes what the learner did this lesson, never the task's status/);
-  assert.match(step4, /hedged forms such as "done on my end", "closes out the substance", or calling the lesson closed out count too/);
-  assert.match(step4, /never call the completion queued or say it will resolve on its own or the next time Altitude is reached[^\n]*any later reply this session/);
-  assert.doesNotMatch(read('skills/next-lesson/SKILL.md'), /paid mode reports completion/);
-  assert.match(read('skills/next-lesson/SKILL.md'), /paid mode sends the completion claim/);
-  // The same holds for quiz emits: a clean exit is not server-side credit.
+  for (const status of ['accepted', 'queued', 'rejected', 'unconfirmed']) assert.ok(step4.includes('`' + status + '`'));
+  assert.match(step4, /next_task_title/);
+  assert.match(step4, /prints nothing/);
+  assert.match(step4, /lagging pointer is not a refusal/);
+  assert.doesNotMatch(step4, /sent but Altitude has not accepted it yet/);
+  assert.match(step4, /Your completion is saved and will send when the connection is back\./);
   const step2 = sliceBetween(read(PAID), '## Step 2', '## Step 3');
-  assert.match(step2, /If you mention an emit that exited cleanly, quiz moment or completion, call it sent[^\n]*never recorded, accepted, credited, or landed/);
+  assert.doesNotMatch(step2, /quiz moment or completion, call it sent/);
 });
 
 test('the compatibility doc requires available downloads, not advance announcements', () => {
