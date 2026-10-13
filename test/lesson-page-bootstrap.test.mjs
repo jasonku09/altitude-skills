@@ -33,7 +33,7 @@ const FREE = "skills/next-lesson/references/free-mode.md";
 // sha256 excluding the lesson-page bootstrap paragraph.
 const SKILL_FEEDBACK_SHA256 = "8a0ad1741fcef25367f2842f57d35b1075dc4b25fa69de092270222f91d786ad";
 // sha256 excluding the leading release note and lesson-page bootstrap paragraph.
-const PAID_BODY_FEEDBACK_SHA256 = "b67d7596ff7a67996deef678f48f052958b5d97c29825250b178ec4df729bf01";
+const PAID_BODY_FEEDBACK_SHA256 = "c23404c7e5ec90305607ce4665b3d37b1ed3e0708b4eec83ec1ae3e558d604d2";
 
 const SKILL_RULE_START = "**The lesson page (paid mode).**";
 const PAID_RULE_START = "**The lesson page:**";

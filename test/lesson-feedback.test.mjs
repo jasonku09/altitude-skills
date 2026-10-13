@@ -19,5 +19,6 @@ test('every nonempty answer uses stdin feedback; old CLIs silently skip recordin
   assert.match(paid, /every non-empty answer/);
   assert.match(paid, /quoted delimiter/);
   assert.match(paid, /unknown.*silently/s);
+  assert.ok(paid.includes("--stdin is not supported for emit lesson-feedback"), "CLI 0.13.0 rejects stdin before dispatching the unknown emit");
   assert.doesNotMatch(paid, /teaching-checkin|method_checkin|--observation|--signal/);
 });
