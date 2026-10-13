@@ -22,3 +22,8 @@ test('every nonempty answer uses stdin feedback; old CLIs silently skip recordin
   assert.ok(paid.includes("--stdin is not supported for emit lesson-feedback"), "CLI 0.13.0 rejects stdin before dispatching the unknown emit");
   assert.doesNotMatch(paid, /teaching-checkin|method_checkin|--observation|--signal/);
 });
+
+test('uses the approved open question and acknowledges feedback without promising changes', () => {
+  assert.ok(skill.includes("Anything you'd like changed about how the lessons go, or any other feedback you'd like to share?"));
+  assert.match(skill, /thank them, say it.s passed along, and record it without promising changes you can.t make/);
+});

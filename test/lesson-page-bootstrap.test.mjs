@@ -30,8 +30,9 @@ const SKILL = "skills/next-lesson/SKILL.md";
 const PAID = "skills/next-lesson/references/paid-mode.md";
 const FREE = "skills/next-lesson/references/free-mode.md";
 
-// sha256 excluding the lesson-page bootstrap paragraph.
-const SKILL_FEEDBACK_SHA256 = "8a0ad1741fcef25367f2842f57d35b1075dc4b25fa69de092270222f91d786ad";
+// sha256 excluding the lesson-page bootstrap paragraph. Refreshed only for
+// Jason's approved 2026-10-12 feedback question and acknowledgement guidance.
+const SKILL_FEEDBACK_SHA256 = "60178e4f7ba5b1d3e0475783bff2c49798498a3e22a3dd870de0f1ffda2749f4";
 // sha256 excluding the leading release note and lesson-page bootstrap paragraph.
 const PAID_BODY_FEEDBACK_SHA256 = "c23404c7e5ec90305607ce4665b3d37b1ed3e0708b4eec83ec1ae3e558d604d2";
 
