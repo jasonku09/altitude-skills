@@ -35,7 +35,7 @@ const FREE = "skills/next-lesson/references/free-mode.md";
 const SKILL_0_9_0_SHA256 = "2cc53fd44e1c43d1c364de07eb15e61074467ffe31826ac56c64975ffb2585d4";
 // sha256 of paid-mode.md after its leading release-note comment: 2250529 (plugin 0.9.0)
 // plus the 2026-10-12 learner brief paragraph and its plan.md exclusion.
-const PAID_BODY_0_9_0_SHA256 = "78d2403bd8efc82c6a00b683f9898bc6a6aa78e5582080a9a8614cc238ac4ee7";
+const PAID_BODY_0_9_0_SHA256 = "d26ad20a0c12e564938ca43fbf898c8e59f97f8f08d4fa1205a8ecb1d8a52b71";
 
 const SKILL_RULE_START = "**The lesson page (paid mode).**";
 const PAID_RULE_START = "**The lesson page:**";
