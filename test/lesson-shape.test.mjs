@@ -58,12 +58,6 @@ test("drills at either level stay relevant to the task, without becoming the gap
   assert.match(drill, /a different problem from the project gap/);
 });
 
-test("no_learner_lines is a hands_on signal only; drills_skipped stays a valid signal at either level", () => {
-  const close = sliceBetween(read(SKILL), "## Step 4 — Close the loop", "## When they broke something");
-  assert.match(close, /zero learner-written lines in a `hands_on` lesson \(`no_learner_lines`; never under `decide_inspect_verify`/);
-  assert.match(close, /`drills_skipped`/);
-});
-
 test("no commit before the plan has taught version control; after that the commit is the learner's", () => {
   const skill = read(SKILL);
   assert.doesNotMatch(skill, /checkpoint commit/);

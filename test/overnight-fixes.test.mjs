@@ -52,7 +52,7 @@ test("questions go only in a turn's final message, since text before a tool call
 });
 
 test("the close names the host's own next-lesson command and nudges a fresh chat, per agent", () => {
-  const close = sliceBetween(read(SKILL), "## Step 4 — Close the loop", "**The method check-in comes after the recap");
+  const close = sliceBetween(read(SKILL), "## Step 4 — Close the loop", "**After the recap in every paid lesson");
   // Since 2026-10-05 (problem 10) the invitation is the close's last step.
   const invite = close.split("\n").find((l) => l.startsWith("7. "));
   assert.doesNotMatch(invite, /run `\/next-lesson` when ready/);

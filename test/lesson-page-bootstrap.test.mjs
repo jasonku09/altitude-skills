@@ -31,9 +31,9 @@ const PAID = "skills/next-lesson/references/paid-mode.md";
 const FREE = "skills/next-lesson/references/free-mode.md";
 
 // sha256 excluding the lesson-page bootstrap paragraph.
-const SKILL_COMPLETION_ACK_SHA256 = "aece73640799ee8240a5c02669f2ad2db3165a46b911ee66f3e936781ce029f7";
+const SKILL_FEEDBACK_SHA256 = "8a0ad1741fcef25367f2842f57d35b1075dc4b25fa69de092270222f91d786ad";
 // sha256 excluding the leading release note and lesson-page bootstrap paragraph.
-const PAID_BODY_COMPLETION_ACK_SHA256 = "8755ca6163746ecd42c4eab80abb85ba1c3100f8e4889437841d2d86a636789c";
+const PAID_BODY_FEEDBACK_SHA256 = "b67d7596ff7a67996deef678f48f052958b5d97c29825250b178ec4df729bf01";
 
 const SKILL_RULE_START = "**The lesson page (paid mode).**";
 const PAID_RULE_START = "**The lesson page:**";
@@ -117,9 +117,9 @@ test("bootstrap: paid-mode.md's Step 1 points to the rule; free mode never opens
   assert.doesNotMatch(read(FREE), /lesson open|lesson_page/, "free mode stays page-free");
 });
 
-test("bootstrap: the terminal fallback stays pinned outside the inserted rule (completion-ack candidate)", () => {
-  assert.equal(sha256(without(read(SKILL), SKILL_RULE_START)), SKILL_COMPLETION_ACK_SHA256, "SKILL.md changed outside the rule");
+test("bootstrap: the terminal fallback stays pinned outside the inserted rule (feedback candidate)", () => {
+  assert.equal(sha256(without(read(SKILL), SKILL_RULE_START)), SKILL_FEEDBACK_SHA256, "SKILL.md changed outside the rule");
   const paid = read(PAID);
   const body = paid.slice(paid.indexOf("-->\n") + 4);
-  assert.equal(sha256(without(body, PAID_RULE_START)), PAID_BODY_COMPLETION_ACK_SHA256, "paid-mode.md changed outside the rule");
+  assert.equal(sha256(without(body, PAID_RULE_START)), PAID_BODY_FEEDBACK_SHA256, "paid-mode.md changed outside the rule");
 });

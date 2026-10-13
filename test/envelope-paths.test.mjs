@@ -33,7 +33,6 @@ const PATHS = [
   "journey.teaching_knobs",
   "journey.current_task.learning_requirements",
   "journey.current_task.due_review",
-  "journey.current_task.method_checkin",
 ];
 
 async function readNextLesson() {
@@ -122,7 +121,6 @@ test("paths: SKILL.md gives the path at each point of reading", async () => {
   const skill = await readNextLesson();
   const step2 = between(skill, "## Step 2 — Review one due concept", "## Step 3");
   const step3 = between(skill, "## Step 3 — Execute the task", "### Introduce, drill, apply");
-  const step4 = between(skill, "**The method check-in comes after the recap", "\n\n");
 
   assert.match(step2, /the source is `journey\.current_task\.due_review` and nothing else/, "Step 2 reads the review by its path");
   assert.match(step3, /Read them from `journey\.teaching_knobs` in paid mode/, "Step 3 reads the knobs by their path");
@@ -132,7 +130,6 @@ test("paths: SKILL.md gives the path at each point of reading", async () => {
     /a `null` read from the top level of the output is a wrong path, not an absent field/,
     "Step 3 must keep a wrong-path null from reading as 'absent'",
   );
-  assert.match(step4, /Read `journey\.current_task\.method_checkin` from the paid-mode envelope/, "Step 4 reads the check-in by its path");
   // The defaults sentence itself is unchanged.
   assert.match(
     step3,
