@@ -172,6 +172,6 @@ test("paths: the 0.7.0 notes list the change and add no requirement", async () =
   assert.match(compat, /It adds no\s+CLI, server, or envelope requirement and moves no floor/, "still no floor move");
   for (const manifest of [".claude-plugin/plugin.json", ".codex-plugin/plugin.json"]) {
     const json = JSON.parse(await readFile(join(repoRoot, manifest), "utf8"));
-    assert.equal(json.version, "0.10.0", `${manifest} is 0.10.0`);
+    assert.equal(json.version, "0.10.1", `${manifest} is 0.10.1`);
   }
 });
