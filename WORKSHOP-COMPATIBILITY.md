@@ -97,12 +97,14 @@ lesson until they update.
 Deploy the server that serves `/api/lesson-page/bundle` and publish CLI 0.13.0
 before plugin 0.10.0, then raise the server's lesson runtime floor. The server's lesson page switch decides who sees the page.
 
-Plugin 0.10.1 moves no floor. With CLI 0.13.1, `altitude emit task-completed` reports whether
+Plugin 0.10.1 pairs with CLI 0.13.1. With CLI 0.13.1, `altitude emit task-completed` reports whether
 Altitude accepted the completion (and names the next task), and `altitude emit lesson-feedback`
 records the optional end-of-lesson feedback; the server stops sending `method_checkin`, which
 replaces the method check-in. On CLI 0.13.0 the tutor falls back to re-reading the journey and
 skips recording feedback silently. Deploy the server (feedback migration included) and publish
-CLI 0.13.1 before plugin 0.10.1.
+CLI 0.13.1 before plugin 0.10.1. Once both are published, the server raises its lesson runtime
+floor to CLI 0.13.1 / plugin 0.10.1 (CLI 0.13.1 also carries a fix for stale uploaders after CLI
+updates), so older installs get the server's update message at their next lesson until they update.
 
 The graded lesson-start review adds no floor either. When `due_review` carries an
 `ask`, the tutor asks that kind of question and sends the answer with
