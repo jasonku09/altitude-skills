@@ -145,7 +145,7 @@ Render exactly this structure:
 5. For each section in the supplied order, add a blank line and `## NN · <section.title>`, where `NN` is the section's numeric `position` left-padded to two digits. On the next non-blank line write the section description verbatim when present.
 6. Under each section, render its tasks in supplied order. A task whose `status` is `completed` is `- [x] <task.title>`; every other status is `- [ ] <task.title>`. If its `id` equals `current_task.id`, append ` ← you are here`. When a task description is present, put it on the following line, prefixing every description line with two spaces.
 
-Use exactly one blank line between top-level blocks. Apart from the required two-space task-description prefix, preserve server text verbatim. Never put IDs, inferred tasks, timestamps, or other nondeterministic data in the file.
+Use exactly one blank line between top-level blocks. Apart from the required two-space task-description prefix, preserve server text verbatim. Never render `learner_brief`: it is about the learner, not the project, and this file sits in a repo they may push publicly. Never put IDs, inferred tasks, timestamps, or other nondeterministic data in the file.
 
 On Windows only, also write the shell you detected earlier to `learning/environment.md`, so later sessions and `/altitude:next-lesson` don't re-detect it. Exactly these bytes, LF line endings, one trailing newline, nothing else — no dates, no IDs, no notes:
 
