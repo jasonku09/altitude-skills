@@ -18,7 +18,7 @@ function sliceBetween(contents, startHeading, endHeading) {
   return contents.slice(start, end);
 }
 
-const close = () => sliceBetween(read(SKILL), "## Step 4 — Close the loop", "**The method check-in comes after the recap");
+const close = () => sliceBetween(read(SKILL), "## Step 4 — Close the loop", "**After the recap in every paid lesson");
 
 test("problem 6: the close records any explanation, decision reason or critique not yet recorded", () => {
   const step1 = close().split("\n").find((l) => l.startsWith("1. "));
@@ -44,7 +44,7 @@ test("problem 10: the fresh-chat invitation is the close's last step, after the 
   // Step 4 keeps only the recap and the motto; a learner who clears the chat
   // on the invitation never answers a check-in asked after it.
   assert.equal(step(4), "4. A one-line recap of the new leaves added to their tree. **Never ship a line of code you can't explain.**");
-  assert.match(step(5), /^5\. The method check-in/);
+  assert.match(step(5), /^5\. The optional feedback question/);
   assert.match(step(6), /^6\. The update lines/);
   assert.match(step(7), /^7\. One line inviting the next lesson in a fresh chat, in their host's own words:/);
   assert.equal(lines.filter((l) => /fresh chat/.test(l)).length, 1, "the invitation is said once, last");

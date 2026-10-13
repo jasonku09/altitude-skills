@@ -33,12 +33,7 @@ const JON =
 
 const DRILL_ASK = "Another one, or into the project?";
 
-const CHECKIN_OBSERVATION = "You asked for the solution on both fill-ins in the fetch step";
-
 const TEACHING_SET = "altitude teaching set <knob>=<value> --session '<this session's ID>'";
-
-const CHECKIN_EMIT =
-  "altitude emit teaching-checkin --session '<this session's ID>' --knob <drills|step_size|check_density> --value <the proposed value> --signal <hints_heavy|drills_skipped|no_learner_lines|impatience|floor> --answer <yes|no> --observation '<your one-line observation>'";
 
 async function readNextLesson() {
   return readFile(join(repoRoot, "skills/next-lesson/SKILL.md"), "utf8");
@@ -310,60 +305,6 @@ test("F: the review question comes only from due_review in paid mode; nothing du
 
 // ------------------------------------------------------------------ G
 
-test("G: the method check-in is asked at the close, after the recap, only when the envelope says so", async () => {
-  const close = closeSection(await readNextLesson());
-
-  assert.match(
-    close,
-    /\*\*The method check-in comes after the recap, only when the envelope says so\.\*\*/,
-    "the check-in rule must be one emphasized instruction",
-  );
-  assert.match(close, /`journey\.current_task\.method_checkin`/, "the envelope field must be named");
-  assert.match(close, /`required`, always ask/, "required means always");
-  assert.match(close, /`allowed`, ask only when you observed/, "allowed means only on an observed signal");
-  assert.match(close, /three or more hint rungs/, "signal: hints heavy");
-  assert.match(close, /`drills_skipped`, zero learner-written lines/, "signal: drills skipped, by its contract name");
-  assert.doesNotMatch(close, /drills declined/, "the undefined 'declined' wording is gone");
-  assert.match(
-    close,
-    /\*\*`drills_skipped` means the learner asked to skip a drill before it had been written and run\*\*/,
-    "drills_skipped must be defined as one emphasized instruction",
-  );
-  assert.match(close, /"skip the drill", "just show me in the project"/, "with the example phrasings");
-  assert.match(close, /\*\*twice in one lesson\*\*/, "twice in one lesson");
-  assert.match(close, /choosing "into the project" at the ask after the drills is not a skip/, "the ask's project answer is not a skip");
-  assert.match(close, /zero learner-written lines/, "signal: no learner lines");
-  assert.match(close, /the impatience rule invoked/, "signal: impatience");
-  assert.match(close, /\*\*When the field is absent, never ask\*\*/, "absence must be emphasized as never");
-  assert.match(close, /\*\*One check-in per session, full stop\*\*/, "the session ceiling must be emphasized");
-  assert.match(close, /skip every later one in the same conversation/, "the ceiling holds across lessons in one conversation");
-  // The form.
-  assert.match(close, /one concrete observation from this lesson/, "one observation");
-  assert.ok(close.includes(CHECKIN_OBSERVATION), "the example observation must be spelled out");
-  assert.match(close, /ONE proposed knob change with its new value/, "one proposal with a value");
-  assert.match(close, /yes or no is what gets recorded, never free text/, "the answer is yes/no");
-  assert.match(close, /`--answer yes` or `--answer no`/, "the answer flag must be spelled out");
-  assert.match(close, /`floor` when a `required` check-in had no observed signal/, "the floor signal must be explained");
-  assert.match(close, /\*\*Never write the knob yourself from a check-in\*\*/, "the server applies accepted proposals");
-  assert.match(close, /\*\*Never propose a level change\*\*/, "level changes are off limits");
-  // The check-in is a real question, so it waits, and it precedes the update lines.
-  assert.match(close, /Then wait\./, "the tutor waits for the answer");
-  assert.match(close, /before any update line/, "the check-in precedes the update relay");
-});
-
-test("G: paid mode carries the exact check-in emit; free mode has no check-in", async () => {
-  const paid = await readPaidMode();
-  assert.match(paid, /### Method check-in \(paid\)/, "paid mode needs the check-in section");
-  assert.ok(paid.includes(CHECKIN_EMIT), "the teaching-checkin emit must be spelled out exactly");
-  assert.match(paid, /never run `altitude teaching set` from a check-in/, "the knob is never written from a check-in");
-  assert.match(paid, /never claim the setting changed/, "the tutor never claims the knob changed");
-  assert.match(paid, /never call a rejected emit recorded/, "a failed emit is not recorded");
-
-  const free = await readFreeMode();
-  assert.match(free, /There is no method check-in in free mode/, "free mode must say it has no check-in");
-  assert.doesNotMatch(free, /teaching-checkin|method_checkin/, "free mode must not carry the check-in mechanics");
-});
-
 // ------------------------------------------------------------------ H
 
 test("H: a plain-words request to change how they are taught maps to one knob and is set the same turn", async () => {
@@ -372,7 +313,7 @@ test("H: a plain-words request to change how they are taught maps to one knob an
 
   assert.match(
     section,
-    /\*\*A plain-words request to change how they are taught, made outside a check-in, maps to exactly one knob and is applied the same turn\.\*\*/,
+    /\*\*A plain-words request to change how they are taught, maps to exactly one knob and is applied the same turn\.\*\*/,
     "the rule must be one emphasized instruction",
   );
   // The mapping, with the two example requests from the lane card.
@@ -504,24 +445,10 @@ test("B: the learner writes the teach lines section scopes the signature example
   assert.match(learnerWrites, /a function signature with its docstring when the task is not teaching what the signature uses/, "the signature example must carry its condition");
 });
 
-test("G: the lesson closes in one fixed order: recap, then check-in, then the emit, then update lines", async () => {
+test("G: feedback follows the recap and precedes updates", async () => {
   const close = closeSection(await readNextLesson());
-
-  assert.match(close, /Close in this order, and nothing else goes between the steps/, "the close must be an ordered sequence");
-  const recap = close.indexOf("4. A one-line recap of the new leaves");
-  const checkin = close.indexOf("5. The method check-in");
-  const updates = close.indexOf("6. The update lines");
-  assert.ok(recap !== -1, "the recap step is missing");
-  assert.ok(checkin > recap, "the check-in step must follow the recap step");
-  assert.ok(updates > checkin, "the update lines must follow the check-in step");
-  assert.match(
-    close,
-    /\*\*the emit is the first thing you do after their answer\*\*/,
-    "the emit must be pinned as the first action after the yes/no",
-  );
-
-  const paid = await readPaidMode();
-  assert.match(paid, /the first action of the turn that reads their answer/, "paid mode must place the emit first in the answering turn");
+  assert.ok(close.indexOf("5. The optional feedback question") > close.indexOf("4. A one-line recap"));
+  assert.ok(close.indexOf("6. The update lines") > close.indexOf("5. The optional feedback question"));
 });
 
 test("prior knowledge: only the explicit claim is a signal; an answered check never makes a concept familiar", async () => {
@@ -572,7 +499,7 @@ test("the README describes the arc and the teaching settings where it describes 
 
   assert.match(readme, /learning\/scratch\//, "the README must name the scratch folder");
   assert.match(readme, /you write every line of what it's teaching/, "the README must say the learner writes the teach lines");
-  assert.match(readme, /check-in/, "the README must mention the check-in");
+  assert.match(readme, /optional feedback question/, "the README names optional feedback");
   assert.match(readme, /drills/, "the README must name the drills setting");
   // The PR #21 fast-forward pins survive.
   assert.match(readme, /a task built entirely from concepts you've marked known opens with an offer/);
@@ -604,7 +531,7 @@ test("README: the check-in cadence is stated in plain words and the settings hav
 
   // Cadence in plain words.
   assert.doesNotMatch(bullet, /Every few lessons/, "the vague cadence is gone");
-  assert.match(bullet, /after your second task, then about every fifth, and never more than once in a sitting/, "the real cadence");
+  assert.match(bullet, /At the end of each paid lesson/, "the feedback cadence");
   // Plain names for the three settings, no raw enum names outside the one syntax clause.
   assert.match(bullet, /how many drills per new concept/, "drills, in plain words");
   assert.match(bullet, /the step size/, "step size, in plain words");
@@ -617,7 +544,7 @@ test("README: the check-in cadence is stated in plain words and the settings hav
   assert.match(bullet, /`altitude teaching set check_density=every_run`/, "the exact syntax stays in one place");
   // The answer line is warm and plain.
   assert.doesNotMatch(bullet, /Your answer is what it records/, "the cold wording is gone");
-  assert.match(bullet, /a yes takes effect from your next lesson, a no leaves things as they are/, "the warm wording");
+  assert.match(bullet, /optional feedback question/, "feedback is optional");
   // No em-dashes in the rewritten learner-facing bullet.
   assert.doesNotMatch(bullet, /—/, "no em-dashes in the bullet");
 });
@@ -629,8 +556,8 @@ test("paid mode opens with a four-line release note naming the server fields thi
   const end = lines.findIndex((line) => line.includes("-->"));
   assert.equal(end, 3, "the note is exactly four lines");
   const note = lines.slice(0, 4).join("\n");
-  assert.match(note, /expects the server to send `teaching_knobs`, `due_review`, and `method_checkin`/, "the three fields");
-  assert.match(note, /uses the default knobs, asks no review question, and never asks a check-in/, "the behavior without them");
+  assert.match(note, /expects the server to send `teaching_knobs` and `due_review`/, "the three fields");
+  assert.match(note, /uses the default knobs and asks no review question/, "the behavior without them");
   assert.match(note, /Do not publish 0\.6\.0 or later before the server that serves these fields is deployed/, "the publish order");
   assert.match(note, /0\.7\.0 adds no new enforced CLI or server requirement/, "the patch adds no requirement");
   assert.match(note, /0\.8\.0 adds no new enforced CLI or server requirement either/, "0.8.0 adds no requirement either");
