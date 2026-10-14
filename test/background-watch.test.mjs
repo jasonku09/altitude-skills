@@ -170,14 +170,15 @@ test("silent re-arms and chat on a background host", async () => {
 
 test("the release notes mention the watch change and move no floor", async () => {
   const compat = await readFile(join(repoRoot, "WORKSHOP-COMPATIBILITY.md"), "utf8");
-  const paid = await readFile(join(repoRoot, "skills", "next-lesson", "references", "paid-mode.md"), "utf8");
+  // The release note leads next-lesson's SKILL.md, so its first comment is the note.
+  const paid = await readFile(join(repoRoot, "skills", "next-lesson", "SKILL.md"), "utf8");
   for (const manifest of [".claude-plugin/plugin.json", ".codex-plugin/plugin.json"]) {
     const { version } = JSON.parse(await readFile(join(repoRoot, manifest), "utf8"));
-    assert.equal(version, "0.10.1", `${manifest}: the version is 0.10.1`);
+    assert.equal(version, "0.10.2", `${manifest}: the version is 0.10.2`);
   }
 
   assert.match(compat, /Plugin 0\.7\.0[^]*background/i, "the current notes mention the background watch");
-  assert.match(paid.split("-->")[0], /background/, "the paid-mode release comment mentions the watch change");
+  assert.match(paid.split("-->")[0], /background/, "the next-lesson release comment mentions the watch change");
   assert.match(paid.split("-->")[0], /CLI 0\.8\.1 \/ plugin 0\.5\.8/, "the floor is unchanged");
 });
 
@@ -242,7 +243,8 @@ test("a silent re-arm after a work-in-progress save re-takes the baseline time-f
 
 test("the 0.7.0 notes delegate the baseline to altitude watch", async () => {
   const compat = await readFile(join(repoRoot, "WORKSHOP-COMPATIBILITY.md"), "utf8");
-  const paid = await readFile(join(repoRoot, "skills", "next-lesson", "references", "paid-mode.md"), "utf8");
+  // The release note leads next-lesson's SKILL.md, so its first comment is the note.
+  const paid = await readFile(join(repoRoot, "skills", "next-lesson", "SKILL.md"), "utf8");
 
   assert.match(compat.replace(/\s+/g, " "), /Plugin 0\.7\.0.*baseline/i);
   assert.match(paid.split("-->")[0], /CLI owns the baseline/);
@@ -329,7 +331,8 @@ test("the expiry question is bound to the carried deadline", async () => {
 
 test("the 0.7.0 notes delegate the deadline and arming check to altitude watch", async () => {
   const compat = await readFile(join(repoRoot, "WORKSHOP-COMPATIBILITY.md"), "utf8");
-  const paid = await readFile(join(repoRoot, "skills", "next-lesson", "references", "paid-mode.md"), "utf8");
+  // The release note leads next-lesson's SKILL.md, so its first comment is the note.
+  const paid = await readFile(join(repoRoot, "skills", "next-lesson", "SKILL.md"), "utf8");
 
   assert.match(compat.replace(/\s+/g, " "), /Plugin 0\.7\.0.*deadline/i);
   assert.match(paid.split("-->")[0], /CLI owns the baseline, deadline, and marker check at arming/);

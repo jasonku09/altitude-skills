@@ -18,15 +18,16 @@ const flat = (text) => text.replace(/\s+/g, " ");
 const MANIFESTS = [".claude-plugin/plugin.json", ".codex-plugin/plugin.json", ".cursor-plugin/plugin.json", ".plugin/plugin.json"];
 
 test("0.10.0: every host manifest carries the release version", () => {
-  for (const path of MANIFESTS) assert.equal(JSON.parse(read(path)).version, "0.10.1", path);
+  for (const path of MANIFESTS) assert.equal(JSON.parse(read(path)).version, "0.10.2", path);
   const market = JSON.parse(read(".github/plugin/marketplace.json"));
-  assert.deepEqual(market.plugins.map((plugin) => plugin.version), ["0.10.1"], "the Copilot marketplace entry");
+  assert.deepEqual(market.plugins.map((plugin) => plugin.version), ["0.10.2"], "the Copilot marketplace entry");
 });
 
-test("0.10.0: the paid-mode release note names the page CLI, server, and subsequent floor raise", () => {
-  const paid = read("skills/next-lesson/references/paid-mode.md");
-  assert.ok(paid.startsWith("<!-- Release note (plugin 0.10.0)"), "the release note leads the file under the new version");
-  const note = flat(paid.slice(0, paid.indexOf("-->")));
+test("0.10.0: the next-lesson release note names the page CLI, server, and subsequent floor raise", () => {
+  const skill = read("skills/next-lesson/SKILL.md");
+  const body = skill.slice(skill.indexOf("\n---\n", 3) + 5).replace(/^\n+/, "");
+  assert.ok(skill.startsWith("---\n") && body.startsWith("<!-- Release note (plugin 0.10.0)"), "the release note leads next-lesson's SKILL.md, right after its frontmatter, under the new version");
+  const note = flat(body.slice(0, body.indexOf("-->")));
   assert.match(note, /0\.10\.0 adds the lesson page bootstrap: `altitude lesson open` needs CLI 0\.13\.0 and the server that serves `\/api\/lesson-page\/bundle`/);
   assert.match(note, /older CLIs and servers send no available `lesson_page`, so the lesson stays in the terminal unchanged/);
   assert.match(note, /The server raises the enforced runtime floor to CLI 0\.13\.0 \/ plugin 0\.10\.0 after 0\.10\.0 is published \(it was CLI 0\.8\.1 \/ plugin 0\.5\.8\)/, "the server raises the floor after publication");

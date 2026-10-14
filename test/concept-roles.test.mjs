@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import { existsSync } from "node:fs";
+import { readFile, readdir } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
@@ -16,17 +17,27 @@ const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
  * checks pin the load-bearing lines the manual live-session plan
  * (TESTPLAN-skip-tutor.md) verifies behaviorally.
  *
- * The skill is split by mode: SKILL.md carries the mode-neutral method and a
- * mandatory read-gate; references/paid-mode.md and references/free-mode.md
- * carry each mode's binding rules. Every pinned sentence lives in exactly one
- * of the three files, and the assertions below read the file that owns it.
+ * The skill is split by mode: SKILL.md carries the mode-neutral method, a
+ * mandatory read-gate, and the paid-mode rules in its own "## Paid mode"
+ * section (inlined so a paid lesson never needs a file read outside the
+ * learner's project); references/free-mode.md carries free mode's binding
+ * rules. Every pinned sentence lives in exactly one of those three homes, and
+ * the assertions below read the one that owns it.
  */
 async function readNextLesson() {
   return readFile(join(repoRoot, "skills/next-lesson/SKILL.md"), "utf8");
 }
 
 async function readPaidMode() {
-  return readFile(join(repoRoot, "skills/next-lesson/references/paid-mode.md"), "utf8");
+  return paidMode(await readFile(join(repoRoot, "skills/next-lesson/SKILL.md"), "utf8"));
+}
+
+/** next-lesson's paid-mode rules: the "## Paid mode" section of its SKILL.md. */
+function paidMode(skill) {
+  const from = skill.indexOf("\n## Paid mode\n");
+  assert.notEqual(from, -1, "next-lesson's SKILL.md has no paid-mode section");
+  const to = skill.indexOf("\n## ", from + 1);
+  return skill.slice(from + 1, to === -1 ? skill.length : to + 1);
 }
 
 async function readFreeMode() {
@@ -64,8 +75,8 @@ test("exercise concepts are used without the teaching apparatus but stay load-be
     skill,
     /Do not drop the exercise concept just because it is not lesson content/,
   );
-  // Both quiz surfaces carry the guard: paid Step 2's opening review (in the
-  // paid reference file) and Step 3's opportunistic checks (mode-neutral).
+  // Both quiz surfaces carry the guard: paid Step 2's opening review (in SKILL.md's
+  // paid-mode section) and Step 3's opportunistic checks (mode-neutral).
   // Either one alone leaves a door open. Since the 2026-09-17 pedagogy
   // redesign the opening review draws from the server-picked `due_review`
   // alone, which by construction is never one of the task's own concepts,
@@ -263,9 +274,9 @@ test("chat arriving mid-file-watch outranks the watch and is the learner's own w
 });
 
 test("the thin client emits only the existing event vocabulary — no skip or mastery mutations", async () => {
-  // Scan all three files together so no file can smuggle a new emit in.
-  const combined =
-    (await readNextLesson()) + (await readPaidMode()) + (await readFreeMode());
+  // Scan both files together (SKILL.md includes the paid-mode section) so no
+  // file can smuggle a new emit in.
+  const combined = (await readNextLesson()) + (await readFreeMode());
 
   const emitted = [...combined.matchAll(/altitude emit ([a-z-]+)/g)].map((m) => m[1]);
   assert.equal(emitted.length > 0, true, "the paid evidence path lost its emit commands");
@@ -277,13 +288,13 @@ test("the thin client emits only the existing event vocabulary — no skip or ma
   );
 });
 
-test("the mode split is wired: read-gate present, reference files real, moved rules gone", async () => {
+test("the mode split is wired: read-gate present, paid rules inline, free reference real, moved rules gone", async () => {
   const skill = await readNextLesson();
 
-  // The gate is the whole mechanism: without it the reference files are dead
+  // The gate is the whole mechanism: without it the mode rules are dead
   // weight and every session silently runs on the neutral half alone.
-  assert.match(skill, /read your mode's reference file/);
-  assert.match(skill, /`references\/paid-mode\.md`/);
+  assert.match(skill, /\*\*Before taking another step, read your mode's rules\*\*/);
+  assert.match(skill, /in paid mode, the \*\*Paid mode\*\* section at the end of this file/);
   assert.match(skill, /`references\/free-mode\.md`/);
   assert.match(
     skill,
@@ -293,16 +304,38 @@ test("the mode split is wired: read-gate present, reference files real, moved ru
 
   const paid = await readPaidMode();
   const free = await readFreeMode();
-  assert.equal(paid.length > 1000, true, "paid-mode.md is missing or gutted");
+  assert.equal(paid.length > 1000, true, "SKILL.md's paid-mode section is missing or gutted");
   assert.equal(free.length > 1000, true, "free-mode.md is missing or gutted");
+  assert.equal(skill.endsWith(paid), true, "the paid-mode section closes SKILL.md, after every shared step");
 
-  // Moved markers must not linger in SKILL.md, or the split regresses
+  // Moved markers must not linger in the shared steps, or the split regresses
   // silently into two homes for one rule.
-  assert.doesNotMatch(skill, /altitude:generated from your journey/);
-  assert.doesNotMatch(skill, /altitude emit/);
-  assert.doesNotMatch(skill, /Partition the task's concepts/);
+  const shared = skill.slice(0, skill.length - paid.length);
+  assert.doesNotMatch(shared, /altitude:generated from your journey/);
+  assert.doesNotMatch(shared, /altitude emit/);
+  assert.doesNotMatch(shared, /Partition the task's concepts/);
+  assert.match(paid, /altitude:generated from your journey/);
+  assert.match(paid, /Partition the task's concepts/);
   // Free mode is emit-free by design: session capture is a paid-mode path.
   assert.doesNotMatch(free, /altitude emit/);
+});
+
+test("paid rules need no outside file read: paid-mode.md is gone and nothing sends the tutor to it", async () => {
+  // The plugin install dir sits outside the learner's project, so a paid
+  // lesson that opened a reference file hit a permission prompt at its start
+  // (Claude Code auto mode), and a learner who blocked it got a tutor running
+  // without its paid rules. Free mode keeps its reference file.
+  assert.equal(
+    existsSync(join(repoRoot, "skills/next-lesson/references/paid-mode.md")),
+    false,
+    "references/paid-mode.md came back; its rules belong in SKILL.md's paid-mode section",
+  );
+  assert.equal(existsSync(join(repoRoot, "skills/next-lesson/references/free-mode.md")), true);
+  for (const name of await readdir(join(repoRoot, "skills"))) {
+    const text = await readFile(join(repoRoot, "skills", name, "SKILL.md"), "utf8");
+    assert.doesNotMatch(text, /paid-mode\.md/, `skills/${name}/SKILL.md still points at paid-mode.md`);
+  }
+  assert.doesNotMatch(await readFreeMode(), /paid-mode\.md/);
 });
 
 test("the plan-materialization spec cannot drift between begin and next-lesson", async () => {
@@ -327,7 +360,7 @@ test("the plan-materialization spec cannot drift between begin and next-lesson",
       "render the bound journey",
       "render the journey",
     ),
-    spec(paid, "references/paid-mode.md"),
+    spec(paid, "next-lesson SKILL.md's paid-mode section"),
     "the two copies of the plan-rendering spec must stay identical",
   );
 });

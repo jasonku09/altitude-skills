@@ -17,10 +17,11 @@ const flat = (text) => text.replace(/\s+/g, " ");
 // The host-manifest version pin moved to test/release-0-10-0.test.mjs: 0.10.0 adds
 // the lesson page bootstrap and carries 0.9.0's Copilot plugin unchanged.
 
-test("0.9.0: the paid-mode release note names Copilot's CLI need and moves no floor", () => {
-  const paid = read("skills/next-lesson/references/paid-mode.md");
-  assert.ok(paid.startsWith("<!-- Release note (plugin 0.10.0)"), "the release note leads the file under the current version");
-  const note = flat(paid.slice(0, paid.indexOf("-->")));
+test("0.9.0: the next-lesson release note names Copilot's CLI need and moves no floor", () => {
+  const skill = read("skills/next-lesson/SKILL.md");
+  const body = skill.slice(skill.indexOf("\n---\n", 3) + 5).replace(/^\n+/, "");
+  assert.ok(skill.startsWith("---\n") && body.startsWith("<!-- Release note (plugin 0.10.0)"), "the release note leads next-lesson's SKILL.md, right after its frontmatter, under the current version");
+  const note = flat(body.slice(0, body.indexOf("-->")));
   assert.match(note, /0\.9\.0 adds the GitHub Copilot plugin, which needs CLI 0\.12\.0; Claude Code, Codex, and Cursor gain no new CLI or server requirement/);
   assert.match(note, /CLI 0\.8\.1 \/ plugin 0\.5\.8/, "the floor is unchanged");
 });

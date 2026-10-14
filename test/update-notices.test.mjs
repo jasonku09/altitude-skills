@@ -27,7 +27,7 @@ const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 // response, not the mode, and paused subscriptions (which read the free-mode
 // reference) still get CLI responses that can carry notices. Nothing on the
 // client self-updates, so notices are the only channel — parking the relay in
-// paid-mode.md would silently cut paused users off from it. In pure free mode
+// the paid-mode section would silently cut paused users off from it. In pure free mode
 // the paragraphs are inert because the fields cannot exist.
 async function readNextLesson() {
   return readFile(join(repoRoot, "skills/next-lesson/SKILL.md"), "utf8");

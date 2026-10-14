@@ -18,7 +18,9 @@ test("the drill's prediction is sent marked as a drill, in the sentence that alr
 });
 
 test("--stdin carries the drill marker as a key", () => {
-  const paid = read("skills/next-lesson/references/paid-mode.md");
+  const next = read("skills/next-lesson/SKILL.md");
+  const paid = next.slice(next.indexOf("\n## Paid mode\n"));
+  assert.ok(paid.startsWith("\n## Paid mode\n"), "next-lesson's SKILL.md has no paid-mode section");
   assert.match(paid, /`drill` \(`true`\) for a drill's prediction/);
 });
 

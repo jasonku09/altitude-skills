@@ -3,7 +3,16 @@ import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 
-const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
+const readRaw = (path) => readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
+const read = (path) => (path === PAID ? paidMode(readRaw("skills/next-lesson/SKILL.md")) : readRaw(path));
+/** next-lesson's paid-mode rules: the "## Paid mode" section of its SKILL.md. */
+function paidMode(skill) {
+  const from = skill.indexOf("\n## Paid mode\n");
+  assert.notEqual(from, -1, "next-lesson's SKILL.md has no paid-mode section");
+  const to = skill.indexOf("\n## ", from + 1);
+  return skill.slice(from + 1, to === -1 ? skill.length : to + 1);
+}
+
 const flat = (text) => text.replace(/\s+/g, " ");
 const sha256 = (text) => createHash("sha256").update(text).digest("hex");
 
@@ -27,14 +36,19 @@ const sha256 = (text) => createHash("sha256").update(text).digest("hex");
  */
 
 const SKILL = "skills/next-lesson/SKILL.md";
-const PAID = "skills/next-lesson/references/paid-mode.md";
+// The paid-mode rules live in next-lesson's SKILL.md; read(PAID) returns that section.
+const PAID = "skills/next-lesson/SKILL.md#paid-mode";
 const FREE = "skills/next-lesson/references/free-mode.md";
 
-// sha256 excluding the lesson-page bootstrap paragraph. Refreshed only for
-// Jason's approved 2026-10-12 feedback question and acknowledgement guidance.
-const SKILL_FEEDBACK_SHA256 = "60178e4f7ba5b1d3e0475783bff2c49798498a3e22a3dd870de0f1ffda2749f4";
-// sha256 excluding the leading release note and lesson-page bootstrap paragraph (includes the 2026-10-12 learner brief paragraph).
-const PAID_BODY_FEEDBACK_SHA256 = "1952a23239f6af2953ea81ca3e7a3acb3de3039b4a69ec74416b84832610d31b";
+// sha256 of SKILL.md's shared steps: the file without its leading release note,
+// its paid-mode section, and the lesson-page bootstrap paragraph. Refreshed for
+// Jason's approved 2026-10-12 feedback question and acknowledgement guidance, and
+// again when the paid-mode rules moved into SKILL.md (pointer wording only).
+const SKILL_FEEDBACK_SHA256 = "1c18c9be9d9d2eaa384eddb5c38d274062336ec059832e0838261efa9b9b4ac4";
+// sha256 of SKILL.md's paid-mode section without its lesson-page bootstrap paragraph
+// (includes the 2026-10-12 learner brief paragraph). Refreshed when the section moved
+// out of references/paid-mode.md (relocation wording only).
+const PAID_BODY_FEEDBACK_SHA256 = "1d284aa9b88b8c6203ff888b88088d37c3f32178b834cdddaeeaa62f0216eef8";
 
 const SKILL_RULE_START = "**The lesson page (paid mode).**";
 const PAID_RULE_START = "**The lesson page:**";
@@ -60,7 +74,7 @@ const skillRule = () => flat(paragraph(read(SKILL), SKILL_RULE_START).text);
 test("bootstrap: SKILL.md carries one lesson page rule, in Step 1 after the mode choice", () => {
   const skill = read(SKILL);
   const { from } = paragraph(skill, SKILL_RULE_START);
-  assert.ok(from > skill.indexOf("**Before taking another step, read your mode's reference file**"), "after the mode file is read");
+  assert.ok(from > skill.indexOf("**Before taking another step, read your mode's rules**"), "after the mode's rules are read");
   assert.ok(from < skill.indexOf("### Match their shell"), "still inside Step 1's opening");
   assert.ok(from > skill.indexOf("## Step 1 — Orient"), "inside Step 1");
 });
@@ -108,7 +122,7 @@ test("bootstrap: an absent or unavailable lesson_page means the terminal, with n
   for (const agent of ["Claude Code", "Cursor", "Copilot"]) assert.doesNotMatch(rule, new RegExp(agent), agent);
 });
 
-test("bootstrap: paid-mode.md's Step 1 points to the rule; free mode never opens the page", () => {
+test("bootstrap: the paid-mode section's Step 1 points to the rule; free mode never opens the page", () => {
   const paid = read(PAID);
   const { from, text } = paragraph(paid, PAID_RULE_START);
   assert.ok(from > paid.indexOf("## Step 1 — Orient (paid)") && from < paid.indexOf("## Step 2"), "inside paid Step 1");
@@ -119,8 +133,11 @@ test("bootstrap: paid-mode.md's Step 1 points to the rule; free mode never opens
 });
 
 test("bootstrap: the terminal fallback stays pinned outside the inserted rule (feedback candidate)", () => {
-  assert.equal(sha256(without(read(SKILL), SKILL_RULE_START)), SKILL_FEEDBACK_SHA256, "SKILL.md changed outside the rule");
+  const skill = read(SKILL);
   const paid = read(PAID);
-  const body = paid.slice(paid.indexOf("-->\n") + 4);
-  assert.equal(sha256(without(body, PAID_RULE_START)), PAID_BODY_FEEDBACK_SHA256, "paid-mode.md changed outside the rule");
+  const note = skill.indexOf("<!-- Release note");
+  assert.notEqual(note, -1, "SKILL.md lost its release note");
+  const shared = skill.slice(0, note) + skill.slice(skill.indexOf("-->\n", note) + 4, skill.length - paid.length);
+  assert.equal(sha256(without(shared, SKILL_RULE_START)), SKILL_FEEDBACK_SHA256, "SKILL.md's shared steps changed outside the rule");
+  assert.equal(sha256(without(paid, PAID_RULE_START)), PAID_BODY_FEEDBACK_SHA256, "SKILL.md's paid-mode section changed outside the rule");
 });

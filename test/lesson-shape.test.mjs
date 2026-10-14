@@ -2,9 +2,19 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 
-const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
+const readRaw = (path) => readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
+const read = (path) => (path === PAID ? paidMode(readRaw("skills/next-lesson/SKILL.md")) : readRaw(path));
+/** next-lesson's paid-mode rules: the "## Paid mode" section of its SKILL.md. */
+function paidMode(skill) {
+  const from = skill.indexOf("\n## Paid mode\n");
+  assert.notEqual(from, -1, "next-lesson's SKILL.md has no paid-mode section");
+  const to = skill.indexOf("\n## ", from + 1);
+  return skill.slice(from + 1, to === -1 ? skill.length : to + 1);
+}
+
 const SKILL = "skills/next-lesson/SKILL.md";
-const PAID = "skills/next-lesson/references/paid-mode.md";
+// The paid-mode rules live in next-lesson's SKILL.md; read(PAID) returns that section.
+const PAID = "skills/next-lesson/SKILL.md#paid-mode";
 
 /**
  * Lesson shape (Jason, 2026-10-02). Intermediate lessons (`decide_inspect_verify`)

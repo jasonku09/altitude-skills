@@ -2,7 +2,9 @@ import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 const skill = readFileSync(new URL('../skills/next-lesson/SKILL.md', import.meta.url), 'utf8');
-const paid = readFileSync(new URL('../skills/next-lesson/references/paid-mode.md', import.meta.url), 'utf8');
+// The paid-mode rules: the "## Paid mode" section that closes SKILL.md.
+const paid = skill.slice(skill.indexOf('\n## Paid mode\n'));
+assert.ok(paid.startsWith('\n## Paid mode\n'), "next-lesson's SKILL.md has no paid-mode section");
 test('paid lesson close offers optional open feedback after recap, never a performance proposal', () => {
   const close = skill.slice(skill.indexOf('## Step 4 — Close the loop'), skill.indexOf('## Direct knob changes'));
   assert.match(close, /5\. The optional feedback question/);
