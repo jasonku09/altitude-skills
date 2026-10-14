@@ -40,7 +40,15 @@ async function readNextLesson() {
 }
 
 async function readPaidMode() {
-  return readFile(join(repoRoot, "skills/next-lesson/references/paid-mode.md"), "utf8");
+  return paidMode(await readFile(join(repoRoot, "skills/next-lesson/SKILL.md"), "utf8"));
+}
+
+/** next-lesson's paid-mode rules: the "## Paid mode" section of its SKILL.md. */
+function paidMode(skill) {
+  const from = skill.indexOf("\n## Paid mode\n");
+  assert.notEqual(from, -1, "next-lesson's SKILL.md has no paid-mode section");
+  const to = skill.indexOf("\n## ", from + 1);
+  return skill.slice(from + 1, to === -1 ? skill.length : to + 1);
 }
 
 async function readFreeMode() {
@@ -517,7 +525,7 @@ test("knob precedence: the knobs set the defaults and server-authored instructio
     /\*\*server-authored `instructions`, when present, outrank the knobs\*\*/,
     "instructions outrank the knobs, as one emphasized instruction",
   );
-  assert.doesNotMatch(section, /and nothing else does/, "the 'nothing else' wording contradicted paid-mode.md");
+  assert.doesNotMatch(section, /and nothing else does/, "the 'nothing else' wording contradicted the paid-mode section");
 
   const paid = await readPaidMode();
   assert.match(paid, /Server-authored `instructions` still outrank the knobs/, "paid mode keeps its precedence line");
@@ -549,9 +557,10 @@ test("README: the check-in cadence is stated in plain words and the settings hav
   assert.doesNotMatch(bullet, /—/, "no em-dashes in the bullet");
 });
 
-test("paid mode opens with a four-line release note naming the server fields this version expects", async () => {
-  const paid = await readPaidMode();
-  const lines = paid.split("\n");
+test("next-lesson's SKILL.md opens with a four-line release note naming the server fields this version expects", async () => {
+  const skill = await readNextLesson();
+  assert.ok(skill.startsWith("---\n"), "the frontmatter stays first");
+  const lines = skill.slice(skill.indexOf("\n---\n", 3) + 5).replace(/^\n+/, "").split("\n");
   assert.match(lines[0], /^<!-- Release note \(plugin 0\.10\.0\):/, "the note is the first line and names the version");
   const end = lines.findIndex((line) => line.includes("-->"));
   assert.equal(end, 3, "the note is exactly four lines");
@@ -565,5 +574,5 @@ test("paid mode opens with a four-line release note naming the server fields thi
   assert.match(note, /0\.9\.0 adds the GitHub Copilot plugin, which needs CLI 0\.12\.0/, "0.9.0 names Copilot's CLI need");
   assert.match(note, /0\.10\.0 adds the lesson page bootstrap: `altitude lesson open` needs CLI 0\.13\.0/, "0.10.0 names the page CLI");
   assert.match(note, /The server raises the enforced runtime floor to CLI 0\.13\.0 \/ plugin 0\.10\.0 after 0\.10\.0 is published \(it was CLI 0\.8\.1 \/ plugin 0\.5\.8\)/, "the server raises the floor after publication");
-  assert.match(lines[4], /^# next-lesson — paid mode/, "the heading follows the note");
+  assert.equal(lines[4], "", "the note stands alone right after the frontmatter");
 });

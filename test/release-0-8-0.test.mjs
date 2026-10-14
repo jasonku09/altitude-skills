@@ -16,10 +16,11 @@ const flat = (text) => text.replace(/\s+/g, " ");
 // The host-manifest version pin moved to test/release-0-10-0.test.mjs: 0.8.1 is a
 // prose-only patch on 0.8.0, 0.9.0 adds Copilot, and 0.10.0 the lesson page, carrying 0.8.0 unchanged.
 
-test("0.8.0: the paid-mode release note names what needs CLI 0.11.0 and moves no floor", () => {
-  const paid = read("skills/next-lesson/references/paid-mode.md");
-  assert.ok(paid.startsWith("<!-- Release note (plugin 0.10.0)"), "the release note leads the file under the current version");
-  const note = flat(paid.slice(0, paid.indexOf("-->")));
+test("0.8.0: the next-lesson release note names what needs CLI 0.11.0 and moves no floor", () => {
+  const skill = read("skills/next-lesson/SKILL.md");
+  const body = skill.slice(skill.indexOf("\n---\n", 3) + 5).replace(/^\n+/, "");
+  assert.ok(skill.startsWith("---\n") && body.startsWith("<!-- Release note (plugin 0.10.0)"), "the release note leads next-lesson's SKILL.md, right after its frontmatter, under the current version");
+  const note = flat(body.slice(0, body.indexOf("-->")));
   assert.match(note, /0\.8\.0 adds no new enforced CLI or server requirement/);
   assert.match(note, /`emit --stdin`, `--review`, and `--drill` need CLI 0\.11\.0/);
   assert.match(note, /CLI 0\.8\.1 \/ plugin 0\.5\.8/, "the floor is unchanged");
@@ -33,7 +34,10 @@ test("0.8.0: the paid-mode release note names what needs CLI 0.11.0 and moves no
  * answer as a missed sync. The fallback names the answer 0.10.0 actually gives.
  */
 test("--stdin falls back to flags on the answer an older CLI actually gives", () => {
-  const paid = flat(read("skills/next-lesson/references/paid-mode.md"));
+  const skill = read("skills/next-lesson/SKILL.md");
+  const at = skill.indexOf("\n## Paid mode\n");
+  assert.notEqual(at, -1, "next-lesson's SKILL.md has no paid-mode section");
+  const paid = flat(skill.slice(at));
   assert.match(paid, /if it reports the option unknown, or that `--question` and `--answer` are required, send the same emit again with the single-quoted flags/);
 });
 

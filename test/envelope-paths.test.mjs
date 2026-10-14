@@ -40,7 +40,15 @@ async function readNextLesson() {
 }
 
 async function readPaidMode() {
-  return readFile(join(repoRoot, "skills/next-lesson/references/paid-mode.md"), "utf8");
+  return paidMode(await readFile(join(repoRoot, "skills/next-lesson/SKILL.md"), "utf8"));
+}
+
+/** next-lesson's paid-mode rules: the "## Paid mode" section of its SKILL.md. */
+function paidMode(skill) {
+  const from = skill.indexOf("\n## Paid mode\n");
+  assert.notEqual(from, -1, "next-lesson's SKILL.md has no paid-mode section");
+  const to = skill.indexOf("\n## ", from + 1);
+  return skill.slice(from + 1, to === -1 ? skill.length : to + 1);
 }
 
 function between(text, start, end) {
@@ -147,7 +155,7 @@ test("paths: paid mode gives the path at each point of reading, and no read is l
     /\*\*The review question comes only from `journey\.current_task\.due_review`\.\*\*/,
     "the sole review source carries its path",
   );
-  for (const [name, text] of [["paid-mode.md", paid], ["SKILL.md", skill]]) {
+  for (const [name, text] of [["SKILL.md's paid-mode section", paid], ["SKILL.md", skill]]) {
     assert.doesNotMatch(text, /Read `current_task\./, `${name}: a read of a current_task field must carry the journey path`);
     assert.doesNotMatch(text, /Read (them from )?`teaching_knobs`/, `${name}: a read of the knobs must carry the journey path`);
     assert.doesNotMatch(text, /the source is `current_task\.due_review`/, `${name}: the review source must carry the journey path`);
@@ -162,9 +170,9 @@ test("paths: /begin checks for versioned requirements at their path under `journ
 });
 
 test("paths: the 0.7.0 notes list the change and add no requirement", async () => {
-  const paid = await readPaidMode();
+  const skill = await readNextLesson();
   const compat = await readFile(join(repoRoot, "WORKSHOP-COMPATIBILITY.md"), "utf8");
-  const note = between(paid, "<!-- Release note (plugin 0.10.0)", "-->");
+  const note = between(skill, "<!-- Release note (plugin 0.10.0)", "-->");
 
   assert.match(note, /every server field is read by its exact path under `journey`/, "the release note lists the change");
   assert.match(note, /0\.7\.0 adds no new enforced CLI or server requirement/, "still no new requirement");

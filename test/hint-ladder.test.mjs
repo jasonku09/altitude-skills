@@ -34,7 +34,15 @@ async function readNextLesson() {
 }
 
 async function readPaidMode() {
-  return readFile(join(repoRoot, "skills/next-lesson/references/paid-mode.md"), "utf8");
+  return paidMode(await readFile(join(repoRoot, "skills/next-lesson/SKILL.md"), "utf8"));
+}
+
+/** next-lesson's paid-mode rules: the "## Paid mode" section of its SKILL.md. */
+function paidMode(skill) {
+  const from = skill.indexOf("\n## Paid mode\n");
+  assert.notEqual(from, -1, "next-lesson's SKILL.md has no paid-mode section");
+  const to = skill.indexOf("\n## ", from + 1);
+  return skill.slice(from + 1, to === -1 ? skill.length : to + 1);
 }
 
 async function readFreeMode() {

@@ -16,10 +16,11 @@ const flat = (text) => text.replace(/\s+/g, " ");
 // The host-manifest version pin moved to test/release-0-10-0.test.mjs: 0.9.0 added
 // Copilot and 0.10.0 the lesson page, both carrying 0.8.1 unchanged for the existing hosts.
 
-test("0.8.1: the paid-mode release note names the patch and moves no floor", () => {
-  const paid = read("skills/next-lesson/references/paid-mode.md");
-  assert.ok(paid.startsWith("<!-- Release note (plugin 0.10.0)"), "the release note leads the file under the current version");
-  const note = flat(paid.slice(0, paid.indexOf("-->")));
+test("0.8.1: the next-lesson release note names the patch and moves no floor", () => {
+  const skill = read("skills/next-lesson/SKILL.md");
+  const body = skill.slice(skill.indexOf("\n---\n", 3) + 5).replace(/^\n+/, "");
+  assert.ok(skill.startsWith("---\n") && body.startsWith("<!-- Release note (plugin 0.10.0)"), "the release note leads next-lesson's SKILL.md, right after its frontmatter, under the current version");
+  const note = flat(body.slice(0, body.indexOf("-->")));
   assert.match(note, /0\.8\.1 is a prose-only patch on 0\.8\.0 with no new CLI or server requirement/);
   assert.match(note, /CLI 0\.8\.1 \/ plugin 0\.5\.8/, "the floor is unchanged");
 });

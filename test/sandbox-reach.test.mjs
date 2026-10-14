@@ -176,7 +176,9 @@ test("next-lesson reads source and reason before choosing a mode", async () => {
 });
 
 test("paid-mode's post-completion refresh knows a non-network read cannot show the pointer moved", async () => {
-  const paid = await readSkill("skills/next-lesson/references/paid-mode.md");
+  const skill = await readSkill("skills/next-lesson/SKILL.md");
+  const paid = skill.slice(skill.indexOf("\n## Paid mode\n"));
+  assert.ok(paid.startsWith("\n## Paid mode\n"), "next-lesson's SKILL.md has no paid-mode section");
 
   // In a sandbox the emit spools and the re-read answers from the local copy,
   // so the pointer still shows the task just finished. That is a queued sync,
@@ -205,8 +207,7 @@ test("connect gets Codex through the sandbox and names the trust prompt that fol
 test("no envelope-reading skill tells a learner to reinstall", async () => {
   for (const relativePath of [
     "skills/begin/SKILL.md",
-    "skills/next-lesson/SKILL.md",
-    "skills/next-lesson/references/paid-mode.md",
+    "skills/next-lesson/SKILL.md", // includes the paid-mode section
     "skills/connect/SKILL.md",
   ]) {
     const skill = await readSkill(relativePath);

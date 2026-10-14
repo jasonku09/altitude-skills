@@ -205,7 +205,8 @@ test("Cursor shared skills identify the host and preserve exact current session 
   const connect = await readFile(join(root, "skills/connect/SKILL.md"), "utf8");
   assert.match(connect, /--agent cursor/);
   assert.match(connect, /cursor-agent --version/);
-  for (const path of ["skills/begin/SKILL.md", "skills/next-lesson/SKILL.md", "skills/next-lesson/references/paid-mode.md"]) {
+  // next-lesson's SKILL.md carries the paid-mode rules too, so it is the one file a paid lesson reads.
+  for (const path of ["skills/begin/SKILL.md", "skills/next-lesson/SKILL.md"]) {
     const text = await readFile(join(root, path), "utf8");
     assert.match(text, /Cursor/);
     assert.match(text, /altitude session --current --json/);

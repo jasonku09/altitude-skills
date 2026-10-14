@@ -1,7 +1,16 @@
 import { readFileSync } from 'node:fs';
 import assert from 'node:assert/strict';
 import test from 'node:test';
-const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
+const readRaw = (path) => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
+const read = (path) => (path === PAID ? paidMode(readRaw('skills/next-lesson/SKILL.md')) : readRaw(path));
+/** next-lesson's paid-mode rules: the "## Paid mode" section of its SKILL.md. */
+function paidMode(skill) {
+  const from = skill.indexOf("\n## Paid mode\n");
+  assert.notEqual(from, -1, "next-lesson's SKILL.md has no paid-mode section");
+  const to = skill.indexOf("\n## ", from + 1);
+  return skill.slice(from + 1, to === -1 ? skill.length : to + 1);
+}
+
 
 /**
  * Versioned paid lesson execution (plugin 0.5.8 + CLI 0.8.1). Every rule below
@@ -17,7 +26,8 @@ const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), 'utf
  * already current.
  */
 const ENTRY_POINTS = ['skills/begin/SKILL.md', 'skills/next-lesson/SKILL.md'];
-const PAID = 'skills/next-lesson/references/paid-mode.md';
+// The paid-mode rules live in next-lesson's SKILL.md; read(PAID) returns that section.
+const PAID = 'skills/next-lesson/SKILL.md#paid-mode';
 
 test('both plugin manifests carry this branch\'s release, above the 0.5.8 floor', () => {
   // The lesson executor landed in 0.5.8 and the pedagogy baseline in 0.6.0; this
@@ -289,8 +299,8 @@ test('a missing altitude command in a bound folder gets the install command, nev
 });
 
 test("next-lesson's hard rules say what a host with no session ID gets", () => {
-  // Step 1 and paid-mode.md both defer to "the hard rules" for this case, and
-  // the agent never reaches paid-mode.md without a scoped read.
+  // Step 1 and the paid-mode section both defer to "the hard rules" for this
+  // case, and the agent never chooses paid mode without a scoped read.
   for (const skill of ENTRY_POINTS) {
     const rules = hardRules(read(skill));
     assert.match(rules, /host that exposes no session ID/, `${skill}'s hard rules skip the no-session host`);
@@ -516,7 +526,9 @@ test('the compatibility doc states the CLI contract for a refresh run outside th
 });
 
 test('missing session records trigger recovery before another update or lesson execution', () => {
-  for (const path of [...ENTRY_POINTS, PAID]) {
+  // next-lesson's hard rules carry this once for both modes; the paid-mode section
+  // shares that SKILL.md, so it does not restate it.
+  for (const path of ENTRY_POINTS) {
     const text = read(path);
     assert.match(text, /`session_required`/, `${path} cannot route the reproduced session failure`);
     assert.match(text, /`recovery_message`/, `${path} loses the runtime recovery instruction`);
@@ -528,14 +540,18 @@ test('missing session records trigger recovery before another update or lesson e
 });
 
 test('missing lesson requirements get reload/support guidance instead of an update loop', () => {
-  for (const path of [...ENTRY_POINTS, PAID]) {
+  // next-lesson's hard rules carry this once for both modes; the paid-mode section
+  // shares that SKILL.md, so it does not restate it.
+  for (const path of ENTRY_POINTS) {
     assert.match(read(path), /`requirements_unavailable`/);
     assert.match(read(path), /do not update[^\n]*requirements/i);
   }
 });
 
 test('session recovery preserves explicit session affinity and pending progress', () => {
-  for (const path of [...ENTRY_POINTS, PAID]) {
+  // next-lesson's hard rules carry this once for both modes; the paid-mode section
+  // shares that SKILL.md, so it does not restate it.
+  for (const path of ENTRY_POINTS) {
     const text = read(path);
     assert.match(text, /correct the `--session` value/);
     assert.match(text, /hooks[^\n]*next learner prompt/i);
