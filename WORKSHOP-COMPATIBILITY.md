@@ -106,6 +106,11 @@ CLI 0.13.1 before plugin 0.10.1. Once both are published, the server raises its 
 floor to CLI 0.13.1 / plugin 0.10.1 (CLI 0.13.1 also carries a fix for stale uploaders after CLI
 updates), so older installs get the server's update message at their next lesson until they update.
 
+Plugin 0.10.2 moves no floor and needs no new CLI or server. It moves next-lesson's paid-mode
+rules from `references/paid-mode.md` into a **Paid mode** section of `skills/next-lesson/SKILL.md`,
+so a paid lesson no longer reads a file outside the learner's project (which hosts like Claude Code's
+auto mode put behind a permission prompt). The rules themselves are unchanged.
+
 The graded lesson-start review adds no floor either. When `due_review` carries an
 `ask`, the tutor asks that kind of question and sends the answer with
 `--review <concept-id>` (key `review` under `emit --stdin`) and no verdict, and the

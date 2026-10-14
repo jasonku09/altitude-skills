@@ -18,9 +18,9 @@ const flat = (text) => text.replace(/\s+/g, " ");
 const MANIFESTS = [".claude-plugin/plugin.json", ".codex-plugin/plugin.json", ".cursor-plugin/plugin.json", ".plugin/plugin.json"];
 
 test("0.10.0: every host manifest carries the release version", () => {
-  for (const path of MANIFESTS) assert.equal(JSON.parse(read(path)).version, "0.10.1", path);
+  for (const path of MANIFESTS) assert.equal(JSON.parse(read(path)).version, "0.10.2", path);
   const market = JSON.parse(read(".github/plugin/marketplace.json"));
-  assert.deepEqual(market.plugins.map((plugin) => plugin.version), ["0.10.1"], "the Copilot marketplace entry");
+  assert.deepEqual(market.plugins.map((plugin) => plugin.version), ["0.10.2"], "the Copilot marketplace entry");
 });
 
 test("0.10.0: the next-lesson release note names the page CLI, server, and subsequent floor raise", () => {
