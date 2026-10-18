@@ -2,6 +2,10 @@
 // (.github/workflows/windows-codex-hooks.yml). The workflow only runs on
 // Windows; these pin the verdicts locally so a rule never silently loosens.
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
+import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import test from "node:test";
 import { checkEmulation, checkRealCodexRun } from "../ci/windows-codex-hooks/checks.mjs";
 
@@ -113,10 +117,62 @@ test("an empty hook tap fails the run (NODE_OPTIONS preload never loaded)", () =
 
 // --- Codex launch emulation (no Codex) ---
 
-const row = (o = {}) => ({ profile: "plain", shell: "pwsh", env: "codex-snapshot", action: "stop", exit: 0, stdout: "", stderr: "", diagnostics: [], ...o });
+const emulatedCliEvent = { ...cliEvent, plan: ["pre-tool-use", "--gate", "plan"] };
+const cliTap = (action) => [{ argv: [node, cliJs, "hook", ...emulatedCliEvent[action]], exitCode: 0, stderr: "" }];
+const row = (o = {}) => ({ profile: "plain", shell: "pwsh", env: "codex-snapshot", action: "stop", exit: 0, stdout: "", stderr: "", diagnostics: [], tap: cliTap("stop"), ...o });
 
 test("emulation: clean exits pass", () => {
-  assert.deepEqual(checkEmulation([row(), row({ shell: "cmd" }), row({ env: "path-without-npm", stderr: "Altitude could not run the workshop CLI: not found\n" })]), []);
+  assert.deepEqual(checkEmulation([row(), row({ shell: "cmd" }), row({ env: "path-without-npm", tap: [], stderr: "Altitude could not run the workshop CLI: not found\n" })]), []);
+});
+
+test("emulation: every action requires its own successful CLI event and gate", () => {
+  for (const action of Object.keys(emulatedCliEvent)) {
+    assert.deepEqual(checkEmulation([row({ action, tap: cliTap(action) })]), []);
+    for (const tap of [undefined, [], [{ argv: [node], action, exitCode: 0 }]]) {
+      assert.match(checkEmulation([row({ action, tap })])[0], /never recorded a successful altitude CLI invocation/);
+    }
+    for (const other of Object.keys(emulatedCliEvent).filter((name) => name !== action)) {
+      assert.equal(checkEmulation([row({ action, tap: cliTap(other) })]).length, 1);
+    }
+  }
+});
+
+test("emulation: missing or unexpected gates fail even with the correct event", () => {
+  for (const action of Object.keys(emulatedCliEvent)) {
+    const args = emulatedCliEvent[action];
+    const tap = [{ argv: [node, cliJs, "hook", args[0], ...(args.length > 1 ? [] : ["--gate", "plan"])], exitCode: 0 }];
+    assert.equal(checkEmulation([row({ action, tap })]).length, 1);
+  }
+});
+
+test("emulation: unsuccessful CLI exits fail even when the shim exits zero", () => {
+  for (const exitCode of [1, 2, null, undefined]) {
+    const tap = cliTap("plan").map((record) => ({ ...record, exitCode }));
+    assert.match(checkEmulation([row({ action: "plan", tap })])[0], /never recorded a successful altitude CLI invocation/);
+    assert.match(checkEmulation([row({ action: "plan", tap: [...tap, ...cliTap("plan")] })])[0], /expected 0/);
+  }
+});
+
+test("emulation: an unknown shim action exits zero but cannot pass as plan", (t) => {
+  const scratch = mkdtempSync(fileURLToPath(new URL("../.hook-tap-test-", import.meta.url)));
+  t.after(() => rmSync(scratch, { recursive: true, force: true }));
+  const tapLog = join(scratch, "tap.jsonl");
+  const preload = fileURLToPath(new URL("../ci/windows-codex-hooks/hook-tap.cjs", import.meta.url));
+  const shim = fileURLToPath(new URL("../bin/altitude-codex-hook.mjs", import.meta.url));
+  const result = spawnSync(process.execPath, [shim, "unknown-action"], {
+    encoding: "utf8",
+    env: { ...process.env, NODE_OPTIONS: `--require ${JSON.stringify(preload.replaceAll("\\", "/"))}`, ALTITUDE_HOOK_TAP_LOG: tapLog },
+  });
+  assert.equal(result.status, 0);
+  assert.match(result.stderr, /usage: altitude-codex-hook/);
+  const tap = readFileSync(tapLog, "utf8").trim().split(/\r?\n/).map((line) => JSON.parse(line));
+  assert.equal(tap.length, 1);
+  assert.match(checkEmulation([row({ action: "plan", exit: result.status, stderr: result.stderr, tap })])[0], /never recorded a successful altitude CLI invocation/);
+  assert.match(checkEmulation([row({ action: "unknown-action", tap })])[0], /unknown hook action/);
+});
+
+test("emulation: the missing-CLI case rejects recorded CLI invocations", () => {
+  assert.match(checkEmulation([row({ env: "path-without-npm", stderr: "Altitude could not run the workshop CLI" })])[0], /unexpectedly reached the altitude CLI/);
 });
 
 test("emulation: a nonzero exit fails and names the case", () => {

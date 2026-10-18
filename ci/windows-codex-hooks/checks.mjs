@@ -23,6 +23,8 @@ export const expectedActions = {
   "session-end": { event: "session-end" },
 };
 
+const expectedEmulationActions = { ...expectedActions, plan: { event: "pre-tool-use", gate: "plan" } };
+
 const excerpt = (text, max = 600) => {
   const clean = String(text ?? "").replace(/\r/g, "").trim();
   return clean.length > max ? `${clean.slice(0, max)}…` : clean;
@@ -120,9 +122,20 @@ export function checkEmulation(rows) {
     if (r.exit !== 0) problems.push(`exited ${r.exit} (expected 0)`);
     if (r.env === "path-without-npm") {
       if (!/Altitude could not run the workshop CLI/.test(r.stderr ?? "")) problems.push("did not report that it could not run the CLI (fail-open path not taken)");
+      if (r.tap?.some(isCliProcess)) problems.push("unexpectedly reached the altitude CLI with no CLI on PATH");
     } else {
       for (const notice of failOpenNotices) if (notice.test(r.stderr ?? "")) problems.push("failed open with the CLI on PATH");
       if (r.diagnostics?.length) problems.push(`new CLI diagnostics: ${r.diagnostics.join("; ")}`);
+      const want = Object.hasOwn(expectedEmulationActions, r.action) ? expectedEmulationActions[r.action] : null;
+      if (!want) problems.push("unknown hook action");
+      else if (!r.tap?.some((record) => {
+        const invocation = isCliProcess(record) && cliInvocation(record);
+        return invocation && invocation.event === want.event && invocation.gate === want.gate && record.exitCode === 0;
+      })) problems.push(`never recorded a successful altitude CLI invocation (altitude hook ${want.event}${want.gate ? ` --gate ${want.gate}` : ""})`);
+      for (const record of r.tap ?? []) {
+        if (record.exitCode !== 0) problems.push(`${describe(record)} exited ${record.exitCode} (expected 0)`);
+        for (const notice of failOpenNotices) if (notice.test(record.stderr ?? "")) problems.push(`${describe(record)} failed open: ${excerpt(record.stderr)}`);
+      }
     }
     if (problems.length) failures.push(`${name} ${problems.join("; ")}. stderr:\n${excerpt(r.stderr) || "(empty)"}`);
   }

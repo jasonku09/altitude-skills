@@ -37,8 +37,11 @@ unpaired, so there is nothing for a gate to block, and every hook must:
   CLI` notice, and leave no new records in `~\.altitude\diagnostics.ndjson`;
 - be launched by the shell the job targets (`pwsh.exe` or `powershell.exe`).
 
-In the emulation, a hook with no CLI on PATH must still exit 0 and say it
-could not run the CLI. That is the fail-open path.
+The emulation records processes separately for each case and requires the
+matching CLI event and gate with exit 0, including the plan gate. These
+records are included in `emulate-results.json`. A hook with no CLI on PATH
+must still exit 0, say it could not run the CLI, and record no CLI invocation.
+That is the fail-open path.
 
 ## Workarounds, and what breaks if Codex changes
 

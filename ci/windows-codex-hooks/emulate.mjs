@@ -17,6 +17,7 @@ import { spawnSync } from "node:child_process";
 import { appendFileSync, cpSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { delimiter, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { checkEmulation } from "./checks.mjs";
 
 const opts = {};
@@ -79,7 +80,7 @@ function layoutPlugin(profileName) {
   return { root, data };
 }
 
-function buildEnv(profileName, envMode, plugin) {
+function buildEnv(profileName, envMode, plugin, tapLog) {
   const profile = profiles[profileName];
   // Windows env names are case-insensitive ("Path" vs "PATH"): replace, never duplicate.
   const set = (env, key, value) => {
@@ -92,6 +93,8 @@ function buildEnv(profileName, envMode, plugin) {
   set(env, "PATH", pathWith(envMode === "path-without-npm" ? null : profile.npm));
   // Drop this harness's own Node-isms so the child sees a user-like env.
   for (const k of Object.keys(env)) if (/^(npm_|NODE_OPTIONS$|INIT_CWD$)/i.test(k)) delete env[k];
+  set(env, "NODE_OPTIONS", `--require ${JSON.stringify(fileURLToPath(new URL("./hook-tap.cjs", import.meta.url)).replaceAll("\\", "/"))}`);
+  set(env, "ALTITUDE_HOOK_TAP_LOG", tapLog);
   for (const [k, v] of Object.entries({ PLUGIN_ROOT: plugin.root, CLAUDE_PLUGIN_ROOT: plugin.root, PLUGIN_DATA: plugin.data, CLAUDE_PLUGIN_DATA: plugin.data })) set(env, k, v);
   return env;
 }
@@ -148,13 +151,16 @@ for (const profileName of Object.keys(profiles)) {
       const command = substitute(raw, plugin);
       const envFile = join(scratch, `env-${n}`);
       const cmdFile = join(scratch, `cmd-${n}`);
-      writeFileSync(envFile, Object.entries(buildEnv(profileName, envMode, plugin)).map(([k, v]) => `${k}=${v}`).join("\0"));
+      const tapLog = join(scratch, `tap-${n}.jsonl`);
+      writeFileSync(tapLog, "");
+      writeFileSync(envFile, Object.entries(buildEnv(profileName, envMode, plugin, tapLog)).map(([k, v]) => `${k}=${v}`).join("\0"));
       writeFileSync(cmdFile, command);
       const before = diagnostics(profileName).length;
       const started = Date.now();
       const r = spawnSync(opts.launcher, [shellPath, project, envFile, cmdFile], { input: JSON.stringify(payload(action, profileName, project, n)), encoding: "utf8", timeout: 30000, windowsHide: true });
       const newDiagnostics = diagnostics(profileName).slice(before).map((l) => { try { const d = JSON.parse(l); return `${d.code}: ${d.detail?.message ?? JSON.stringify(d.detail ?? {})}`; } catch { return l; } });
-      const row = { profile: profileName, shell: shellName, env: envMode, action, exit: r.status, ms: Date.now() - started, stdout: r.stdout ?? "", stderr: r.stderr ?? "", diagnostics: newDiagnostics, error: r.error?.message };
+      const tap = readFileSync(tapLog, "utf8").split(/\r?\n/).filter(Boolean).map((line) => JSON.parse(line));
+      const row = { profile: profileName, shell: shellName, env: envMode, action, exit: r.status, ms: Date.now() - started, stdout: r.stdout ?? "", stderr: r.stderr ?? "", diagnostics: newDiagnostics, tap, error: r.error?.message };
       results.push(row);
       const tag = `shell=${row.shell} profile=${row.profile} env=${row.env} action=${row.action} exit=${row.exit}`;
       console.log(`::group::${tag} (${row.ms}ms)`);
