@@ -1,11 +1,9 @@
 # Windows Codex hooks check
 
-`.github/workflows/windows-codex-hooks.yml` proves the Codex plugin's hooks
-work on native Windows. It exists because plugin 0.10.2 shipped
-`commandWindows` lines with cmd-style `%PLUGIN_ROOT%`. Codex runs Windows
-hooks through PowerShell, PowerShell leaves `%PLUGIN_ROOT%` as literal text,
-and so every hook exited 1 for Windows learners. Nothing caught it before
-release because no test had ever run on Windows.
+[The workflow](../../.github/workflows/windows-codex-hooks.yml) checks the
+Codex plugin's hook launches on native Windows. The compatibility contract
+and the regression this guards against are documented in
+[Codex on native Windows](../../WORKSHOP-COMPATIBILITY.md#codex-on-native-windows).
 
 It runs on pull requests that touch `hooks/`, `bin/`, `.codex-plugin/`,
 `.agents/plugins/` or this check itself, and by hand via `workflow_dispatch`.
@@ -13,18 +11,23 @@ It deliberately has no schedule.
 
 ## Jobs
 
-| Job | What it does | Blocks merge? |
+| Job | What it does | Hook failures fail the job? |
 |---|---|---|
-| Hook launch emulation (no Codex) | `emulate.mjs` launches every hook in `hooks/codex.json` the way Codex does (pwsh 7, Windows PowerShell 5.1, and the `cmd /C` fallback), across five profile paths (plain, spaces, `'` `$HOME` `%OS%`). | yes |
+| Hook launch emulation (no Codex) | `emulate.mjs` launches every hook in `hooks/codex.json` the way Codex does (pwsh 7, Windows PowerShell 5.1, and the `cmd /C` fallback), across profile and install-path combinations defined in its `profiles` object. | yes |
 | Codex pinned / {pwsh 7, Windows PowerShell 5.1} / {plain path, space in path} | `real-codex.ps1` runs one real `codex exec` turn at `CODEX_PINNED_VERSION`, then `check-real-codex.mjs` judges it. | yes |
-| Codex latest (informational - never blocks) | The same run on `@openai/codex@latest`. Failures show up as warnings and a failed step, but the job still passes. | no |
+| Codex latest (informational - never blocks) | The same run on `@openai/codex@latest`, using Windows PowerShell 5.1 and a space in the profile path. Hook check failures produce warnings and a failed step whose failure is allowed. | no |
 
-All the version pins are in the workflow's top-level `env:` block.
+Merge enforcement depends on repository branch protection. Checkout, Node
+setup, or artifact-upload failures can still fail the informational job.
+
+The Codex, Altitude CLI and Node versions used by the workflow are configured
+in its top-level `env:` block.
 
 ## Pass/fail rules (`checks.mjs`, tested in `test/windows-codex-hooks-checks.test.mjs`)
 
-Hooks fail open: a hook may exit only 0 (allow) or 2 (a gate block). CI runs
-unpaired, so there is nothing for a gate to block, and every hook must:
+CI runs unpaired, so there is nothing for a gate to block. The real-Codex
+scenario exercises the diff gate; the plan gate is covered by emulation.
+The real-Codex checks require hooks in that scenario to:
 
 - be reported by Codex as `hook: <Event> Completed`. SessionStart,
   UserPromptSubmit, PreToolUse and Stop must all appear, and any other
@@ -34,8 +37,11 @@ unpaired, so there is nothing for a gate to block, and every hook must:
 - actually reach `altitude hook <event>`. That covers SessionEnd as well,
   which `codex exec` never prints;
 - print no `Altitude hook skipped` or `Altitude could not run the workshop
-  CLI` notice, and leave no new records in `~\.altitude\diagnostics.ndjson`;
-- be launched by the shell the job targets (`pwsh.exe` or `powershell.exe`).
+  CLI` notice, and leave no new records in `~\.altitude\diagnostics.ndjson`.
+
+The run must have at least one recorded launching shell, with every recorded
+shell matching the job's target (`pwsh.exe` or `powershell.exe`). The observer
+skips the SessionEnd shell lookup to avoid its short timeout.
 
 The emulation records processes separately for each case and requires the
 matching CLI event and gate with exit 0, including the plan gate. These
@@ -59,8 +65,8 @@ yellow.
    *Breaks if* Codex changes the Responses wire format or the
    `model_providers` config keys, stops offering `apply_patch` to that slug,
    or renames the tool. The usual symptom is a missing `PreToolUse` or a
-   non-zero `codex exec` exit. `mock.out` in the job artifact lists what
-   Codex sent.
+   non-zero `codex exec` exit. `mock.out` in the job artifact lists request
+   methods, URLs and body lengths, not request bodies.
 2. **Hook-trust bypass** (`codex exec --dangerously-bypass-hook-trust`).
    Codex runs a plugin hook only after a one-time trust review in its TUI,
    and every change to the command text asks again. CI has no TUI, and the
@@ -79,15 +85,19 @@ yellow.
 
 `hook-tap.cjs` is an observer, not a workaround. It is preloaded through
 `NODE_OPTIONS` and records each hook process's argv, exit code, stderr and
-launching shell, because `codex exec` prints only `Completed`/`Failed`. It
-does not change what any hook does. `codex-launcher/` is a small Rust copy of
-Codex's Windows hook spawn (`codex-rs/hooks/src/engine/command_runner.rs` at
-rust-v0.163.0). If Codex changes how it launches hooks, update the launcher
-and keep the comment's version reference current.
+launching shell where looked up, because `codex exec` prints only
+`Completed`/`Failed`. It does not change what any hook does.
+`codex-launcher/` is a small Rust copy of Codex's Windows hook spawn; its
+[module comment](codex-launcher/src/main.rs) identifies the source and
+version it replicates. If Codex changes how it launches hooks, update the
+launcher and keep that reference current.
 
 ## Reproducing a failure
 
-Download the job's artifact. `real-codex-<id>/` holds `codex-output.txt`,
-`hook-tap.jsonl`, `diagnostics-new.ndjson` and `mock.out`. Then run
-`node ci/windows-codex-hooks/check-real-codex.mjs --dir <that dir> --label x --shell pwsh.exe`
-on any OS to get the same verdict.
+Download and extract the job's `real-codex-<id>` artifact, keeping all files,
+including `codex-exit.txt`, which the checker requires. Then run
+`node ci/windows-codex-hooks/check-real-codex.mjs --dir "<extracted directory>" --label x --shell <shell executable>`
+on any OS. Use `pwsh.exe` for a pwsh 7 job and `powershell.exe` for a Windows
+PowerShell 5.1 job to reproduce its verdict. `--informational` changes
+failure annotations to warnings but still exits 1 on failure; the workflow
+allows that exit for the latest-Codex job.

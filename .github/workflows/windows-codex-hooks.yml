@@ -1,13 +1,10 @@
 name: windows-codex-hooks
 
-# Proves the Codex plugin's hooks run on native Windows: real Codex launches
-# every hook through PowerShell (pwsh 7, else Windows PowerShell 5.1), and
-# every hook must Complete, exit 0 and reach the altitude CLI. Plugin 0.10.2
-# shipped cmd-style %PLUGIN_ROOT% that PowerShell leaves literal, so every
-# hook exited 1 for Windows learners; this check would have gone red on it.
-# No secrets: Codex talks to a local stand-in model server and the CLI runs
-# unpaired. How the harness works and what is fragile:
+# Checks native Windows hook launches with emulation and a real Codex turn.
+# Coverage, pass/fail rules and compatibility rationale are documented in
 # ci/windows-codex-hooks/README.md.
+# No secrets: Codex talks to a local stand-in model server and the CLI runs
+# unpaired.
 #
 # Pull requests only (plus manual runs). Deliberately NO schedule: drift in
 # new Codex releases surfaces through the informational "Codex latest" job
