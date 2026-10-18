@@ -1,0 +1,174 @@
+name: windows-codex-hooks
+
+# Proves the Codex plugin's hooks run on native Windows: real Codex launches
+# every hook through PowerShell (pwsh 7, else Windows PowerShell 5.1), and
+# every hook must Complete, exit 0 and reach the altitude CLI. Plugin 0.10.2
+# shipped cmd-style %PLUGIN_ROOT% that PowerShell leaves literal, so every
+# hook exited 1 for Windows learners; this check would have gone red on it.
+# No secrets: Codex talks to a local stand-in model server and the CLI runs
+# unpaired. How the harness works and what is fragile:
+# ci/windows-codex-hooks/README.md.
+#
+# Pull requests only (plus manual runs). Deliberately NO schedule: drift in
+# new Codex releases surfaces through the informational "Codex latest" job
+# on the next plugin PR instead.
+on:
+  pull_request:
+    paths:
+      - hooks/**
+      - bin/**
+      - .codex-plugin/**
+      - .agents/plugins/**
+      - ci/windows-codex-hooks/**
+      - .github/workflows/windows-codex-hooks.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: windows-codex-hooks-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # --- Version pins: bump here, nowhere else. -------------------------------
+  # The required jobs run this Codex release (the one the first Windows
+  # learner had, verified in runs 39090799387 / 39091988000). The
+  # "Codex latest" job always runs @openai/codex@latest and never blocks.
+  CODEX_PINNED_VERSION: 0.163.0
+  # The workshop CLI the hooks call (npm @learnaltitude/cli).
+  ALTITUDE_CLI_VERSION: 0.15.0
+  NODE_VERSION: 24
+  # ----------------------------------------------------------------------------
+  # A second user profile whose path holds a space, like "C:\Users\Jane Doe".
+  SPACE_PROFILE: 'C:\Users\Alty Learner'
+  # PowerShell expands `$HOME` and treats `'` as a quote; cmd expands %OS%.
+  TRICKY_PROFILE: 'C:\Users\O''Neil $HOME %OS% x'
+
+defaults:
+  run:
+    shell: pwsh
+
+jobs:
+  emulate:
+    name: Hook launch emulation (no Codex)
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install the altitude CLI (normal and space-in-path npm prefixes)
+        run: |
+          foreach ($p in @($env:SPACE_PROFILE, $env:TRICKY_PROFILE)) { foreach ($d in @("$p\AppData\Roaming\npm", "$p\AppData\Local\Temp", "$p\projects")) { New-Item -ItemType Directory -Force -Path $d | Out-Null } }
+          npm install -g --no-fund --no-audit --prefix (Join-Path $env:APPDATA 'npm') "@learnaltitude/cli@$env:ALTITUDE_CLI_VERSION"
+          npm install -g --no-fund --no-audit --prefix "$env:SPACE_PROFILE\AppData\Roaming\npm" "@learnaltitude/cli@$env:ALTITUDE_CLI_VERSION"
+
+      - name: Build codex-launcher (Codex's Windows hook spawn, in Rust std)
+        working-directory: ci/windows-codex-hooks/codex-launcher
+        run: cargo build --release --quiet
+
+      - name: Launch every hook like Codex (shell x profile path), require exit 0
+        run: |
+          node ci/windows-codex-hooks/emulate.mjs `
+            --repo "$env:GITHUB_WORKSPACE" `
+            --launcher "$env:GITHUB_WORKSPACE\ci\windows-codex-hooks\codex-launcher\target\release\codex-launcher.exe" `
+            --normal-npm (Join-Path $env:APPDATA 'npm') `
+            --space-npm "$env:SPACE_PROFILE\AppData\Roaming\npm" `
+            --space-profile "$env:SPACE_PROFILE" `
+            --tricky-profile "$env:TRICKY_PROFILE" `
+            --pwsh (Get-Command pwsh).Source `
+            --powershell "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" `
+            --out "$env:RUNNER_TEMP\emulate-results.json"
+
+      - uses: actions/upload-artifact@v7
+        if: ${{ !cancelled() }}
+        with:
+          name: emulate-results
+          path: ${{ runner.temp }}/emulate-results.json
+          if-no-files-found: warn
+
+  real-codex:
+    name: ${{ matrix.name }}
+    runs-on: windows-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Required: the pinned Codex, both PowerShells, plain and space paths.
+          - { id: pinned-pwsh-plain, name: 'Codex pinned / pwsh 7 / plain path', codex: pinned, shell: pwsh, profile: plain, informational: false }
+          - { id: pinned-pwsh-space, name: 'Codex pinned / pwsh 7 / space in path', codex: pinned, shell: pwsh, profile: space, informational: false }
+          - { id: pinned-ps51-plain, name: 'Codex pinned / Windows PowerShell 5.1 / plain path', codex: pinned, shell: powershell-5.1, profile: plain, informational: false }
+          - { id: pinned-ps51-space, name: 'Codex pinned / Windows PowerShell 5.1 / space in path', codex: pinned, shell: powershell-5.1, profile: space, informational: false }
+          # Informational: newest Codex release. Its failures are warnings and
+          # never fail the job, so a Codex change shows up without blocking.
+          - { id: latest-ps51-space, name: 'Codex latest (informational - never blocks) / Windows PowerShell 5.1 / space in path', codex: latest, shell: powershell-5.1, profile: space, informational: true }
+    env:
+      CODEX_CHANNEL: ${{ matrix.codex }}
+      TARGET_SHELL: ${{ matrix.shell }}
+      TARGET_PROFILE: ${{ matrix.profile }}
+      JOB_LABEL: ${{ matrix.name }}
+      INFORMATIONAL: ${{ matrix.informational }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install Codex and the altitude CLI
+        # Informational job: a broken @openai/codex@latest must not fail it either.
+        continue-on-error: ${{ matrix.informational }}
+        run: |
+          $codex = if ($env:CODEX_CHANNEL -eq 'latest') { 'latest' } else { $env:CODEX_PINNED_VERSION }
+          $profileDir = if ($env:TARGET_PROFILE -eq 'space') { $env:SPACE_PROFILE } else { $env:USERPROFILE }
+          $npmDir = Join-Path $profileDir 'AppData\Roaming\npm'
+          foreach ($d in @($npmDir, "$profileDir\AppData\Local\Temp", "$profileDir\projects")) { New-Item -ItemType Directory -Force -Path $d | Out-Null }
+          npm install -g --no-fund --no-audit --prefix $npmDir "@learnaltitude/cli@$env:ALTITUDE_CLI_VERSION"
+          npm install -g --no-fund --no-audit --prefix "$env:RUNNER_TEMP\codex-cli" "@openai/codex@$codex"
+          "$env:RUNNER_TEMP\codex-cli" | Out-File -Append -Encoding utf8 $env:GITHUB_PATH
+          "PROFILE_DIR=$profileDir" | Out-File -Append -Encoding utf8 $env:GITHUB_ENV
+          "NPM_DIR=$npmDir" | Out-File -Append -Encoding utf8 $env:GITHUB_ENV
+          "OUT_DIR=$env:RUNNER_TEMP\real-codex" | Out-File -Append -Encoding utf8 $env:GITHUB_ENV
+          $installed = (& "$env:RUNNER_TEMP\codex-cli\codex.cmd" --version) -join ' '
+          "Codex under test: $installed (channel $env:CODEX_CHANNEL), altitude CLI $env:ALTITUDE_CLI_VERSION, node $(node --version)" | Tee-Object -Append -FilePath $env:GITHUB_STEP_SUMMARY
+
+      - name: Run one real codex exec turn
+        continue-on-error: ${{ matrix.informational }}
+        run: |
+          $a = @{ Repo = $env:GITHUB_WORKSPACE; ProfileDir = $env:PROFILE_DIR; NpmDir = $env:NPM_DIR; OutDir = $env:OUT_DIR }
+          if ($env:TARGET_SHELL -eq 'powershell-5.1') {
+            # A stock Windows 11 box has no pwsh 7, so Codex falls back to
+            # Windows PowerShell 5.1. Hide pwsh.exe (a running exe can be
+            # renamed) so Codex's shell detection finds only powershell.exe.
+            $pwshExe = 'C:\Program Files\PowerShell\7\pwsh.exe'
+            Rename-Item $pwshExe 'pwsh.exe.hidden'
+            try {
+              if (Get-Command pwsh -ErrorAction SilentlyContinue) { throw "pwsh is still discoverable at $((Get-Command pwsh).Source); the 5.1 job would test pwsh 7" }
+              & ci/windows-codex-hooks/real-codex.ps1 @a
+            } finally {
+              Rename-Item "$pwshExe.hidden" 'pwsh.exe'
+            }
+          } else {
+            & ci/windows-codex-hooks/real-codex.ps1 @a
+          }
+          # Collecting evidence succeeded; the next step decides pass/fail.
+          exit 0
+
+      - name: Check every hook Completed, exited 0 and reached the altitude CLI
+        if: ${{ !cancelled() }}
+        continue-on-error: ${{ matrix.informational }}
+        run: |
+          $shellExe = if ($env:TARGET_SHELL -eq 'powershell-5.1') { 'powershell.exe' } else { 'pwsh.exe' }
+          $checkArgs = @('--dir', $env:OUT_DIR, '--label', $env:JOB_LABEL, '--shell', $shellExe)
+          if ($env:INFORMATIONAL -eq 'true') { $checkArgs += '--informational' }
+          node ci/windows-codex-hooks/check-real-codex.mjs @checkArgs
+
+      - uses: actions/upload-artifact@v7
+        if: ${{ !cancelled() }}
+        with:
+          name: real-codex-${{ matrix.id }}
+          path: ${{ runner.temp }}/real-codex
+          if-no-files-found: warn
