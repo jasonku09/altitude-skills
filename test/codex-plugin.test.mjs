@@ -4,7 +4,7 @@ import { chmod, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, delimiter, join, resolve } from "node:path";
 import test from "node:test";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const shim = join(repoRoot, "bin/altitude-codex-hook.mjs");
@@ -350,10 +350,60 @@ test("the shim fails open when workshop-core is missing entirely", async (t) => 
 test("the shim is hooks-only: connect and status are not shim actions", () => {
   for (const retired of ["connect", "status"]) {
     const result = runShim([retired], { input: "" });
-    assert.equal(result.status, 1, retired);
+    // Still a hook invocation from Codex's point of view: a misconfigured
+    // action prints usage for a human but never surfaces as a hook failure.
+    assert.equal(result.status, 0, retired);
     assert.match(result.stderr, /usage: altitude-codex-hook/);
   }
   execFileSync(process.execPath, ["--check", shim]);
+});
+
+test("gates fail OPEN: any CLI exit other than 0 or 2 becomes 0, stderr kept", async (t) => {
+  const temp = await mkdtemp(join(tmpdir(), "altitude-codex-crash-"));
+  t.after(() => rm(temp, { recursive: true, force: true }));
+  // 1 = a crash / old CLI; 3 = anything unexpected; 9009 truncates to an
+  // 8-bit status on POSIX, so 137 stands in for "killed by the OS".
+  for (const code of [1, 3, 137]) {
+    await fakeExecutable(
+      temp,
+      "altitude",
+      `echo "partial context" \necho "TypeError: boom at cli.js:1" >&2\nexit ${code}`,
+    );
+    for (const action of ["session-start", "plan", "diff", "stop", "session-end", "user-prompt-submit"]) {
+      const result = runShim([action], {
+        input: JSON.stringify({ session_id: `codex-crash-${code}` }),
+        env: { PATH: `${temp}${delimiter}${process.env.PATH}` },
+      });
+      assert.equal(result.status, 0, `${action} exit ${code}`);
+      // The real error stays visible to a human running the hook by hand.
+      assert.match(result.stderr, /TypeError: boom at cli\.js:1/, `${action} exit ${code}`);
+      assert.match(result.stderr, new RegExp(`exited with code ${code}`), `${action} exit ${code}`);
+      // A crashed CLI's stdout is not trusted as model context.
+      assert.equal(result.stdout, "", `${action} exit ${code}`);
+    }
+  }
+});
+
+test("gates fail OPEN: a crash inside the shim itself exits 0", async (t) => {
+  const temp = await mkdtemp(join(tmpdir(), "altitude-codex-shim-crash-"));
+  t.after(() => rm(temp, { recursive: true, force: true }));
+  await fakeExecutable(temp, "altitude", "exit 0");
+  // Preloaded before the shim: reading stdin throws, as a broken host pipe would.
+  const preload = join(temp, "broken-stdin.mjs");
+  await writeFile(
+    preload,
+    'Object.defineProperty(process, "stdin", { get() { throw new Error("stdin unavailable: EPIPE"); } });\n',
+  );
+  for (const action of ["session-start", "diff"]) {
+    const result = spawnSync(process.execPath, ["--import", pathToFileURL(preload).href, shim, action], {
+      encoding: "utf8",
+      input: "{}",
+      env: { ...process.env, PATH: `${temp}${delimiter}${process.env.PATH}` },
+    });
+    assert.equal(result.status, 0, action);
+    assert.match(result.stderr, /Altitude hook skipped/, action);
+    assert.match(result.stderr, /stdin unavailable: EPIPE/, action);
+  }
 });
 
 test("keeps the Codex adapter surface free of server-owned teaching content", async () => {

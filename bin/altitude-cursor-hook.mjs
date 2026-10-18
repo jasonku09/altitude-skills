@@ -134,9 +134,11 @@ export async function main(action = process.argv[2]) {
     const [lifecycle, ...extra] = actions[action];
     const args = [...command.args, "hook", lifecycle, "--agent", "cursor", "--mapping", mapping, "--transcript-mapping", join(pluginRoot, "hooks/cursor-transcript-mapping.json"), "--output", "json", "--delivery", "prompt-context", "--stop-policy", "defer-to-prompt", ...extra];
     const child = spawnSync(command.file, args, { shell: false, input: JSON.stringify(input), encoding: "utf8", timeout: 25000, maxBuffer: 1024 * 1024, windowsHide: true });
+    // Relay the CLI's own stderr first: when it crashed, that is the real
+    // error a human running the hook by hand needs to see.
+    if (child.stderr) process.stderr.write(child.stderr);
     if (child.error || child.signal) throw new Error("Altitude CLI could not finish this hook.");
     const result = parseResult(child.stdout, child.status, input.conversation_id);
-    if (child.stderr) process.stderr.write(child.stderr);
     if (result.action === "block" && ["diff", "user-prompt-submit"].includes(action)) {
       const reason = result.reason || "Altitude requested a workshop check before continuing.";
       response = action === "user-prompt-submit" ? { continue: false, user_message: reason } : { permission: "deny", user_message: reason, agent_message: reason };

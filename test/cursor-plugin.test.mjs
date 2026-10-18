@@ -105,6 +105,15 @@ for (const [label, response, status] of [
   assert.deepEqual(output(run("diff", payload, fake.dir)), { permission: "allow" });
 });
 
+test("a crashed CLI's stderr stays visible while Cursor tools stay usable", async (t) => {
+  const fake = await fixture(t);
+  await writeFile(join(fake.dir, "altitude"), `#!${process.execPath}\nprocess.stderr.write("TypeError: boom at cli.js:1\\n"); process.exit(1);`);
+  const result = run("diff", payload, fake.dir);
+  assert.deepEqual(output(result), { permission: "allow" });
+  assert.match(result.stderr, /TypeError: boom at cli\.js:1/);
+  assert.match(result.stderr, /Altitude Cursor hook skipped/);
+});
+
 test("missing CLI, invalid input and unknown actions fail open", async (t) => {
   const fake = await fixture(t);
   assert.deepEqual(output(run("diff", payload, join(fake.dir, "missing"))), { permission: "allow" });

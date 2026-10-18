@@ -100,8 +100,9 @@ export async function main(host=process.argv[2],action=process.argv[3]) {
       delete input.generation_id;delete input.stop_status;delete input.last_assistant_message;
     }
     const child=spawnSync(command.file,[...command.args,contextOnly?'hook-context':'hook',lifecycle,...(uncertainOrder?['--uncertain-order']:[]),'--agent','copilot','--mapping',join(root,'hooks/copilot-field-map.json'),'--output','json','--delivery','prompt-context','--stop-policy','defer-to-prompt',...extra],{shell:false,input:JSON.stringify(input),encoding:'utf8',timeout:25000,maxBuffer:1024*1024,windowsHide:true});
-    const result=resultFrom(child,who.session_id);
+    // CLI stderr first: when it crashed, that is the real error to surface.
     if(child.stderr)process.stderr.write(child.stderr);
+    const result=resultFrom(child,who.session_id);
     if(action==='stop' && receipt) {
       try { ownership.clear(receipt); } catch(error) { process.stderr.write('Altitude Copilot receipt cleanup skipped: '+error.message+'\n'); }
     }

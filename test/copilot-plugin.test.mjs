@@ -123,6 +123,14 @@ test('a late stop cannot attribute a new prompt to the preceding turn',async t=>
   f.output(f.run('stop'));assert.equal((await f.calls()).length,1);
 });
 
+test('a crashed CLI stderr stays visible while Copilot fails open',async t=>{
+  const f=await fixture(t);await writeFile(f.cli,`process.stderr.write('TypeError: boom at cli.js:1\\n'); process.exit(1);`);
+  const result=f.run('diff',f.payload('diff',{toolName:'edit'}));
+  assert.deepEqual(f.output(result),{});
+  assert.match(result.stderr,/TypeError: boom at cli\.js:1/);
+  assert.match(result.stderr,/Altitude Copilot hook skipped/);
+});
+
 test('missing CLI and malformed input fail open without invoking a fallback',async t=>{
   const f=await fixture(t);assert.deepEqual(f.output(f.run('diff',f.payload('diff',{toolName:'edit'}),{ALTITUDE_CLI_PATH:join(f.dir,'missing.mjs')})),{});
   await assert.rejects(readFile(f.capture),{code:'ENOENT'});

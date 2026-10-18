@@ -96,20 +96,42 @@ async function runHook(action) {
   }
 
   if (result.stderr) process.stderr.write(result.stderr);
+  const status = result.status ?? 0; // null = killed by a signal: fail open
+  if (status !== 0 && status !== 2) {
+    // Gates fail OPEN: only 0 (allow) and 2 (an explicit gate block) may
+    // reach Codex. Anything else is a crash (old CLI, broken install, a
+    // Windows shell's 1/9009) — Codex would show it as "hook failed" on every
+    // turn. The CLI's own stderr above is the real error; its stdout is not
+    // trusted as model context.
+    process.stderr.write(
+      `Altitude hook skipped: the workshop CLI exited with code ${status}; continuing without blocking.\n`,
+    );
+    return 0;
+  }
   // Plain stdout passthrough for every action: Codex injects non-JSON
   // SessionStart stdout as model context (the Claude Code convention), and
   // gate passes print nothing.
   if (result.stdout) process.stdout.write(result.stdout);
-  return result.status ?? 0;
+  return status;
 }
 
-const action = process.argv[2];
-if (Object.hasOwn(hookActions, action)) {
-  process.exitCode = await runHook(action);
-} else {
+// Every path out of this shim is a hook result, so it exits only 0 or 2 —
+// including an unknown action and a throw in the shim itself (which would
+// otherwise be an unhandled top-level-await rejection: exit 1).
+try {
+  const action = process.argv[2];
+  if (Object.hasOwn(hookActions, action)) {
+    process.exitCode = await runHook(action);
+  } else {
+    process.stderr.write(
+      "usage: altitude-codex-hook " +
+        "<session-start|plan|diff|stop|session-end|user-prompt-submit>\n",
+    );
+    process.exitCode = 0;
+  }
+} catch (error) {
   process.stderr.write(
-    "usage: altitude-codex-hook " +
-      "<session-start|plan|diff|stop|session-end|user-prompt-submit>\n",
+    `Altitude hook skipped: ${error instanceof Error ? (error.stack ?? error.message) : String(error)}\n`,
   );
-  process.exitCode = 1;
+  process.exitCode = 0;
 }
