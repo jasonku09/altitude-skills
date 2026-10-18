@@ -111,6 +111,12 @@ rules from `references/paid-mode.md` into a **Paid mode** section of `skills/nex
 so a paid lesson no longer reads a file outside the learner's project (which hosts like Claude Code's
 auto mode put behind a permission prompt). The rules themselves are unchanged.
 
+Plugin 0.10.3 moves no floor and needs no new CLI or server. It fixes Codex hooks on native
+Windows, where every hook exited 1: Codex runs `commandWindows` through PowerShell, which left the
+cmd-style `%PLUGIN_ROOT%` literal (see **Codex on native Windows** below). Windows installs see
+Codex's one-time hook trust review again; macOS/Linux trust is unaffected. Every hook shim now
+exits only 0 or 2, so a crashing CLI can no longer surface as a hook failure.
+
 The graded lesson-start review adds no floor either. When `due_review` carries an
 `ask`, the tutor asks that kind of question and sends the answer with
 `--review <concept-id>` (key `review` under `emit --stdin`) and no verdict, and the

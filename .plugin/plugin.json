@@ -1,6 +1,6 @@
 {
   "name": "altitude",
-  "version": "0.10.2",
+  "version": "0.10.3",
   "description": "Learn to code by building a real project. Shared Altitude skills and workshop hooks for GitHub Copilot.",
   "author": {
     "name": "Jason Ku"
