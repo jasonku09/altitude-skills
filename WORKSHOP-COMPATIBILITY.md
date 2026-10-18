@@ -428,6 +428,9 @@ diagnostics. A separate emulation of Codex's own process launch, including the
 `cmd /C` fallback, passed all 270 cases:
 <https://github.com/jasonku09/altitude-skills/actions/runs/39091988000>.
 
+Ongoing pull-request coverage and failure reproduction are documented in
+[Windows Codex hooks check](ci/windows-codex-hooks/README.md).
+
 ## Cursor implementation (unreleased)
 
 The native Cursor manifest shares this release's skill bodies and version string,
