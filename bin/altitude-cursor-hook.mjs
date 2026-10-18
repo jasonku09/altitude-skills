@@ -2,9 +2,13 @@
 
 // Transport only. All session, evidence and question state belongs to the CLI.
 import { spawnSync } from "node:child_process";
-import { existsSync, readFileSync, realpathSync, statSync } from "node:fs";
-import { delimiter, dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
+import { realpathSync } from "node:fs";
+import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
+import { resolveCli } from "./altitude-cli.mjs";
+
+// Re-exported: the Copilot adapter and existing callers import it from here.
+export { resolveCli };
 
 const pluginRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const mapping = join(pluginRoot, "hooks/cursor-field-mapping.json");
@@ -16,32 +20,6 @@ const actions = {
   "user-prompt-submit": ["user-prompt-submit"],
   "after-assistant-response": ["after-assistant-response"],
 };
-
-// npm's Windows entry point is a .cmd wrapper. Executing it with shell:true
-// would interpret path/argument metacharacters. Resolve its installed package
-// and launch the JavaScript bin with this Node process instead. Never eval .cmd.
-export function resolveCli({ platform = process.platform, path = process.env.PATH ?? "", separator = delimiter, cliPath = process.env.ALTITUDE_CLI_PATH } = {}) {
-  if (cliPath) {
-    if (!isAbsolute(cliPath) || !existsSync(cliPath) || !statSync(cliPath).isFile()) throw new Error("ALTITUDE_CLI_PATH must name an existing absolute JavaScript entry point.");
-    return { file: process.execPath, args: [cliPath] };
-  }
-  if (platform !== "win32") return { file: "altitude", args: [] };
-  for (const directory of path.split(separator).filter(Boolean)) {
-    const native = join(directory, "altitude.exe");
-    if (existsSync(native)) return { file: native, args: [] };
-    if (!existsSync(join(directory, "altitude.cmd"))) continue;
-    const packageRoot = join(directory, "node_modules/@learnaltitude/cli");
-    try {
-      const pkg = JSON.parse(readFileSync(join(packageRoot, "package.json"), "utf8"));
-      const bin = typeof pkg.bin === "string" ? pkg.bin : pkg.bin?.altitude;
-      if (pkg.name !== "@learnaltitude/cli" || typeof bin !== "string") continue;
-      const entry = resolve(packageRoot, bin);
-      if (relative(packageRoot, entry).startsWith(`..${sep}`) || !existsSync(entry)) continue;
-      return { file: process.execPath, args: [entry] };
-    } catch { /* A broken install is a fail-open diagnostic, never a shell fallback. */ }
-  }
-  throw new Error("Altitude CLI was not found; install it with npm install -g @learnaltitude/cli.");
-}
 
 function record(value) { return value !== null && typeof value === "object" && !Array.isArray(value); }
 function nonempty(value) { return typeof value === "string" && value.trim().length > 0; }
@@ -134,9 +112,11 @@ export async function main(action = process.argv[2]) {
     const [lifecycle, ...extra] = actions[action];
     const args = [...command.args, "hook", lifecycle, "--agent", "cursor", "--mapping", mapping, "--transcript-mapping", join(pluginRoot, "hooks/cursor-transcript-mapping.json"), "--output", "json", "--delivery", "prompt-context", "--stop-policy", "defer-to-prompt", ...extra];
     const child = spawnSync(command.file, args, { shell: false, input: JSON.stringify(input), encoding: "utf8", timeout: 25000, maxBuffer: 1024 * 1024, windowsHide: true });
+    // Relay the CLI's own stderr first: when it crashed, that is the real
+    // error a human running the hook by hand needs to see.
+    if (child.stderr) process.stderr.write(child.stderr);
     if (child.error || child.signal) throw new Error("Altitude CLI could not finish this hook.");
     const result = parseResult(child.stdout, child.status, input.conversation_id);
-    if (child.stderr) process.stderr.write(child.stderr);
     if (result.action === "block" && ["diff", "user-prompt-submit"].includes(action)) {
       const reason = result.reason || "Altitude requested a workshop check before continuing.";
       response = action === "user-prompt-submit" ? { continue: false, user_message: reason } : { permission: "deny", user_message: reason, agent_message: reason };

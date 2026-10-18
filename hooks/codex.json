@@ -7,7 +7,7 @@
           {
             "type": "command",
             "command": "node \"$PLUGIN_ROOT/bin/altitude-codex-hook.mjs\" session-start",
-            "commandWindows": "node \"%PLUGIN_ROOT%\\bin\\altitude-codex-hook.mjs\" session-start",
+            "commandWindows": "node -e \"Promise.resolve().then(()=>{const p=require('node:path'),r=process.env.PLUGIN_ROOT;if(typeof r==='string'&&p.isAbsolute(r))return import(require('node:url').pathToFileURL(p.join(r,'bin','altitude-codex-hook.mjs')).href);throw Error('PLUGIN_ROOT is not an absolute plugin path')}).then((m)=>m.main('session-start')).catch((e)=>{process.stderr.write('Altitude hook skipped: '+e.message+'\\n');process.exitCode=0})\"",
             "timeout": 30,
             "statusMessage": "Starting Altitude workshop capture"
           }
@@ -21,7 +21,7 @@
           {
             "type": "command",
             "command": "node \"$PLUGIN_ROOT/bin/altitude-codex-hook.mjs\" plan",
-            "commandWindows": "node \"%PLUGIN_ROOT%\\bin\\altitude-codex-hook.mjs\" plan",
+            "commandWindows": "node -e \"Promise.resolve().then(()=>{const p=require('node:path'),r=process.env.PLUGIN_ROOT;if(typeof r==='string'&&p.isAbsolute(r))return import(require('node:url').pathToFileURL(p.join(r,'bin','altitude-codex-hook.mjs')).href);throw Error('PLUGIN_ROOT is not an absolute plugin path')}).then((m)=>m.main('plan')).catch((e)=>{process.stderr.write('Altitude hook skipped: '+e.message+'\\n');process.exitCode=0})\"",
             "timeout": 30,
             "statusMessage": "Checking the Altitude plan gate"
           }
@@ -33,7 +33,7 @@
           {
             "type": "command",
             "command": "node \"$PLUGIN_ROOT/bin/altitude-codex-hook.mjs\" diff",
-            "commandWindows": "node \"%PLUGIN_ROOT%\\bin\\altitude-codex-hook.mjs\" diff",
+            "commandWindows": "node -e \"Promise.resolve().then(()=>{const p=require('node:path'),r=process.env.PLUGIN_ROOT;if(typeof r==='string'&&p.isAbsolute(r))return import(require('node:url').pathToFileURL(p.join(r,'bin','altitude-codex-hook.mjs')).href);throw Error('PLUGIN_ROOT is not an absolute plugin path')}).then((m)=>m.main('diff')).catch((e)=>{process.stderr.write('Altitude hook skipped: '+e.message+'\\n');process.exitCode=0})\"",
             "timeout": 30,
             "statusMessage": "Checking the Altitude diff gate"
           }
@@ -46,7 +46,7 @@
           {
             "type": "command",
             "command": "node \"$PLUGIN_ROOT/bin/altitude-codex-hook.mjs\" stop",
-            "commandWindows": "node \"%PLUGIN_ROOT%\\bin\\altitude-codex-hook.mjs\" stop",
+            "commandWindows": "node -e \"Promise.resolve().then(()=>{const p=require('node:path'),r=process.env.PLUGIN_ROOT;if(typeof r==='string'&&p.isAbsolute(r))return import(require('node:url').pathToFileURL(p.join(r,'bin','altitude-codex-hook.mjs')).href);throw Error('PLUGIN_ROOT is not an absolute plugin path')}).then((m)=>m.main('stop')).catch((e)=>{process.stderr.write('Altitude hook skipped: '+e.message+'\\n');process.exitCode=0})\"",
             "timeout": 30,
             "statusMessage": "Checking the Altitude retro gate"
           }
@@ -59,7 +59,7 @@
           {
             "type": "command",
             "command": "node \"$PLUGIN_ROOT/bin/altitude-codex-hook.mjs\" session-end",
-            "commandWindows": "node \"%PLUGIN_ROOT%\\bin\\altitude-codex-hook.mjs\" session-end",
+            "commandWindows": "node -e \"Promise.resolve().then(()=>{const p=require('node:path'),r=process.env.PLUGIN_ROOT;if(typeof r==='string'&&p.isAbsolute(r))return import(require('node:url').pathToFileURL(p.join(r,'bin','altitude-codex-hook.mjs')).href);throw Error('PLUGIN_ROOT is not an absolute plugin path')}).then((m)=>m.main('session-end')).catch((e)=>{process.stderr.write('Altitude hook skipped: '+e.message+'\\n');process.exitCode=0})\"",
             "timeout": 3,
             "statusMessage": "Closing the Altitude workshop session"
           }
@@ -72,7 +72,7 @@
           {
             "type": "command",
             "command": "node \"$PLUGIN_ROOT/bin/altitude-codex-hook.mjs\" user-prompt-submit",
-            "commandWindows": "node \"%PLUGIN_ROOT%\\bin\\altitude-codex-hook.mjs\" user-prompt-submit",
+            "commandWindows": "node -e \"Promise.resolve().then(()=>{const p=require('node:path'),r=process.env.PLUGIN_ROOT;if(typeof r==='string'&&p.isAbsolute(r))return import(require('node:url').pathToFileURL(p.join(r,'bin','altitude-codex-hook.mjs')).href);throw Error('PLUGIN_ROOT is not an absolute plugin path')}).then((m)=>m.main('user-prompt-submit')).catch((e)=>{process.stderr.write('Altitude hook skipped: '+e.message+'\\n');process.exitCode=0})\"",
             "timeout": 30,
             "statusMessage": "Recording your Altitude turn"
           }

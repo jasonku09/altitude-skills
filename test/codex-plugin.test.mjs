@@ -1,10 +1,10 @@
 import assert from "node:assert/strict";
 import { execFileSync, spawnSync } from "node:child_process";
-import { chmod, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { chmod, cp, mkdir, mkdtemp, readFile, realpath, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, delimiter, join, resolve } from "node:path";
 import test from "node:test";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const shim = join(repoRoot, "bin/altitude-codex-hook.mjs");
@@ -18,6 +18,71 @@ async function fakeExecutable(directory, name, body) {
   await writeFile(path, `#!/bin/sh\n${body}\n`);
   await chmod(path, 0o755);
   return path;
+}
+
+// The exact Windows hook command (see the freeze test). It reads the plugin
+// root from the PLUGIN_ROOT environment variable Codex sets for every plugin
+// hook, so the path never passes through a shell parser: no `$`, `%`, `!`,
+// `^`, backtick or inner double quote may appear, because pwsh 7, Windows
+// PowerShell 5.1 and cmd (Codex's fallback when it has no session shell) each
+// expand a different subset of them inside double quotes.
+function windowsBootstrap(action) {
+  const script =
+    "Promise.resolve().then(()=>{const p=require('node:path'),r=process.env.PLUGIN_ROOT;" +
+    "if(typeof r==='string'&&p.isAbsolute(r))" +
+    "return import(require('node:url').pathToFileURL(p.join(r,'bin','altitude-codex-hook.mjs')).href);" +
+    "throw Error('PLUGIN_ROOT is not an absolute plugin path')})" +
+    `.then((m)=>m.main('${action}'))` +
+    ".catch((e)=>{process.stderr.write('Altitude hook skipped: '+e.message+'\\n');process.exitCode=0})";
+  return `node -e "${script}"`;
+}
+
+const actions = ["session-start", "plan", "diff", "stop", "session-end", "user-prompt-submit"];
+
+async function windowsCommands() {
+  const config = await readJson("hooks/codex.json");
+  const commands = new Map();
+  for (const entries of Object.values(config.hooks)) {
+    for (const entry of entries) {
+      for (const hook of entry.hooks) {
+        const action = hook.command.split(" ").at(-1);
+        commands.set(action, hook.commandWindows);
+      }
+    }
+  }
+  return commands;
+}
+
+// A plugin install whose root path contains every character some Windows
+// hook shell would expand or split on inside double quotes. Pass a realpath'd
+// temp: Node resolves symlinks (macOS /var -> /private/var) when it imports
+// the shim, so the shim's own plugin root is always the real path.
+async function trickyPluginRoot(temp) {
+  const root = join(temp, "plugin O'Neil $HOME %OS% `x` !y! ^z & (1)");
+  await cp(join(repoRoot, "bin"), join(root, "bin"), { recursive: true });
+  await cp(join(repoRoot, "hooks"), join(root, "hooks"), { recursive: true });
+  return root;
+}
+
+// Simulates native Windows for the shim's CLI launch: process.platform is
+// read when the CLI is resolved, after this preload has run.
+async function win32Preload(temp) {
+  const preload = join(temp, "as-win32.mjs");
+  await writeFile(preload, 'Object.defineProperty(process, "platform", { value: "win32" });\n');
+  return pathToFileURL(preload).href;
+}
+
+// An npm global prefix as Windows lays it out: altitude.cmd beside
+// node_modules/@learnaltitude/cli. The .cmd must never run.
+async function npmWindowsPrefix(directory, cliBody) {
+  const pkg = join(directory, "node_modules/@learnaltitude/cli");
+  await mkdir(join(pkg, "bin"), { recursive: true });
+  await writeFile(join(directory, "altitude.cmd"), "@echo off\r\nREM not executed\r\n");
+  await writeFile(
+    join(pkg, "package.json"),
+    JSON.stringify({ name: "@learnaltitude/cli", bin: { altitude: "bin/altitude.js" } }),
+  );
+  await writeFile(join(pkg, "bin/altitude.js"), cliBody);
 }
 
 function runShim(args, options = {}) {
@@ -97,8 +162,7 @@ test("declares Codex's documented hook payload fields at the adapter edge", asyn
 test("wires lifecycle and PreToolUse gates through frozen cross-platform shim commands", async () => {
   const config = await readJson("hooks/codex.json");
   const command = (action) => `node "$PLUGIN_ROOT/bin/altitude-codex-hook.mjs" ${action}`;
-  const commandWindows = (action) =>
-    `node "%PLUGIN_ROOT%\\bin\\altitude-codex-hook.mjs" ${action}`;
+  const commandWindows = windowsBootstrap;
   const hook = (action, statusMessage, timeout = 30) => ({
     type: "command",
     command: command(action),
@@ -112,6 +176,13 @@ test("wires lifecycle and PreToolUse gates through frozen cross-platform shim co
   // command string silently un-trusts the hook for every installed user, and
   // reordering entries orphans their trust state. Treat this deepEqual as the
   // freeze: iterate inside the shim, never here.
+  //
+  // commandWindows moved off cmd's `%PLUGIN_ROOT%` on 2026-10-17: Codex
+  // (>=0.131.0) runs Windows hooks through the session shell — PowerShell —
+  // which left it literal, so every Windows hook exited 1. Codex hashes the
+  // platform's own command, so this re-prompts the one-time hook trust review
+  // for Windows installs only (all of which were broken); POSIX `command`
+  // strings are untouched and macOS/Linux trust is unaffected.
   assert.deepEqual(config, {
     description: "Altitude workshop lifecycle and learning gates.",
     hooks: {
@@ -350,10 +421,60 @@ test("the shim fails open when workshop-core is missing entirely", async (t) => 
 test("the shim is hooks-only: connect and status are not shim actions", () => {
   for (const retired of ["connect", "status"]) {
     const result = runShim([retired], { input: "" });
-    assert.equal(result.status, 1, retired);
+    // Still a hook invocation from Codex's point of view: a misconfigured
+    // action prints usage for a human but never surfaces as a hook failure.
+    assert.equal(result.status, 0, retired);
     assert.match(result.stderr, /usage: altitude-codex-hook/);
   }
   execFileSync(process.execPath, ["--check", shim]);
+});
+
+test("gates fail OPEN: any CLI exit other than 0 or 2 becomes 0, stderr kept", async (t) => {
+  const temp = await mkdtemp(join(tmpdir(), "altitude-codex-crash-"));
+  t.after(() => rm(temp, { recursive: true, force: true }));
+  // 1 = a crash / old CLI; 3 = anything unexpected; 9009 truncates to an
+  // 8-bit status on POSIX, so 137 stands in for "killed by the OS".
+  for (const code of [1, 3, 137]) {
+    await fakeExecutable(
+      temp,
+      "altitude",
+      `echo "partial context" \necho "TypeError: boom at cli.js:1" >&2\nexit ${code}`,
+    );
+    for (const action of ["session-start", "plan", "diff", "stop", "session-end", "user-prompt-submit"]) {
+      const result = runShim([action], {
+        input: JSON.stringify({ session_id: `codex-crash-${code}` }),
+        env: { PATH: `${temp}${delimiter}${process.env.PATH}` },
+      });
+      assert.equal(result.status, 0, `${action} exit ${code}`);
+      // The real error stays visible to a human running the hook by hand.
+      assert.match(result.stderr, /TypeError: boom at cli\.js:1/, `${action} exit ${code}`);
+      assert.match(result.stderr, new RegExp(`exited with code ${code}`), `${action} exit ${code}`);
+      // A crashed CLI's stdout is not trusted as model context.
+      assert.equal(result.stdout, "", `${action} exit ${code}`);
+    }
+  }
+});
+
+test("gates fail OPEN: a crash inside the shim itself exits 0", async (t) => {
+  const temp = await mkdtemp(join(tmpdir(), "altitude-codex-shim-crash-"));
+  t.after(() => rm(temp, { recursive: true, force: true }));
+  await fakeExecutable(temp, "altitude", "exit 0");
+  // Preloaded before the shim: reading stdin throws, as a broken host pipe would.
+  const preload = join(temp, "broken-stdin.mjs");
+  await writeFile(
+    preload,
+    'Object.defineProperty(process, "stdin", { get() { throw new Error("stdin unavailable: EPIPE"); } });\n',
+  );
+  for (const action of ["session-start", "diff"]) {
+    const result = spawnSync(process.execPath, ["--import", pathToFileURL(preload).href, shim, action], {
+      encoding: "utf8",
+      input: "{}",
+      env: { ...process.env, PATH: `${temp}${delimiter}${process.env.PATH}` },
+    });
+    assert.equal(result.status, 0, action);
+    assert.match(result.stderr, /Altitude hook skipped/, action);
+    assert.match(result.stderr, /stdin unavailable: EPIPE/, action);
+  }
 });
 
 test("keeps the Codex adapter surface free of server-owned teaching content", async () => {
@@ -361,6 +482,7 @@ test("keeps the Codex adapter surface free of server-owned teaching content", as
     ".codex-plugin/plugin.json",
     ".agents/plugins/marketplace.json",
     "bin/altitude-codex-hook.mjs",
+    "bin/altitude-cli.mjs",
     "hooks/codex-field-mapping.json",
     "hooks/codex.json",
   ];
@@ -391,4 +513,158 @@ test("README installs Codex through the marketplace, not clone-and-copy", async 
     /~\/\.codex\/skills/,
     "the Codex clone-and-copy path is retired; the plugin is the only documented install",
   );
+});
+
+test("commandWindows carries no syntax any Windows hook shell would expand", async () => {
+  const commands = await windowsCommands();
+  assert.deepEqual([...commands.keys()].sort(), [...actions].sort());
+  for (const [action, command] of commands) {
+    // pwsh 7 and PowerShell 5.1 expand `$` and backtick escapes inside double
+    // quotes; cmd expands `%VAR%` (and `!VAR!`, `^` under delayed expansion).
+    // The plugin path is substituted by nobody: the bootstrap reads it from
+    // the PLUGIN_ROOT environment variable, so no path character can matter.
+    assert.doesNotMatch(command, /[$%`!^]/, action);
+    assert.equal(command.split('"').length, 3, `${action}: exactly one double-quoted argument`);
+    assert.match(command, /^node -e "/, action);
+    assert.match(command, /process\.env\.PLUGIN_ROOT/, action);
+    assert.doesNotMatch(command, /\$\{?PLUGIN_ROOT/, action);
+  }
+});
+
+test("each Windows hook command runs the shim from a plugin root full of shell metacharacters", async (t) => {
+  const temp = await realpath(await mkdtemp(join(tmpdir(), "altitude-codex-win-cmd-")));
+  t.after(() => rm(temp, { recursive: true, force: true }));
+  const root = await trickyPluginRoot(temp);
+  const argvPath = join(temp, "argv");
+  const stdinPath = join(temp, "stdin");
+  const cliDir = join(temp, "cli");
+  await mkdir(cliDir);
+  await fakeExecutable(
+    cliDir,
+    "altitude",
+    `printf '%s\\n' "$@" > "${argvPath}"\ncat > "${stdinPath}"\nexit "\${FAKE_EXIT:-0}"`,
+  );
+  const commands = await windowsCommands();
+  const env = { ...process.env, PLUGIN_ROOT: root, PATH: `${cliDir}${delimiter}${process.env.PATH}` };
+
+  for (const [action, command] of commands) {
+    const payload = JSON.stringify({ session_id: `codex-win-${action}`, cwd: "/tmp/project" });
+    // The command has no shell-specific syntax, so /bin/sh parses it exactly
+    // as pwsh, PowerShell 5.1 and cmd do: node -e <script> with no other args.
+    const result = spawnSync("/bin/sh", ["-c", command], { input: payload, encoding: "utf8", env });
+    assert.equal(result.status, 0, `${action}: ${result.stderr}`);
+    const argv = (await readFile(argvPath, "utf8")).trim().split("\n");
+    assert.equal(argv[0], "hook", action);
+    assert.equal(argv[argv.indexOf("--mapping") + 1], join(root, "hooks/codex-field-mapping.json"), action);
+    assert.equal(
+      argv[argv.indexOf("--transcript-mapping") + 1],
+      join(root, "hooks/codex-transcript-mapping.json"),
+      action,
+    );
+    assert.equal(await readFile(stdinPath, "utf8"), payload, action);
+  }
+
+  // A gate block still reaches Codex as exit 2 through the bootstrap.
+  const blocked = spawnSync("/bin/sh", ["-c", commands.get("diff")], {
+    input: "{}",
+    encoding: "utf8",
+    env: { ...env, FAKE_EXIT: "2" },
+  });
+  assert.equal(blocked.status, 2);
+});
+
+test("the Windows bootstrap fails open when the plugin root is unusable", async (t) => {
+  const temp = await mkdtemp(join(tmpdir(), "altitude-codex-win-boot-"));
+  t.after(() => rm(temp, { recursive: true, force: true }));
+  const command = (await windowsCommands()).get("diff");
+  for (const pluginRoot of [undefined, "relative/plugin", join(temp, "missing-plugin")]) {
+    const env = { ...process.env };
+    if (pluginRoot === undefined) delete env.PLUGIN_ROOT;
+    else env.PLUGIN_ROOT = pluginRoot;
+    const result = spawnSync("/bin/sh", ["-c", command], { input: "{}", encoding: "utf8", env, cwd: temp });
+    assert.equal(result.status, 0, String(pluginRoot));
+    assert.match(result.stderr, /Altitude hook skipped: /, String(pluginRoot));
+  }
+});
+
+test("importing the shim runs nothing; main(action) is the hook entry point", async () => {
+  const { main } = await import(pathToFileURL(shim).href);
+  assert.equal(typeof main, "function");
+});
+
+test("on Windows the shim runs the npm CLI through node, never through a shell", async (t) => {
+  const temp = await realpath(await mkdtemp(join(tmpdir(), "altitude codex win32 & $(x) ")));
+  t.after(() => rm(temp, { recursive: true, force: true }));
+  const root = await trickyPluginRoot(temp);
+  const npm = join(temp, "Alty Learner", "AppData", "Roaming", "npm");
+  const capture = join(temp, "capture.json");
+  await npmWindowsPrefix(
+    npm,
+    `let input = ""; process.stdin.on("data", (c) => (input += c)).on("end", () => {
+      require("node:fs").writeFileSync(${JSON.stringify(capture)}, JSON.stringify({ argv: process.argv.slice(2), input }));
+      process.stdout.write("Altitude journey: Foundations\\n");
+      process.exitCode = Number(process.env.FAKE_EXIT ?? 0);
+    });`,
+  );
+  const preload = await win32Preload(temp);
+  const shimAt = join(root, "bin/altitude-codex-hook.mjs");
+  const launch = (action, env = {}) =>
+    spawnSync(process.execPath, ["--import", preload, shimAt, action], {
+      input: JSON.stringify({ session_id: "codex-win32" }),
+      encoding: "utf8",
+      env: { ...process.env, ALTITUDE_CLI_PATH: "", PATH: npm, ...env },
+    });
+
+  const result = launch("session-start");
+  assert.equal(result.status, 0, result.stderr);
+  // No shell ever saw the arguments: paths with spaces and the `$skill`
+  // nudge arrive intact, and Node raises no shell-with-args deprecation.
+  const { argv, input } = JSON.parse(await readFile(capture, "utf8"));
+  assert.deepEqual(argv.slice(0, 2), ["hook", "session-start"]);
+  assert.equal(argv[argv.indexOf("--mapping") + 1], join(root, "hooks/codex-field-mapping.json"));
+  assert.equal(argv[argv.indexOf("--nudge") + 1], "Run $next-lesson to continue (or $begin for your first session).");
+  assert.equal(input, JSON.stringify({ session_id: "codex-win32" }));
+  assert.equal(result.stdout, "Altitude journey: Foundations\n");
+  assert.doesNotMatch(result.stderr, /DEP0190|not recognized/);
+
+  const blocked = launch("diff", { FAKE_EXIT: "2" });
+  assert.equal(blocked.status, 2);
+});
+
+test("on Windows a missing CLI is a clean fail-open message, exit 0", async (t) => {
+  const temp = await mkdtemp(join(tmpdir(), "altitude-codex-win32-missing-"));
+  t.after(() => rm(temp, { recursive: true, force: true }));
+  const preload = await win32Preload(temp);
+  // One PATH entry holds nothing; the other a stray altitude.cmd with no
+  // installed package beside it — never executed, never a shell fallback.
+  const empty = join(temp, "empty");
+  const stray = join(temp, "stray");
+  await mkdir(empty);
+  await mkdir(stray);
+  await writeFile(join(stray, "altitude.cmd"), "@echo off\r\nREM not executed\r\n");
+  for (const action of actions) {
+    const result = spawnSync(process.execPath, ["--import", preload, shim, action], {
+      input: "{}",
+      encoding: "utf8",
+      env: { ...process.env, ALTITUDE_CLI_PATH: "", PATH: [empty, stray].join(delimiter) },
+    });
+    assert.equal(result.status, 0, action);
+    assert.equal(result.stdout, "", action);
+    assert.match(
+      result.stderr,
+      /Altitude could not run the workshop CLI: Altitude CLI was not found; install it with npm install -g @learnaltitude\/cli\./,
+      action,
+    );
+    assert.doesNotMatch(result.stderr, /DEP0190|not recognized/, action);
+  }
+});
+
+test("the Codex and Cursor shims share one CLI resolver", async () => {
+  const shared = await import(pathToFileURL(join(repoRoot, "bin/altitude-cli.mjs")).href);
+  const cursor = await import(pathToFileURL(join(repoRoot, "bin/altitude-cursor-hook.mjs")).href);
+  assert.equal(typeof shared.resolveCli, "function");
+  assert.equal(cursor.resolveCli, shared.resolveCli);
+  const source = await readFile(shim, "utf8");
+  assert.match(source, /from "\.\/altitude-cli\.mjs"/);
+  assert.doesNotMatch(source, /shell:\s*(true|process\.platform)/);
 });

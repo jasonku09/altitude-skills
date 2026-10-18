@@ -111,6 +111,12 @@ rules from `references/paid-mode.md` into a **Paid mode** section of `skills/nex
 so a paid lesson no longer reads a file outside the learner's project (which hosts like Claude Code's
 auto mode put behind a permission prompt). The rules themselves are unchanged.
 
+Plugin 0.10.3 moves no floor and needs no new CLI or server. It fixes Codex hooks on native
+Windows, where every hook exited 1: Codex runs `commandWindows` through PowerShell, which left the
+cmd-style `%PLUGIN_ROOT%` literal (see **Codex on native Windows** below). Windows installs see
+Codex's one-time hook trust review again; macOS/Linux trust is unaffected. Every hook shim now
+exits only 0 or 2, so a crashing CLI can no longer surface as a hook failure.
+
 The graded lesson-start review adds no floor either. When `due_review` carries an
 `ask`, the tutor asks that kind of question and sends the answer with
 `--review <concept-id>` (key `review` under `emit --stdin`) and no verdict, and the
@@ -387,6 +393,40 @@ The server and scratch flusher were stopped. Raw evidence lives at
 `~/.cache/altitude-runtime-recovery/` (including `REPORT.md`, results and matrix);
 the harness is `~/.cache/altitude-runtime-recovery/reproduce.py`. The two-turn test
 passed again after the final CLI changes.
+
+## Codex on native Windows
+
+Codex reads `commandWindows` from `hooks/codex.json` on Windows (since Codex
+0.131.0) and runs it through the session's shell: `pwsh -NoProfile -Command`, or
+Windows PowerShell 5.1 when pwsh 7 is absent, and `cmd /C` only when Codex has no
+session shell (openai/codex `rust-v0.163.0`, `core/src/session/mod.rs`
+`build_hooks_config` and `hooks/src/engine/command_runner.rs`). It is not a cmd
+command line. The old `%PLUGIN_ROOT%` form was cmd syntax that PowerShell left
+literal, so every Windows hook exited 1 before the shim loaded.
+
+The Windows command is now a `node -e` bootstrap that reads the plugin root from the
+`PLUGIN_ROOT` environment variable (which Codex sets for every plugin hook), imports
+`bin/altitude-codex-hook.mjs` and calls `main(<action>)`. The command text contains
+no `$`, `%`, `!`, `^`, backtick or inner double quote, so pwsh 7, PowerShell 5.1 and
+cmd all parse it the same way, and the plugin path never goes through a shell. Codex
+also replaces `${PLUGIN_ROOT}` in the command text (since 0.126.0), but that pastes
+the raw path into the command, where PowerShell would still expand a `$name` or a
+backtick inside it. Once the shim is running, it starts the workshop CLI with
+`shell: false`, using the npm package's JavaScript entry point (`bin/altitude-cli.mjs`,
+which the Cursor and Copilot adapters share). It no longer runs `altitude.cmd`
+through cmd. A CLI that cannot be found is reported on stderr and the hook exits 0.
+
+Codex hashes the platform's own command for hook trust, so this change brings back
+the one-time hook review for Windows installs only. macOS and Linux keep their
+trust. This was checked with real Codex 0.163.0 on GitHub's `windows-latest`
+runners (Node LTS, current, and the image's own Node), using `codex exec` against
+a local mock model. The runs covered pwsh 7 and PowerShell 5.1, with a plain
+profile, a profile path containing a space, and the profile `C:\Users\O'Neil
+$HOME %OS% x`. All 54 SessionStart, UserPromptSubmit and Stop hook lines reported
+`Completed`, every hook and CLI process exited 0, and the CLI wrote no new
+diagnostics. A separate emulation of Codex's own process launch, including the
+`cmd /C` fallback, passed all 270 cases:
+<https://github.com/jasonku09/altitude-skills/actions/runs/39091988000>.
 
 ## Cursor implementation (unreleased)
 
