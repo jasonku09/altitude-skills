@@ -31,11 +31,11 @@ function contains(path, root, child) {
 /**
  * Native Windows Cursor sends project paths in URI-path form — a slash before
  * a drive letter, often lowercase, with forward slashes ("/c:/Users/x",
- * "/d:/code/"). Node treats that as a rootless path and resolves it to
+ * "/d:/code/"). Node does not recognize that drive prefix and can resolve it to
  * "C:\c:\Users\x", so the CLI would never find the project's binding.
  * Convert those (and file: URIs) to native drive paths, uppercasing the drive
- * letter the way Windows' own working directories report it. Everything else
- * is returned unchanged for the absolute-path checks to judge. A no-op off
+ * letter the way Windows' own working directories report it. File URI hosts
+ * become UNC paths; other inputs still face the existing path checks. A no-op off
  * Windows, where "/c:/x" is a legal path.
  * @param {unknown} value @param {string} [platform]
  */

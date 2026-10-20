@@ -133,11 +133,12 @@ drive letter, often lowercase, with forward slashes (`/c:/Users/me/project`,
 the CLI never found the project's binding and every lesson in a correctly opened
 folder reported `outside_project` (plugin 0.10.4 fix, from a learner report on
 Cursor 3.24.12). On Windows only, the adapter converts `workspace_roots` entries,
-`cwd`, and `transcript_path` from that form, and from `file:` URIs
-(percent-decoded), to native drive paths with an uppercase drive letter before
-any absolute-path, containment, or ambiguity check; spaces and non-ASCII folder
-names pass through unchanged. Other values are left as sent, so the existing
-refusals still apply. On macOS and Linux the conversion is a no-op (`/c:/x` is a
+`cwd`, and `transcript_path` from that form to native drive paths with an
+uppercase drive letter before any absolute-path, containment, or ambiguity
+check. It also normalizes native drive paths and decodes `file:` URIs to Windows
+paths, including UNC paths for URI hosts; spaces and non-ASCII folder names
+are preserved. Invalid file URIs and other path forms still go through the
+existing checks. On macOS and Linux the conversion is a no-op (`/c:/x` is a
 legal POSIX path). [Native Windows workspace roots CI](#native-windows-workspace-roots-ci)
 checks this against the real CLI on Windows.
 
@@ -190,13 +191,13 @@ released installations keep the standard PATH/npm resolution.
 
 ## Native Windows workspace roots CI
 
-[`windows-cursor-roots`](.github/workflows/windows-cursor-roots.yml) runs on
+[`windows-cursor-roots`](.github/workflows/windows-cursor-roots.yml) is configured to run on
 `windows-latest` for pull requests that touch `bin/`, the Cursor hook files,
 `.cursor-plugin/`, or the check itself. It needs no Cursor and no secrets.
 `ci/windows-cursor-roots/check.mjs` creates a folder bound with a `.altitude`
 marker at `%USERPROFILE%\Documents\Pi Learning\π\Coding Projects\route-check`
-(spaces and a non-ASCII name, like the learner's). It installs the published
-CLI pinned in the workflow, and gives each scenario its own unpaired
+(spaces and a non-ASCII name, like the learner's). The workflow installs the
+published CLI at its pinned version; the harness gives each scenario its own unpaired
 `ALTITUDE_DATA_DIR` with one cached down-sync answer. That answer is an explicit
 journey miss, so no lesson content is faked, and it carries the server-authored
 `learning_runtime` descriptor. It then pipes Cursor-shaped `sessionStart` and
@@ -222,14 +223,16 @@ The job also runs the harness rules and the adapter's `Windows:`/`POSIX:`
 path-rule tests under real win32 path semantics. The rest of the suite uses
 POSIX executable fixtures, which Windows cannot run.
 
-This proves that on real Windows the fixed adapter turns the URI-path root into
-the folder the real CLI finds the binding in, and that the old one did not. It
-does not verify:
+A passing native Windows run establishes that the fixed adapter turns the
+URI-path root into the folder the real CLI finds the binding in, and that the
+old one did not. The workflow remains unverified until it runs on
+`windows-latest`, including its PowerShell steps, npm install/PATH layout, tag
+checkout, and `π` folder path. Even a passing run does not verify:
 
 - **Cursor's real desktop payload.** The URI-path form comes from the learner
   report (Cursor 3.24.12). The JSON is hand-built: no `cwd` (selection falls
   back to the sole root), no `transcript_path`, no multi-root workspace. Unit
-  tests cover those forms only under emulated win32 rules.
+  tests cover those forms with explicit win32 rules, without a real Cursor payload.
 - **How Cursor launches hooks on Windows.** The job runs the wrapper with
   `node` directly. It skips the `node -e` bootstrap in `hooks/cursor.json`, the
   `~/.cursor/altitude/plugin.json` registration, and whatever shell Cursor uses.
@@ -355,9 +358,11 @@ Test existing hooks alongside Altitude: Cursor merges hook responses and another
 hook's stop follow-up can override Altitude's. An offered question must never be
 marked asked merely because the adapter printed an instruction.
 
-Dedicated Windows and further Linux testing are deferred by the user's release
-decision; native Windows and Linux desktop remain unverified. Existing Ubuntu
-terminal evidence is retained. This does not remove automated portability checks.
+Native Windows Cursor desktop and Linux desktop remain unverified; dedicated
+desktop and further Linux testing are deferred by the user's release decision.
+Existing Ubuntu terminal evidence is retained. For the separate automated
+Windows adapter check and its verification status, see
+[native Windows workspace roots CI](#native-windows-workspace-roots-ci).
 
 macOS, native Windows, and Linux are intended targets. No row in that matrix is
 certified by these package tests. Recommend a model only after its recorded full
