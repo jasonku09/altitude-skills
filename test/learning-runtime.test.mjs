@@ -38,7 +38,7 @@ test('both plugin manifests carry this branch\'s release, above the 0.5.8 floor'
   // the lesson page bootstrap.
   // The enforced floor stays 0.5.8 — minima move only for compatibility needs.
   for (const path of ['.claude-plugin/plugin.json', '.codex-plugin/plugin.json']) {
-    assert.equal(JSON.parse(read(path)).version, '0.10.3', path);
+    assert.equal(JSON.parse(read(path)).version, '0.10.4', path);
   }
 });
 
