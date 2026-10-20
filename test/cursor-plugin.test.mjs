@@ -7,7 +7,9 @@ import { fileURLToPath } from "node:url";
 import test from "node:test";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const shim = join(root, "bin/altitude-cursor-hook.mjs");
+// ESM imports require file URLs for Windows drive paths; subprocesses need paths.
+const shimUrl = new URL("../bin/altitude-cursor-hook.mjs", import.meta.url);
+const shim = fileURLToPath(shimUrl);
 const allow = { version: 1, exitCode: 0, action: "allow", context: [] };
 const payload = { conversation_id: "chat-a", generation_id: "turn-a", workspace_roots: [root] };
 /** @param {unknown} response @param {unknown} status */
@@ -151,7 +153,7 @@ const learnerFolder = "C:\\Users\\tjoba\\Documents\\Codex\\Pi Learning\\π\\lear
 const learnerUriPath = "/c:/Users/tjoba/Documents/Codex/Pi Learning/π/learn/Coding Projects/route-check";
 
 test("Windows: Cursor's URI-path and file URI forms become native drive paths", async () => {
-  const { cursorHostPath } = await import(shim);
+  const { cursorHostPath } = await import(shimUrl);
   for (const [sent, native] of [
     [learnerUriPath, learnerFolder],
     [`${learnerUriPath}/`, `${learnerFolder}\\`],
@@ -170,14 +172,14 @@ test("Windows: Cursor's URI-path and file URI forms become native drive paths", 
 });
 
 test("Windows: values that are not drive paths are left for the absolute-path checks to refuse", async () => {
-  const { cursorHostPath } = await import(shim);
+  const { cursorHostPath } = await import(shimUrl);
   for (const value of ["relative\\lesson", "/c/Users/x", "/cd:/x", "file:///c%2F..%2Fx", "file://", ""]) {
     assert.equal(cursorHostPath(value, "win32"), value, JSON.stringify(value));
   }
 });
 
 test("Windows: native bare drives remain relative while URI-path bare drives become roots", async () => {
-  const { cursorHostPath, normalizeCursorInput } = await import(shim);
+  const { cursorHostPath, normalizeCursorInput } = await import(shimUrl);
   for (const drive of ["C:", "c:"]) {
     assert.equal(cursorHostPath(drive, "win32"), drive);
     assert.throws(
@@ -194,7 +196,7 @@ test("Windows: native bare drives remain relative while URI-path bare drives bec
 });
 
 test("POSIX: Cursor path conversion is a no-op, including the legal path /c:/x", async () => {
-  const { cursorHostPath } = await import(shim);
+  const { cursorHostPath } = await import(shimUrl);
   for (const value of ["/c:/x", "/Users/a/π project", "file:///c:/x", "c:\\x"]) {
     assert.equal(cursorHostPath(value, "darwin"), value);
     assert.equal(cursorHostPath(value, "linux"), value);
@@ -202,7 +204,7 @@ test("POSIX: Cursor path conversion is a no-op, including the legal path /c:/x",
 });
 
 test("Windows: the learner's project folder survives selection exactly", async () => {
-  const { normalizeCursorInput } = await import(shim);
+  const { normalizeCursorInput } = await import(shimUrl);
   const transcript = "/c:/Users/tjoba/.cursor/projects/c-Users-tjoba-route-check/agent-transcripts/chat-a/chat-a.jsonl";
   // Sole root, no cwd (Cursor's generic tools send cwd:"").
   for (const cwd of [undefined, ""]) {
@@ -219,12 +221,12 @@ test("Windows: the learner's project folder survives selection exactly", async (
 });
 
 test("Windows: one root sent in two forms is still a single root", async () => {
-  const { normalizeCursorInput } = await import(shim);
+  const { normalizeCursorInput } = await import(shimUrl);
   assert.equal(normalizeCursorInput({ ...payload, workspace_roots: [learnerUriPath, learnerFolder] }, "diff", { platform: "win32" }).cwd, learnerFolder);
 });
 
 test("Windows: path conversion keeps every ambiguity and outside-project refusal", async () => {
-  const { normalizeCursorInput } = await import(shim);
+  const { normalizeCursorInput } = await import(shimUrl);
   for (const input of [
     { ...payload, workspace_roots: [learnerUriPath, "/d:/code/other/"] },
     { ...payload, workspace_roots: [learnerUriPath, `${learnerUriPath}/src`], cwd: `${learnerUriPath}/src/lesson` },
@@ -236,7 +238,7 @@ test("Windows: path conversion keeps every ambiguity and outside-project refusal
 });
 
 test("POSIX: selection and transcript forwarding are unchanged by the Windows rules", async () => {
-  const { normalizeCursorInput } = await import(shim);
+  const { normalizeCursorInput } = await import(shimUrl);
   const input = normalizeCursorInput({ ...payload, workspace_roots: ["/c:/x"], transcript_path: "/c:/x/t.jsonl" }, "diff", { platform: "darwin" });
   assert.equal(input.cwd, "/c:/x");
   assert.equal(input.transcript_path, "/c:/x/t.jsonl");
@@ -268,7 +270,7 @@ test("unverified continuation output cannot trigger synthetic learner turns", as
 });
 
 test("native Windows launcher invokes npm CLI through node without cmd interpretation", async (t) => {
-  const { resolveCli } = await import(shim);
+  const { resolveCli } = await import(shimUrl);
   const dir = await mkdtemp(join(tmpdir(), "altitude windows & $(host)-"));
   t.after(() => rm(dir, { recursive: true, force: true }));
   const pkg = join(dir, "node_modules/@learnaltitude/cli");
