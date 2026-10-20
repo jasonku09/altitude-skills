@@ -3,7 +3,7 @@
 // Transport only. All session, evidence and question state belongs to the CLI.
 import { spawnSync } from "node:child_process";
 import { realpathSync } from "node:fs";
-import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
+import { dirname, join, posix, resolve, win32 } from "node:path";
 import { fileURLToPath } from "node:url";
 import { resolveCli } from "./altitude-cli.mjs";
 
@@ -23,31 +23,62 @@ const actions = {
 
 function record(value) { return value !== null && typeof value === "object" && !Array.isArray(value); }
 function nonempty(value) { return typeof value === "string" && value.trim().length > 0; }
-function contains(root, path) {
-  const child = relative(root, path);
-  return child === "" || (!child.startsWith(`..${sep}`) && child !== ".." && !isAbsolute(child));
+function contains(path, root, child) {
+  const rel = path.relative(root, child);
+  return rel === "" || (!rel.startsWith(`..${path.sep}`) && rel !== ".." && !path.isAbsolute(rel));
 }
 
-function normalize(input, action) {
+/**
+ * Native Windows Cursor sends project paths in URI-path form — a slash before
+ * a drive letter, often lowercase, with forward slashes ("/c:/Users/x",
+ * "/d:/code/"). Node treats that as a rootless path and resolves it to
+ * "C:\c:\Users\x", so the CLI would never find the project's binding.
+ * Convert those (and file: URIs) to native drive paths, uppercasing the drive
+ * letter the way Windows' own working directories report it. Everything else
+ * is returned unchanged for the absolute-path checks to judge. A no-op off
+ * Windows, where "/c:/x" is a legal path.
+ * @param {unknown} value @param {string} [platform]
+ */
+export function cursorHostPath(value, platform = process.platform) {
+  if (platform !== "win32" || typeof value !== "string") return value;
+  let path;
+  if (/^file:/i.test(value)) {
+    // Decodes percent-escapes; a URI host becomes a \\server\share UNC path.
+    try { path = fileURLToPath(value, { windows: true }); } catch { return value; }
+  } else path = value.replace(/^[\\/](?=[A-Za-z]:(?:[\\/]|$))/, "");
+  if (/^[A-Za-z]:$/.test(path)) path += "\\";
+  if (/^[A-Za-z]:[\\/]/.test(path)) return win32.normalize(`${path[0].toUpperCase()}${path.slice(1)}`);
+  return path;
+}
+
+/**
+ * Select the one project folder this callback belongs to and copy only the
+ * documented transport fields. `platform` picks the path rules (tests run the
+ * win32 rules on any OS); it defaults to the running host.
+ */
+export function normalizeCursorInput(input, action, { platform = process.platform } = {}) {
+  const path = platform === "win32" ? win32 : posix;
   if (!record(input) || !nonempty(input.conversation_id)) throw new Error("Cursor did not provide an exact conversation ID.");
   if (input.session_id !== undefined && input.session_id !== input.conversation_id) throw new Error("Cursor session identities disagree.");
   if (input.is_background_agent === true) throw new Error("Altitude workshops require an interactive Cursor session.");
-  if (!Array.isArray(input.workspace_roots) || input.workspace_roots.length === 0 || !input.workspace_roots.every((root) => nonempty(root) && isAbsolute(root))) throw new Error("Cursor did not provide an unambiguous project.");
-  const roots = [...new Set(input.workspace_roots.map((root) => resolve(root)))];
+  const sentRoots = Array.isArray(input.workspace_roots) ? input.workspace_roots.map((root) => cursorHostPath(root, platform)) : [];
+  if (sentRoots.length === 0 || !sentRoots.every((root) => nonempty(root) && path.isAbsolute(root))) throw new Error("Cursor did not provide an unambiguous project.");
+  const roots = [...new Set(sentRoots.map((root) => path.resolve(root)))];
   let selected;
   // The terminal currently sends cwd:"" for generic tools. An empty value
   // contributes no project evidence; only a sole workspace root can replace it.
   if (input.cwd !== undefined && input.cwd !== "") {
-    if (!nonempty(input.cwd) || !isAbsolute(input.cwd)) throw new Error("Cursor cwd is not an absolute project path.");
-    const matches = roots.filter((root) => contains(root, resolve(input.cwd)));
-    if (matches.length === 1) selected = resolve(input.cwd);
+    const cwd = cursorHostPath(input.cwd, platform);
+    if (!nonempty(cwd) || !path.isAbsolute(cwd)) throw new Error("Cursor cwd is not an absolute project path.");
+    const matches = roots.filter((root) => contains(path, root, path.resolve(cwd)));
+    if (matches.length === 1) selected = path.resolve(cwd);
   } else if (roots.length === 1) selected = roots[0];
   if (!selected) throw new Error("Cursor workspace is ambiguous; open the bound lesson folder in its own workspace.");
   // Copy only documented transport fields. Do not forward email, arbitrary
   // prompt_origin, or an invented continuation association.
   const normalized = { conversation_id: input.conversation_id, cwd: selected };
   for (const key of ["generation_id", "tool_name"]) if (typeof input[key] === "string") normalized[key] = input[key];
-  if (nonempty(input.transcript_path)) normalized.transcript_path = input.transcript_path;
+  if (nonempty(input.transcript_path)) normalized.transcript_path = cursorHostPath(input.transcript_path, platform);
   if (record(input.tool_input)) normalized.tool_input = input.tool_input;
   if (nonempty(input.cursor_version)) normalized.agent_version = input.cursor_version;
   // The model the learner picked, for the tutor's recommended-model line.
@@ -107,7 +138,7 @@ export async function main(action = process.argv[2]) {
       stdin += chunk;
       if (stdin.length > 1024 * 1024) throw new Error("Cursor hook input is too large.");
     }
-    const input = normalize(JSON.parse(stdin), action);
+    const input = normalizeCursorInput(JSON.parse(stdin), action);
     const command = resolveCli();
     const [lifecycle, ...extra] = actions[action];
     const args = [...command.args, "hook", lifecycle, "--agent", "cursor", "--mapping", mapping, "--transcript-mapping", join(pluginRoot, "hooks/cursor-transcript-mapping.json"), "--output", "json", "--delivery", "prompt-context", "--stop-policy", "defer-to-prompt", ...extra];

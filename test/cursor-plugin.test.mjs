@@ -141,6 +141,90 @@ test("explicit nested cwd retains the exact lesson path rather than a workspace 
   assert.equal(captured.input.cwd, lessonPath);
 });
 
+// Native Windows Cursor sends project paths in URI-path form: a slash before a
+// (often lowercase) drive letter and forward slashes, e.g. "/c:/Users/x" or
+// "/d:/code/". Treating that as a path made Node resolve it to "C:\c:\Users\x",
+// so the CLI never found the project's binding and every lesson in a real
+// learner's folder (spaces and a non-ASCII "π") reported outside_project.
+// These run the win32 rules on any OS through the injected platform.
+const learnerFolder = "C:\\Users\\tjoba\\Documents\\Codex\\Pi Learning\\π\\learn\\Coding Projects\\route-check";
+const learnerUriPath = "/c:/Users/tjoba/Documents/Codex/Pi Learning/π/learn/Coding Projects/route-check";
+
+test("Windows: Cursor's URI-path and file URI forms become native drive paths", async () => {
+  const { cursorHostPath } = await import(shim);
+  for (const [sent, native] of [
+    [learnerUriPath, learnerFolder],
+    [`${learnerUriPath}/`, `${learnerFolder}\\`],
+    ["/C:/Users/yi.chen/", "C:\\Users\\yi.chen\\"],
+    ["/d:/code/code/", "D:\\code\\code\\"],
+    ["\\c:\\Users\\x", "C:\\Users\\x"],
+    ["/c:", "C:\\"],
+    ["c:\\Users\\x", "C:\\Users\\x"],
+    ["c:/Users/x", "C:\\Users\\x"],
+    [learnerFolder, learnerFolder],
+    ["file:///c%3A/Users/tjoba/Documents/Codex/Pi%20Learning/%CF%80/learn/Coding%20Projects/route-check", learnerFolder],
+    ["file:///c:/Users/tjoba/Documents/Codex/Pi Learning/π/learn/Coding Projects/route-check", learnerFolder],
+    ["FILE:///C:/x", "C:\\x"],
+    ["\\\\server\\share\\project", "\\\\server\\share\\project"],
+  ]) assert.equal(cursorHostPath(sent, "win32"), native, sent);
+});
+
+test("Windows: values that are not drive paths are left for the absolute-path checks to refuse", async () => {
+  const { cursorHostPath } = await import(shim);
+  for (const value of ["relative\\lesson", "/c/Users/x", "/cd:/x", "file:///c%2F..%2Fx", "file://", ""]) {
+    assert.equal(cursorHostPath(value, "win32"), value, JSON.stringify(value));
+  }
+});
+
+test("POSIX: Cursor path conversion is a no-op, including the legal path /c:/x", async () => {
+  const { cursorHostPath } = await import(shim);
+  for (const value of ["/c:/x", "/Users/a/π project", "file:///c:/x", "c:\\x"]) {
+    assert.equal(cursorHostPath(value, "darwin"), value);
+    assert.equal(cursorHostPath(value, "linux"), value);
+  }
+});
+
+test("Windows: the learner's project folder survives selection exactly", async () => {
+  const { normalizeCursorInput } = await import(shim);
+  const transcript = "/c:/Users/tjoba/.cursor/projects/c-Users-tjoba-route-check/agent-transcripts/chat-a/chat-a.jsonl";
+  // Sole root, no cwd (Cursor's generic tools send cwd:"").
+  for (const cwd of [undefined, ""]) {
+    const input = normalizeCursorInput({ ...payload, workspace_roots: [learnerUriPath], cwd, transcript_path: transcript }, "diff", { platform: "win32" });
+    assert.equal(input.cwd, learnerFolder);
+    assert.equal(input.transcript_path, "C:\\Users\\tjoba\\.cursor\\projects\\c-Users-tjoba-route-check\\agent-transcripts\\chat-a\\chat-a.jsonl");
+  }
+  // cwd in the same URI-path form, with a lowercase drive and trailing slash.
+  assert.equal(normalizeCursorInput({ ...payload, workspace_roots: [`${learnerUriPath}/`], cwd: learnerUriPath }, "diff", { platform: "win32" }).cwd, learnerFolder);
+  // Mixed forms: root as URI path, nested cwd native with a lowercase drive.
+  assert.equal(normalizeCursorInput({ ...payload, workspace_roots: [learnerUriPath], cwd: `c:${learnerFolder.slice(2)}\\src` }, "diff", { platform: "win32" }).cwd, `${learnerFolder}\\src`);
+  // A file URI root.
+  assert.equal(normalizeCursorInput({ ...payload, workspace_roots: ["file:///c%3A/Users/tjoba/Documents/Codex/Pi%20Learning/%CF%80/learn/Coding%20Projects/route-check"] }, "diff", { platform: "win32" }).cwd, learnerFolder);
+});
+
+test("Windows: one root sent in two forms is still a single root", async () => {
+  const { normalizeCursorInput } = await import(shim);
+  assert.equal(normalizeCursorInput({ ...payload, workspace_roots: [learnerUriPath, learnerFolder] }, "diff", { platform: "win32" }).cwd, learnerFolder);
+});
+
+test("Windows: path conversion keeps every ambiguity and outside-project refusal", async () => {
+  const { normalizeCursorInput } = await import(shim);
+  for (const input of [
+    { ...payload, workspace_roots: [learnerUriPath, "/d:/code/other/"] },
+    { ...payload, workspace_roots: [learnerUriPath, `${learnerUriPath}/src`], cwd: `${learnerUriPath}/src/lesson` },
+    { ...payload, workspace_roots: [learnerUriPath], cwd: "/c:/Users/tjoba/Documents" },
+    { ...payload, workspace_roots: [learnerUriPath], cwd: "/d:/code/route-check" },
+    { ...payload, workspace_roots: ["relative\\route-check"] },
+    { ...payload, workspace_roots: [learnerUriPath], cwd: "src" },
+  ]) assert.throws(() => normalizeCursorInput(input, "diff", { platform: "win32" }), /^Error: Cursor (did not provide an unambiguous project|workspace is ambiguous|cwd is not an absolute project path)/, JSON.stringify(input));
+});
+
+test("POSIX: selection and transcript forwarding are unchanged by the Windows rules", async () => {
+  const { normalizeCursorInput } = await import(shim);
+  const input = normalizeCursorInput({ ...payload, workspace_roots: ["/c:/x"], transcript_path: "/c:/x/t.jsonl" }, "diff", { platform: "darwin" });
+  assert.equal(input.cwd, "/c:/x");
+  assert.equal(input.transcript_path, "/c:/x/t.jsonl");
+});
+
 test("prompt text has unknown provenance and cannot be forged via unverified payload fields", async (t) => {
   const fake = await fixture(t);
   assert.deepEqual(output(run("user-prompt-submit", { ...payload, prompt: "synthetic instruction", prompt_origin: "learner", continuation_id: "forged" }, fake.dir)), { continue: true });

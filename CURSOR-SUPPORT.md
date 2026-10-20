@@ -127,8 +127,22 @@ ancestor workspace binding. The adapter never selects
 `workspace_roots[0]` or substitutes the plugin process's working directory. Open
 the bound lesson folder in a separate workspace when attribution is ambiguous.
 
-A nonempty string `transcript_path` is forwarded unchanged to the CLI; missing,
-blank, or non-string values are omitted without disabling the hook. The adapter
+Native Windows Cursor reports these paths in URI-path form: a slash before a
+drive letter, often lowercase, with forward slashes (`/c:/Users/me/project`,
+`/d:/code/`). Read as a path, Node resolves that to `C:\c:\Users\me\project`, so
+the CLI never found the project's binding and every lesson in a correctly opened
+folder reported `outside_project` (plugin 0.10.4 fix, from a learner report on
+Cursor 3.24.12). On Windows only, the adapter converts `workspace_roots` entries,
+`cwd`, and `transcript_path` from that form, and from `file:` URIs
+(percent-decoded), to native drive paths with an uppercase drive letter before
+any absolute-path, containment, or ambiguity check; spaces and non-ASCII folder
+names pass through unchanged. Other values are left as sent, so the existing
+refusals still apply. On macOS and Linux the conversion is a no-op (`/c:/x` is a
+legal POSIX path).
+
+A nonempty string `transcript_path` is forwarded to the CLI unchanged apart from
+that Windows path conversion; missing, blank, or non-string values are omitted
+without disabling the hook. The adapter
 does not read the transcript itself. See [transcript-sharing compatibility](WORKSHOP-COMPATIBILITY.md#transcript-sharing-integration)
 for the companion CLI requirement.
 
@@ -272,8 +286,10 @@ explicit denial, malformed results, missing CLI, session isolation, multi-root
 resolution, callback field normalization, and refusing unverified continuation
 traffic. Setup tests isolate the user home and exercise merge, idempotency,
 uninstall, malformed config, and concurrent-writer refusal. The Windows test runs the Windows npm-entry resolver and then invokes its
-Node command with paths and arguments containing shell metacharacters. It does
-**not** establish a native Windows Cursor session.
+Node command with paths and arguments containing shell metacharacters. The
+Windows path tests run the adapter's win32 project-selection rules on any OS
+against the learner-reported path forms, including a folder with spaces and `π`.
+Neither establishes a native Windows Cursor session.
 
 The acceptance matrix records desktop and terminal versions, OS,
 model/configuration, and results for: user-scoped install/reload/update, folder change, pair/begin,
