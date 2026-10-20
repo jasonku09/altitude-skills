@@ -46,7 +46,7 @@ export function cursorHostPath(value, platform = process.platform) {
     // Decodes percent-escapes; a URI host becomes a \\server\share UNC path.
     try { path = fileURLToPath(value, { windows: true }); } catch { return value; }
   } else path = value.replace(/^[\\/](?=[A-Za-z]:(?:[\\/]|$))/, "");
-  if (/^[A-Za-z]:$/.test(path)) path += "\\";
+  if (/^\/[A-Za-z]:$/.test(value)) path += "\\";
   if (/^[A-Za-z]:[\\/]/.test(path)) return win32.normalize(`${path[0].toUpperCase()}${path.slice(1)}`);
   return path;
 }

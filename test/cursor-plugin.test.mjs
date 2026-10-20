@@ -176,6 +176,23 @@ test("Windows: values that are not drive paths are left for the absolute-path ch
   }
 });
 
+test("Windows: native bare drives remain relative while URI-path bare drives become roots", async () => {
+  const { cursorHostPath, normalizeCursorInput } = await import(shim);
+  for (const drive of ["C:", "c:"]) {
+    assert.equal(cursorHostPath(drive, "win32"), drive);
+    assert.throws(
+      () => normalizeCursorInput({ ...payload, workspace_roots: [drive] }, "diff", { platform: "win32" }),
+      /^Error: Cursor did not provide an unambiguous project\.$/,
+    );
+    assert.throws(
+      () => normalizeCursorInput({ ...payload, workspace_roots: ["C:\\"], cwd: drive }, "diff", { platform: "win32" }),
+      /^Error: Cursor cwd is not an absolute project path\.$/,
+    );
+    assert.equal(normalizeCursorInput({ ...payload, workspace_roots: [`/${drive}`] }, "diff", { platform: "win32" }).cwd, "C:\\");
+    assert.equal(normalizeCursorInput({ ...payload, workspace_roots: ["C:\\"], cwd: `/${drive}` }, "diff", { platform: "win32" }).cwd, "C:\\");
+  }
+});
+
 test("POSIX: Cursor path conversion is a no-op, including the legal path /c:/x", async () => {
   const { cursorHostPath } = await import(shim);
   for (const value of ["/c:/x", "/Users/a/π project", "file:///c:/x", "c:\\x"]) {
