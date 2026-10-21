@@ -1,0 +1,100 @@
+name: windows-cursor-roots
+
+# Checks, on native Windows, that the Cursor adapter finds a bound project
+# from the workspace_roots forms Cursor sends ("/c:/Users/.../route-check" and
+# the native path), using the real published altitude CLI, and that the
+# pre-fix plugin release still reproduces the learner's outside_project bug
+# (the negative control). What it proves and what stays unverified:
+# CURSOR-SUPPORT.md, "Native Windows workspace roots CI".
+# No Cursor and no secrets: the CLI runs unpaired against a cached down-sync
+# fixture, and the hooks receive Cursor-shaped JSON on stdin.
+on:
+  pull_request:
+    paths:
+      - bin/**
+      - hooks/cursor*.json
+      - .cursor-plugin/**
+      - ci/windows-cursor-roots/**
+      - test/cursor-plugin.test.mjs
+      - test/windows-cursor-roots-checks.test.mjs
+      - .github/workflows/windows-cursor-roots.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: windows-cursor-roots-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # --- Version pins: bump here, nowhere else. -------------------------------
+  # The workshop CLI the hooks call (npm @learnaltitude/cli).
+  ALTITUDE_CLI_VERSION: 0.15.0
+  NODE_VERSION: 24
+  # The last plugin release with the bug. Never move this to a fixed release:
+  # the negative control would stop reproducing the bug and the job fails.
+  PRE_FIX_TAG: altitude--v0.10.3
+  # ----------------------------------------------------------------------------
+
+defaults:
+  run:
+    shell: pwsh
+
+jobs:
+  roots:
+    name: Cursor workspace roots on native Windows (real CLI, no Cursor)
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      # The rest of the suite uses POSIX executable fixtures (a shebang file
+      # named "altitude"), which Windows cannot run, so only these run here:
+      # the harness rules and the adapter's Windows/POSIX path-rule tests,
+      # now on real win32 path semantics instead of emulated ones.
+      - name: Unit tests that run on Windows
+        run: |
+          node --test test/windows-cursor-roots-checks.test.mjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node --test '--test-name-pattern=^(Windows|POSIX):' test/cursor-plugin.test.mjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Install the altitude CLI
+        run: |
+          $prefix = Join-Path $env:RUNNER_TEMP 'altitude-npm'
+          npm install -g --no-fund --no-audit --prefix $prefix "@learnaltitude/cli@$env:ALTITUDE_CLI_VERSION"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $prefix | Out-File -Append -Encoding utf8 $env:GITHUB_PATH
+          "altitude CLI $env:ALTITUDE_CLI_VERSION, node $(node --version), pre-fix plugin $env:PRE_FIX_TAG" | Tee-Object -Append -FilePath $env:GITHUB_STEP_SUMMARY
+
+      - name: Check out the pre-fix plugin release (negative control)
+        run: |
+          git fetch --no-tags --depth=1 origin "refs/tags/$($env:PRE_FIX_TAG):refs/tags/$($env:PRE_FIX_TAG)"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          git worktree add --detach (Join-Path $env:RUNNER_TEMP 'pre-fix-plugin') $env:PRE_FIX_TAG
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Pipe Cursor hook JSON through both plugins and judge the CLI's verdicts
+        run: |
+          # The learner's folder shape: spaces and a non-ASCII "π" (built from
+          # its code point so the script file's encoding cannot matter).
+          $pi = [char]0x03C0
+          $project = Join-Path $env:USERPROFILE "Documents\Pi Learning\$pi\Coding Projects\route-check"
+          node ci/windows-cursor-roots/check.mjs `
+            --plugin "$env:GITHUB_WORKSPACE" `
+            --pre-fix-plugin (Join-Path $env:RUNNER_TEMP 'pre-fix-plugin') `
+            --project $project `
+            --work (Join-Path $env:RUNNER_TEMP 'cursor-roots') `
+            --out (Join-Path $env:RUNNER_TEMP 'cursor-roots-results.json')
+          exit $LASTEXITCODE
+
+      - uses: actions/upload-artifact@v7
+        if: ${{ !cancelled() }}
+        with:
+          name: cursor-roots-results
+          path: ${{ runner.temp }}/cursor-roots-results.json
+          if-no-files-found: warn

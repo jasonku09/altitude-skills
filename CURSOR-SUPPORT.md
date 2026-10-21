@@ -127,8 +127,24 @@ ancestor workspace binding. The adapter never selects
 `workspace_roots[0]` or substitutes the plugin process's working directory. Open
 the bound lesson folder in a separate workspace when attribution is ambiguous.
 
-A nonempty string `transcript_path` is forwarded unchanged to the CLI; missing,
-blank, or non-string values are omitted without disabling the hook. The adapter
+Native Windows Cursor reports these paths in URI-path form: a slash before a
+drive letter, often lowercase, with forward slashes (`/c:/Users/me/project`,
+`/d:/code/`). Read as a path, Node resolves that to `C:\c:\Users\me\project`, so
+the CLI never found the project's binding and every lesson in a correctly opened
+folder reported `outside_project` (plugin 0.10.4 fix, from a learner report on
+Cursor 3.24.12). On Windows only, the adapter converts `workspace_roots` entries,
+`cwd`, and `transcript_path` from that form to native drive paths with an
+uppercase drive letter before any absolute-path, containment, or ambiguity
+check. It also normalizes native drive paths and decodes `file:` URIs to Windows
+paths, including UNC paths for URI hosts; spaces and non-ASCII folder names
+are preserved. Invalid file URIs and other path forms still go through the
+existing checks. On macOS and Linux the conversion is a no-op (`/c:/x` is a
+legal POSIX path). [Native Windows workspace roots CI](#native-windows-workspace-roots-ci)
+checks this against the real CLI on Windows.
+
+A nonempty string `transcript_path` is forwarded to the CLI unchanged apart from
+that Windows path conversion; missing, blank, or non-string values are omitted
+without disabling the hook. The adapter
 does not read the transcript itself. See [transcript-sharing compatibility](WORKSHOP-COMPATIBILITY.md#transcript-sharing-integration)
 for the companion CLI requirement.
 
@@ -172,6 +188,60 @@ selects the intended JavaScript CLI entry through Node with no shell. Cursor's
 login-shell PATH may otherwise prefer an older globally installed CLI. Missing or
 invalid overrides fail open without silently testing a different build. Normal
 released installations keep the standard PATH/npm resolution.
+
+## Native Windows workspace roots CI
+
+[`windows-cursor-roots`](.github/workflows/windows-cursor-roots.yml) is configured to run on
+`windows-latest` for pull requests that touch `bin/`, the Cursor hook files,
+`.cursor-plugin/`, or the check itself. It needs no Cursor and no secrets.
+`ci/windows-cursor-roots/check.mjs` creates a folder bound with a `.altitude`
+marker at `%USERPROFILE%\Documents\Pi Learning\π\Coding Projects\route-check`
+(spaces and a non-ASCII name, like the learner's). The workflow installs the
+published CLI at its pinned version; the harness gives each scenario its own unpaired
+`ALTITUDE_DATA_DIR` with one cached down-sync answer. That answer is an explicit
+journey miss, so no lesson content is faked, and it carries the server-authored
+`learning_runtime` descriptor. It then pipes Cursor-shaped `sessionStart` and
+`beforeSubmitPrompt` JSON into `bin/altitude-cursor-hook.mjs` from a neutral
+working directory, with the CLI found on PATH as an npm install would find it.
+After each hook it runs `altitude task --json --session <conversation_id>` from
+the project folder. The rules live in `ci/windows-cursor-roots/checks.mjs` and
+are pinned by `test/windows-cursor-roots-checks.test.mjs`.
+
+| Plugin | `workspace_roots[0]` | Required result |
+|---|---|---|
+| this checkout | `/c:/Users/.../route-check` (Cursor's URI-path form) | live session marker, no unbound observation, task `binding` is the project, `learning_runtime.status` `supported` |
+| this checkout | native `C:\Users\...\route-check` | the same |
+| `altitude--v0.10.3` (the last release with the bug) | URI-path form | unbound observation, no marker, `outside_project` naming the project: the learner's bug, reproduced |
+| `altitude--v0.10.3` | native path | bound and `supported` |
+| both | the project's parent folder | `outside_project`, so the harness can see that verdict at all |
+
+If the old release stops reproducing the bug, the job fails and says the
+negative control is broken; it does not pass silently. Every hook must also exit
+0 with a JSON response and print no `Altitude Cursor hook skipped` notice. That
+separates "the hook refused the payload" from "it reported the wrong folder".
+The job also runs the harness rules and the adapter's `Windows:`/`POSIX:`
+path-rule tests under real win32 path semantics. The rest of the suite uses
+POSIX executable fixtures, which Windows cannot run.
+
+A passing native Windows run establishes that the fixed adapter turns the
+URI-path root into the folder the real CLI finds the binding in, and that the
+old one did not. The workflow remains unverified until it runs on
+`windows-latest`, including its PowerShell steps, npm install/PATH layout, tag
+checkout, and `π` folder path. Even a passing run does not verify:
+
+- **Cursor's real desktop payload.** The URI-path form comes from the learner
+  report (Cursor 3.24.12). The JSON is hand-built: no `cwd` (selection falls
+  back to the sole root), no `transcript_path`, no multi-root workspace. Unit
+  tests cover those forms with explicit win32 rules, without a real Cursor payload.
+- **How Cursor launches hooks on Windows.** The job runs the wrapper with
+  `node` directly. It skips the `node -e` bootstrap in `hooks/cursor.json`, the
+  `~/.cursor/altitude/plugin.json` registration, and whatever shell Cursor uses.
+- **A paired account or a real journey.** The CLI is unpaired, and the
+  `supported` verdict comes from the cached descriptor, not from the server.
+
+To run the harness locally (macOS/Linux leave out the URI form, so the checkout
+can stand in for both plugins):
+`ALTITUDE_CURSOR_ROOTS_CLI=<path to @learnaltitude/cli bin/altitude.js> node --test test/windows-cursor-roots-checks.test.mjs`.
 
 ## Native recall context and provenance
 
@@ -272,8 +342,12 @@ explicit denial, malformed results, missing CLI, session isolation, multi-root
 resolution, callback field normalization, and refusing unverified continuation
 traffic. Setup tests isolate the user home and exercise merge, idempotency,
 uninstall, malformed config, and concurrent-writer refusal. The Windows test runs the Windows npm-entry resolver and then invokes its
-Node command with paths and arguments containing shell metacharacters. It does
-**not** establish a native Windows Cursor session.
+Node command with paths and arguments containing shell metacharacters. The
+Windows path tests run the adapter's win32 project-selection rules on any OS
+against the learner-reported path forms, including a folder with spaces and `π`.
+Neither establishes a native Windows Cursor session. The
+[native Windows workspace roots CI](#native-windows-workspace-roots-ci) runs the
+adapter and the real CLI on Windows, but still without Cursor.
 
 The acceptance matrix records desktop and terminal versions, OS,
 model/configuration, and results for: user-scoped install/reload/update, folder change, pair/begin,
@@ -284,9 +358,11 @@ Test existing hooks alongside Altitude: Cursor merges hook responses and another
 hook's stop follow-up can override Altitude's. An offered question must never be
 marked asked merely because the adapter printed an instruction.
 
-Dedicated Windows and further Linux testing are deferred by the user's release
-decision; native Windows and Linux desktop remain unverified. Existing Ubuntu
-terminal evidence is retained. This does not remove automated portability checks.
+Native Windows Cursor desktop and Linux desktop remain unverified; dedicated
+desktop and further Linux testing are deferred by the user's release decision.
+Existing Ubuntu terminal evidence is retained. For the separate automated
+Windows adapter check and its verification status, see
+[native Windows workspace roots CI](#native-windows-workspace-roots-ci).
 
 macOS, native Windows, and Linux are intended targets. No row in that matrix is
 certified by these package tests. Recommend a model only after its recorded full

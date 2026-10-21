@@ -117,6 +117,12 @@ cmd-style `%PLUGIN_ROOT%` literal (see **Codex on native Windows** below). Windo
 Codex's one-time hook trust review again; macOS/Linux trust is unaffected. Every hook shim now
 exits only 0 or 2, so a crashing CLI can no longer surface as a hook failure.
 
+Plugin 0.10.4 moves no floor and needs no new CLI or server. It fixes Cursor on native Windows,
+where lessons reported `outside_project` even in a correctly opened folder.
+See [Cursor's transport contract](CURSOR-SUPPORT.md#transport-contract) for path
+conversion and platform scope, and [its Windows CI coverage](CURSOR-SUPPORT.md#native-windows-workspace-roots-ci)
+for verification limits.
+
 The graded lesson-start review adds no floor either. When `due_review` carries an
 `ask`, the tutor asks that kind of question and sends the answer with
 `--review <concept-id>` (key `review` under `emit --stdin`) and no verdict, and the
